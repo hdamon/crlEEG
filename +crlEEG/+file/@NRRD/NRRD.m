@@ -1,4 +1,4 @@
-classdef NRRD < crlEEG.file.basefile & matlab.mixin.Copyable
+classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
   % Object for reading/manipulating NRRD files
   %  
   % Usage:
@@ -40,8 +40,11 @@ classdef NRRD < crlEEG.file.basefile & matlab.mixin.Copyable
   % Part of the cnlEEG Project
   %
   
-  
-  properties
+  properties (Constant, Hidden=true)
+    validExts = {'.nrrd', '.nhdr'};
+  end;
+    
+  properties   
     %% NRRD Header Fields
     content     = '???';
     type        = '???';
@@ -116,7 +119,7 @@ classdef NRRD < crlEEG.file.basefile & matlab.mixin.Copyable
       %
       % function obj = file_NRRD2(fname,fpath)
       %
-      
+                        
       needsFName = ~exist('fname','var')||isempty(fname);
       needsFPath = ~exist('fpath','var')||isempty(fpath);
       
@@ -136,7 +139,7 @@ classdef NRRD < crlEEG.file.basefile & matlab.mixin.Copyable
       
       if ~exist('readonly','var'), readonly = false; end;
       
-      obj = obj@file(fname,fpath,{'.nrrd', '.nhdr'});
+      obj = obj@crlEEG.file.baseobj(fname,fpath);
       obj.readOnly = readonly;
       
       if isa(fname,'NRRD')

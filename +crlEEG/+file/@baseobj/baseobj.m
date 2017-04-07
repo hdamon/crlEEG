@@ -1,8 +1,8 @@
-classdef basefile < handle
+classdef (Abstract) baseobj < handle
 %
-% classdef BASEFILE < handle
+% classdef crlEEG.file.BASEOBJ < handle
 %
-% SuperClass for all other filetypes.
+% Abstract superClass for all other filetypes.
 %
 % To use in the constructor for a derived class:
 %    f = obj@FILE(fname,fpath,validExts);
@@ -34,32 +34,33 @@ classdef basefile < handle
 
   properties
     fname;
-    fpath;        
+    fpath;            
   end
-    
-  properties (Hidden = true)
-    validExts = [];
-  end;
   
-  properties (Dependent = true, SetAccess = protected, Hidden = true)
+  properties (Dependent = true, Hidden=true);    
+    existsOnDisk;
     fname_short;
     fext;
+    date;
   end
   
-  properties (Dependent = true, SetAccess=protected);    
-    existsOnDisk;
+  properties (Access=protected)
+    
   end
-  
+      
+  properties (Abstract, Constant, Hidden = true)
+    validExts;
+  end;
+          
   methods
     %% Object Constructor
 
-    function obj = basefile(fname,fpath,validExts)            
+    function obj = baseobj(fname,fpath)            
       if nargin>0
         
-        if isa(fname,'basefile'), 
+        if isa(fname,'baseobj'), 
           obj.fname = fname.fname; 
-          obj.fpath = fname.fpath;
-          obj.validExts = fname.validExts;
+          obj.fpath = fname.fpath;          
           return; 
         end;
         
@@ -81,12 +82,8 @@ classdef basefile < handle
           end
         end;
                   
-        % Path defaults to the current one                
-        if ~exist('fpath','var')||isempty(fpath), fpath = './'; end;
-        if ~exist('validExts','var'), validExts = []; end;
-        
-        % Set list of valid extensions
-        obj.validExts = validExts;
+        % Path defaults to the present working directory                
+        if ~exist('fpath','var')||isempty(fpath), fpath = pwd; end;
         
         % Check that the path exists, and make sure we have the full path
         %
@@ -97,23 +94,20 @@ classdef basefile < handle
         
         % Define filename and check if it exists
         obj.fname = fname;                
-        
-        
-        
+                        
       end;
     end;
   
 
     %% Functionality for checking filenames
     function set.fname(obj,fname)
-      %fname = checkName(obj,fname);   
-            
+      % Set the filename,             
       if ~isempty(obj.validExts)
         [path,name,ext] = fileparts(fname);
         if validatestring(ext,obj.validExts)
           obj.fname = [name ext];
           if ~isempty(path)
-            obj.fpath = path;
+            error('Cannot set file path for a crlEEG.file.NRRD object this way');
           end;
         else
           error(['File must have one of these extensions: ' obj.validExts{:}]);
@@ -125,29 +119,40 @@ classdef basefile < handle
     end;
     
     function out = get.fname_short(obj)
+      % Returns the filename without its extension
       [~,out,~] = fileparts(obj.fname);
     end;
     
     function out = get.fext(obj)
+      % Returns the file extension, with leading period.
       [~,~,out] = fileparts(obj.fname);
     end;
     
     function out = get.existsOnDisk(obj)
+      % Returns true if the file exists on disk.
       out = exist([obj.fpath obj.fname],'file');        
     end
             
     %% Functionality for Checking Paths
     function set.fpath(obj,fpath)
-      obj.fpath = file.checkPath(fpath);
+      obj.fpath = crlEEG.file.baseobj.checkPath(fpath);
     end;
                            
   end % Methods
   
+  %% Static Protected Methods
   methods (Static=true, Access=protected)
+    
     function fpath = checkPath(fpath)
-      if exist(['./' fpath],'dir') % It's a relative path
+      % Validate the provided path, ensuring that it is both an absolute
+      % path, and includes a file separator at the end.
+      %
+      
+      if exist(['./' fpath],'dir') 
+        % If path is relative, pad with current working directory.
         fpath = [pwd '/' fpath];
-      elseif exist(fpath,'dir') % It's an absolute path
+      elseif exist(fpath,'dir') 
+        % If path is absolute, just use it.
         fpath = fpath;
       else
         warning off backtrace
@@ -156,37 +161,12 @@ classdef basefile < handle
         fpath = './';
       end;
       
-      fpath = file.cleanPath(fpath);
-      
-      % Make sure the path ends in a /
-      if ~strcmpi(fpath(end),'/')
-        fpath(end+1) = '/';
-      end
-    end;
-    
-    function fpath = cleanPath(fpath)
-      % function fpath = cleanPath(fpath)
-      %
-      % Remove '/./' and '//' strings from file pathnames and replace with
-      % '/'
-      fpath = strrep(fpath,'/./','/');
-      fpath = strrep(fpath,'//','/');            
-    end;
-        
-%     function fpath = rmstringfrompath(fpath,string,replace)
-%       % function fpath = rmstringfrompath(fpath,string,replace)
-%       %
-%       % Remove 'string' from 'fpath' and replace with 'replace'
-%       nOff = length(string);
-%       Q = strfind(fpath,string);
-%       while length(Q)>0
-%         fpath = [fpath(1:Q(1)-1) replace fpath(Q(1)+nOff:end)];
-%         Q = strfind(fpath,string);
-%       end;
-%     end
-    
+      % Get full path 
+      fpath = fullfile([fpath filesep]);     
+    end;                    
   end % Static Methods
   
+  %% Abstract Methods
   methods (Abstract)
     read(fileIn,varargin);
     write(fileIn,varargin);
