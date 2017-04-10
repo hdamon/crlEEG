@@ -1,7 +1,21 @@
-function [fName fPath] = checkFileNameAndPath(fName,fPath)
+function [fName, fPath] = checkFileNameAndPath(fName,fPath)
 % Provides validation of file names and paths
 %
-% 
+% function [fName fPath] = checkFileNameAndPath(fName,fPath)
+%
+% checkFileNameAndPath takes 0, 1, or 2 character string inputs, and
+% returns a filename and path from them.
+%
+% With 0 inputs: 
+%    Generates a temporary filename and path
+% With 1 input:
+%    If a path: Generates a temp filename, and returns the provided path.
+%    If a name: Returns the current working directory as the path.
+% With 2 inputs:
+%    Returns the provided filename and path.
+%
+% See Also: checkFileNameForValidExtension, which provides file extension
+% validation if a specific filetype is required.
 %
 % Written By: Damon Hyde
 % Part of the crlEEG Project

@@ -55,67 +55,40 @@ classdef (Abstract) baseobj < handle
   methods
     %% Object Constructor
 
-    function obj = baseobj(fname,fpath)            
+    function obj = baseobj(varargin)
+      
       if nargin>0
         
-        if isa(fname,'baseobj'), 
-          obj.fname = fname.fname; 
-          obj.fpath = fname.fpath;          
-          return; 
+        % If a crlEEG.file.baseobj object was passed in, just copy
+        % parameters.
+        if isa(varargin{1},'crlEEG.file.baseobj')
+          obj.fname = varargin{1}.fname;
+          obj.fpath = varargin{1}.fpath;    
+          return;
         end;
         
-        % Check if fname contains the full path
-        [path, name, ext] = fileparts(fname);
+        % Otherwise, parse as a fname/fpath pair.
+        p = inputParser;
+        p.addOptional('fname',[],@(x) isempty(x)||ischar(x));
+        p.addOptional('fpath',[],@(x) isempty(x)||ischar(x));
+        p.parse(varargin{:});
         
-        % Get the actual filename
-        fname = [name ext];
+        [fName, fPath] = ...
+          crlEEG.util.checkFileNameAndPath(p.Results.fname,p.Results.fpath);
         
-        % Determine which variable contains the path.        
-        if ~isempty(path) % Found a path in fname        
-          if ~exist('fpath','var')||isempty(fpath)
-            % Use the path defined in fname if nothing else provided
-            fpath = path; 
-          else
-            % If a path was identified from fname, and fpath is not empty,
-            % error out because of conflict.`
-            error('Define path either in fname or fpath, but not both'); 
-          end
-        end;
-                  
-        % Path defaults to the present working directory                
-        if ~exist('fpath','var')||isempty(fpath), fpath = pwd; end;
+        fName = crlEEG.util.checkFileNameForValidExtension(fName,obj.validExts);
         
-        % Check that the path exists, and make sure we have the full path
-        %
-        % Note that if both [pwd '/' path] and [path] exist as directories
-        % (unlikely, but technically possible), that this defaults to the
-        % [pwd '/' path] option.                                
-        obj.fpath = fpath;
+        obj.fname = fName;
+        obj.fpath = fPath;
         
-        % Define filename and check if it exists
-        obj.fname = fname;                
-                        
       end;
     end;
   
 
     %% Functionality for checking filenames
     function set.fname(obj,fname)
-      % Set the filename,             
-      if ~isempty(obj.validExts)
-        [path,name,ext] = fileparts(fname);
-        if validatestring(ext,obj.validExts)
-          obj.fname = [name ext];
-          if ~isempty(path)
-            error('Cannot set file path for a crlEEG.file.NRRD object this way');
-          end;
-        else
-          error(['File must have one of these extensions: ' obj.validExts{:}]);
-        end
-      else
-        obj.fname = fname;
-      end
-      
+      % Set the filename, 
+      obj.fname = crlEEG.util.checkFileNameForValidExtension(fname,obj.validExts);           
     end;
     
     function out = get.fname_short(obj)

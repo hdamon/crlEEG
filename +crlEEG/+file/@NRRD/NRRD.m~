@@ -119,25 +119,45 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
       %
       % function obj = file_NRRD2(fname,fpath)
       %
-                   
+                              
       p = inputParser;
-      p.addOptional('fname',[],@(x) isempty(x)||ischar(x)||isa(x,'crlEEG.file.NRRD'));
-      p.addOptional('fpath',[],@(x) isempty(x)||ischar(x));
-      p.addParamValue('readOnly',false,@(x) islogical(x));
+      p.addOptional('fname',[],@(x) ischar(x));
+      p.addOptional('fpath',[],@(x) ischar(x));
+      p.addParamValue('readonly',false,@(x) islogical(x));
       p.parse(varargin{:});
       
       obj = obj@crlEEG.file.baseobj(p.Results.fname,p.Results.fpath);
-      obj.readOnly = p.Results.readOnly;
-                  
-      % If a crlEEG.file.NRRD object was 
-      if isa(varargin{1},'crlEEG.file.NRRD')    
-        obj.copyFields(varargin{1});
+      obj.readOnly = p.Results.readonly;
+      
+      needsFName = ~exist('fname','var')||isempty(fname);
+      needsFPath = ~exist('fpath','var')||isempty(fpath);
+      
+      [path,name,~] = fileparts(tempname());
+      if (needsFName && needsFPath)
+        % If name and path are not provided, use a temporary file name in
+        % the /tmp/ directory
+        fname = [name '.nrrd'];
+        fpath = path;
+      elseif needsFName
+        % Default filename is a random temporary name
+        fname = [name '.nrrd'];
+      elseif needsFPath
+        % Default path when a filename is provided is the current directory
+        fpath = './';
+      end;
+      
+      if ~exist('readonly','var'), readonly = false; end;
+      
+      obj = obj@crlEEG.file.baseobj(fname,fpath);
+      obj.readOnly = readonly;
+      
+      if isa(fname,'NRRD')
+        obj.copyFields(fname);
         return;
       end;
       
-      % If the NRRD file exists on disk, read the header.
       if obj.existsOnDisk
-        obj.read;
+        read(obj);
       else
         disp(['NRRD not located on disk. Creating empty object']);
       end;
