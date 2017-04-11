@@ -1,7 +1,7 @@
-classdef uipanel < handle
+classdef uipanel < handle & matlab.mixin.SetGet
   % CNLUIOBJ Base class for UI objects in cnlEEG
   %
-  % classdef cnlUIObj < handle
+  % classdef crlEEG.uitools.uipanel < handle
   %
   % cnlUIObj is a basic object class to act as the parent for UI objects that
   % require passing a bunch of figure/parent/panel/axes handles around.
@@ -86,9 +86,27 @@ classdef uipanel < handle
       %
       % function uiObj = cnlUIObj(varargin)
       %      
-      uiObj.panel = uipanel(varargin{:});        
+      uiObj.panel = uipanel(varargin{:});   
+      set(uiObj.panel,'DeleteFcn',@(h,evt) uiObj.delete);
+    end;
+    
+    function delete(obj)
+      delete(obj.panel);
     end;
         
+    function setUnmatched(obj,unmatched)
+      % A bit of a hack to make sure that the units field is set first, so
+      % resizing of teh uipanel works correctly.
+      if isfield(unmatched,'units')
+        obj.Units = unmatched.units;
+        rmfield(unmatched,'units');
+      elseif isfield(unmatched,'Units')
+        obj.Units = unmatched.Units;
+        rmfield(unmatched,'Units');        
+      end
+      set(obj,unmatched);      
+    end
+    
     %% Properties Redirected to the Internal UIPanel 
     function out = get.BorderType(obj)
       out = get(obj.panel,'BorderType');

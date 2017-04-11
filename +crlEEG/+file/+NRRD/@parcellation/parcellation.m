@@ -32,9 +32,10 @@ classdef parcellation < crlEEG.file.NRRD
       % Input Parsing      
       validParcels = crlEEG.file.NRRD.parcellation.validParcels;
       
-      fnameFcn = @(x) (ischar(x)&&~ismember(lower(x),validParcels))||...
-                          isa(x,'crlEEG.file.NRRD.parcellation');
-      fpathFcn = @(x) (ischar(x)&& ~ismember(lower(x),{'parceltype' 'readonly'}));
+      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.file.NRRD.parcellation')||...
+            (ischar(x)&& ~ismember(lower(x),{'parceltype' 'readonly'}));
+      fpathFcn = @(x) isempty(x)||...
+            (ischar(x)&& ~ismember(lower(x),{'parceltype' 'readonly'}));
             
       p = inputParser;
       p.addOptional('fname',[],fnameFcn);

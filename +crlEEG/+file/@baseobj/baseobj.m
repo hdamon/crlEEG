@@ -34,7 +34,8 @@ classdef (Abstract) baseobj < handle
 
   properties
     fname;
-    fpath;            
+    fpath;      
+    readOnly;
   end
   
   properties (Dependent = true, Hidden=true);    
@@ -63,14 +64,16 @@ classdef (Abstract) baseobj < handle
         % parameters.
         if isa(varargin{1},'crlEEG.file.baseobj')
           obj.fname = varargin{1}.fname;
-          obj.fpath = varargin{1}.fpath;    
+          obj.fpath = varargin{1}.fpath;   
+          obj.readOnly = varargin{1}.readOnly;
           return;
         end;
         
         % Otherwise, parse as a fname/fpath pair.
         p = inputParser;
         p.addOptional('fname',[],@(x) isempty(x)||ischar(x));
-        p.addOptional('fpath',[],@(x) isempty(x)||ischar(x));
+        p.addOptional('fpath',[],@(x) isempty(x)||ischar(x));        
+        p.addParamValue('readOnly',false,@(x) islogical(x));
         p.parse(varargin{:});
         
         [fName, fPath] = ...
@@ -80,6 +83,7 @@ classdef (Abstract) baseobj < handle
         
         obj.fname = fName;
         obj.fpath = fPath;
+        obj.readOnly = p.Results.readOnly;
         
       end;
     end;

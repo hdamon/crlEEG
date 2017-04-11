@@ -3,7 +3,7 @@ classdef alphacolor < handle
   %
   % ALPHACOLOR is a handle class object that allows the user to easily
   % select between a range of colormaps, and adjust both the range and
-  % transparency of the colormap 
+  % transparency of the colormap
   %
   % Uitools class for colormaps including an alpha value.
   %
@@ -145,7 +145,7 @@ classdef alphacolor < handle
     end;
     
     function set.depth(obj,val)
-
+      
       if ~isequal(obj.depth,val)
         if isfield(obj.storedVals,'alpha')&&~isempty(obj.storedVals.alpha)
           currAlpha = obj.storedVals.alpha;
@@ -156,7 +156,7 @@ classdef alphacolor < handle
           [~,iA] = unique(newAlpha(:,1));
           newAlpha = newAlpha(iA,:);
           obj.storedVals.alpha = newAlpha;
-        end        
+        end
         
         obj.storedVals.depth = val;
         obj.updateGUI;
@@ -316,7 +316,7 @@ classdef alphacolor < handle
         'Units','normalized',...
         'Position',[0.03 0.03 0.3 0.54],...
         'SelectionChangeFcn',@(h,evt)obj.updateColormapFromGUI);
-      cmaps = uitools.util.colorMapList;
+      cmaps = crlEEG.gui.alphacolor.colorMapList;
       cmaps(end+1).name = 'custom';
       setappdata(guiObj,'radioGroup',radioGroup);
       
@@ -445,26 +445,26 @@ classdef alphacolor < handle
       %    @(h,evt) obj.updatePlot);
       obj.updateGUI;
     end
-%%    
-%     function updateInterp(obj)
-%       interpType = getappdata(obj.gui,'interpType');
-%       string = get(interpType(2),'String');
-%       idx = get(interpType(2),'Value');
-%       obj.interptype = string{idx};
-%     end
-%     
-%     function updateRange(obj)
-%       range = getappdata(obj.gui,'cMapRange');
-%       obj.range(1) = str2num(get(range(2),'String'));
-%       obj.range(2) = str2num(get(range(3),'String'));
-%     end
-%     
-%     function getRangeFromColormap(obj)
-%       range = getappdata(obj.gui,'cMapRange');
-%       set(range(2),'String',num2str(obj.range(1)));
-%       set(range(3),'String',num2str(obj.range(2)));
-%     end;
-       
+    %%
+    %     function updateInterp(obj)
+    %       interpType = getappdata(obj.gui,'interpType');
+    %       string = get(interpType(2),'String');
+    %       idx = get(interpType(2),'Value');
+    %       obj.interptype = string{idx};
+    %     end
+    %
+    %     function updateRange(obj)
+    %       range = getappdata(obj.gui,'cMapRange');
+    %       obj.range(1) = str2num(get(range(2),'String'));
+    %       obj.range(2) = str2num(get(range(3),'String'));
+    %     end
+    %
+    %     function getRangeFromColormap(obj)
+    %       range = getappdata(obj.gui,'cMapRange');
+    %       set(range(2),'String',num2str(obj.range(1)));
+    %       set(range(3),'String',num2str(obj.range(2)));
+    %     end;
+    
     function resetAlpha(obj)
       % Reset the colormap alpha to 0.5
       %
@@ -473,7 +473,7 @@ classdef alphacolor < handle
     end;
     
     function shiftTransp(obj,val)
-      % Shift the overall transparency of the colormap by 
+      % Shift the overall transparency of the colormap by
       %
       alphaData = obj.storedVals.alpha;
       alphaData(:,2) = alphaData(:,2)+val;
@@ -593,8 +593,8 @@ classdef alphacolor < handle
   end
   
   methods (Access=protected)
-
-    function selectAlpha(obj)      
+    
+    function selectAlpha(obj)
       % Protected Method for GUI Selection of Alpha Values
       %
       % This method is used in conjunction with the alphacolor GUI to allow
@@ -659,9 +659,32 @@ classdef alphacolor < handle
       set(cMapAxes,'Units',axesUnits);
       %obj.map.alpha = 1.5-pos(1,2);
       obj.updateColormapFromGUI;
-    end    
+    end
     
   end;
-    
   
+  methods (Static = true)
+    function maps = colorMapList
+      % COLORMAPLIST Return list of available colormaps
+      %
+      % function maps = colorMapList
+      
+      maps(1).name = 'jet';
+      maps(2).name = 'gray';
+      maps(3).name = 'hot';
+      maps(4).name = 'parula';
+      %maps(5).name = 'hsv';
+      %maps(6).name = 'bone';
+      %maps(7).name = 'copper';
+      %maps(8).name = 'pink';
+      %maps(9).name = 'colorcube';
+      %maps(10).name = 'prism';
+      maps(5).name = 'cool';
+      maps(6).name = 'autumn';
+      maps(7).name = 'winter';
+      maps(8).name = 'spring';
+      maps(9).name = 'summer';
+      
+    end
+  end
 end

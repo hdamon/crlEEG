@@ -72,10 +72,7 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
     
     % For use with separate header/data files
     data
-    
-    %% Additional Properties
-    readOnly
-    
+        
   end
   
   properties ( Dependent = true )
@@ -88,8 +85,7 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
     domainDims
     nonZeroVoxels
     zeroVoxels
-    nVoxels
-    isScalar
+    nVoxels    
     aspect
   end;
   
@@ -115,20 +111,32 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
   methods
     
     function obj = NRRD(varargin)
-      % Constructor for file_NRRD2 objects.
+      % Constructor for file_NRRD objects.
       %
-      % function obj = file_NRRD2(fname,fpath)
+      % function obj = file_NRRD(fname,fpath)
       %
-                   
-      p = inputParser;
-      p.addOptional('fname',[],@(x) isempty(x)||ischar(x)||isa(x,'crlEEG.file.NRRD'));
-      p.addOptional('fpath',[],@(x) isempty(x)||ischar(x));
-      p.addParamValue('readOnly',false,@(x) islogical(x));
-      p.parse(varargin{:});
+          
       
-      obj = obj@crlEEG.file.baseobj(p.Results.fname,p.Results.fpath);
-      obj.readOnly = p.Results.readOnly;
-                  
+      %% Input Parsing
+      
+      % Test Functions
+      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.file.NRRD')||...
+                        (ischar(x) && ~ismember(lower(x),{'readonly'}));
+      fpathFcn = @(x) isempty(x) || ...
+                        (ischar(x) && ~ismember(lower(x),{'readonly'}));
+      
+      % Input Parser Object
+      p = inputParser;
+      p.KeepUnmatched = true;
+      p.addOptional('fname',[],fnameFcn);
+      p.addOptional('fpath',[],fpathFcn);      
+      p.parse(varargin{:});
+            
+      %% Call Parent Constructor
+      obj = obj@crlEEG.file.baseobj(p.Results.fname,p.Results.fpath,...
+                                      p.Unmatched);      
+      
+      %% Assign Properties
       % If a crlEEG.file.NRRD object was 
       if isa(varargin{1},'crlEEG.file.NRRD')    
         obj.copyFields(varargin{1});
@@ -375,17 +383,18 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
       end;
     end
     
-    function out = get.isScalar(nrrdIn)
-      % function out = isScalar(nrrdIn)
+    function out = isscalar(nrrdIn)
+      % function out = isscalar(nrrdIn)
       %
       % Returns a boolean true value if all members of the kinds field are
       % "domain".  Returns boolean false otherwise.
       out = false;
-      if all(strcmp(nrrdIn.kinds,'domain'));
+      if all(strcmp(nrrdIn.kinds,'domain'))
         out = true;
       end;
     end
     
+        
     function aspect = get.aspect(nrrdIn)
       aspect = sqrt(sum(nrrdIn.spacedirections.^2,1));
     end;

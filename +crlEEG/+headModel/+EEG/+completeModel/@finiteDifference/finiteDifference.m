@@ -41,8 +41,7 @@ classdef finiteDifference
     fpath  = './';
     
     nrrdCond        
-    electrodes
-    elecModel
+    electrodes    
   end
   
   properties (GetAccess=public,SetAccess=protected)    
