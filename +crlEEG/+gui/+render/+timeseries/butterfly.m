@@ -32,23 +32,29 @@ ax = p.Results.ax;
 xvals = timeseries.xvals;
 yrange = p.Results.yrange;
 
-if isempty(xvals), xvals = 1:size(timeseries,1); end;
+%% Shift to appropriate axes, or open a new one.
 if isempty(ax), figure; ax = axes; end;
 axes(ax);
 
+% If plotting a single timepoint, use X's.
 if numel(xvals)==1, plotOpts = 'kx';
 else                plotOpts = 'k';  end;
 
+%% Plot!
+%plotOut = plot(xvals,timeseries.data,plotOpts);
 plotOut = plot(xvals,timeseries.data,plotOpts,'ButtonDownFcn',get(ax,'ButtonDownFcn'));
-set(ax,'ButtonDownFcn',get(plotOut(1),'ButtonDownFcn'));
+%set(ax,'ButtonDownFcn',get(plotOut(1),'ButtonDownFcn'));
 
+% Modify X Limits is plotting a single timepoint.
 XLim = [xvals(1) xvals(end)];
 if XLim(1)==XLim(2), XLim = XLim + [-0.1 0.1]; end;
 
+% Make the y limits symmetric.
 YLim = max(abs(yrange));
 
 axis([XLim(1) XLim(2) -YLim YLim]);
 
+% Set Yticks.
 ticks = linspace(0,YLim,6);
 ticks = [-flipdim(ticks(2:end),2) ticks];
 labels = 10^(-2)*round(ticks*10^2);

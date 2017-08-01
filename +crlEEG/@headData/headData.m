@@ -30,57 +30,9 @@ classdef headData < handle
   % Part of the cnlEEG Project
   %
   
-  properties
-    
-    % Segmentation Options
-    skullThickness = 4; % Units are as used by the NRRD Files
-    useBrainSeg = 'CRL';
-    
-    % Conductivity Options
-    CSFFraction = 0;
-    condMap
-    useAniso = true;
-    
-    % Structures to Hold all the NRRDS
-    MRI
-    Vector
-    Tensor
-    Segmentation
-    Parcellation
-        
-    % Flag to prevent files from being changed.
-    isFrozen = false;
-    
-    % Raw MRI Data
-    nrrdT1   = [];
-    nrrdT2   = [];
-    nrrdDTI  = [];
-    
-    % Stuff for building the model segmentation
-    %  These can technically be computed from the above, but we store them
-    %  separately since they're processed outside of matlab with the main CRL pipeline.
-    nrrdSkin  = [];
-    nrrdSkull = [];
-    nrrdICC   = [];
-    
-    % Brain Segmentations Available from CRL Pipeline
-    nrrdBrain;
-    
-    % Parcellations from CRL Pipeline
-    nrrdParcel
-    
-    % iEEG/sEEG Electrode Maps
-    nrrdIEEG
-    
-    % Other useful head data
-    nrrdCSFFractions  = [];
-    nrrdSurfNorm      = [];
-    nrrdPVSeg         = [];
-    
-    %
-    nrrdFullHead
-    nrrdConductivity
-    nrrdCorticalConstraints
+  properties    
+    options
+    images     
   end
   
   properties (Dependent = true)
@@ -100,103 +52,221 @@ classdef headData < handle
     DEFAULT_FNAME_SEGMENTATION = 'FullSegmentation.nrrd';
     DEFAULT_FNAME_CONDUCTIVITY = 'AnisotropicConductivity.nrrd';
     
+    DEFAULT_OPTIONS = struct(...
+      'segmentation', crlEEG.headData.DEFAULT_SEGMENTATION_OPTIONS,...
+      'conductivity', crlEEG.headData.DEFAULT_CONDUCTIVITY_OPTIONS );
+    
+    DEFAULT_SEGMENTATION_OPTIONS = struct(...
+          'skullThickness', 4, ...
+          'useSkinSeg'  , 'seg.skin',...
+          'useSkullSeg' , 'seg.skull',...
+          'useICCSeg'   , 'seg.ICC',...
+          'useBrainSeg' , 'seg.brain.CRL', ...
+          'outputImgField', 'seg.fullHead',...
+          'brainMap', crlEEG.headData.DEFAULT_BRAIN_SEGMENTATION_LABEL_MAP,...
+          'skullMap', crlEEG.headData.DEFAULT_SKULL_SEGMENTATION_LABEL_MAP...
+          );
+        
+    DEFAULT_CONDUCTIVITY_OPTIONS = struct(...
+          'CSFFraction', 0, ...
+          'condMap', crlEEG.headData.DEFAULT_CONDUCTIVITY_MAP,...          
+          'useAniso', true ...
+          );      
+    
+    % Map from skull segmentation to tissue type
+    DEFAULT_SKULL_SEGMENTATION_LABEL_MAP = struct(...
+      'HardBone' , 1, ...
+      'SoftBone' , 2, ...
+      'Sinus', 3  ...
+    );
+        
+    % Map from brain segmentation to tissue type
+    DEFAULT_BRAIN_SEGMENTATION_LABEL_MAP = struct(...
+      'Gray' , 4 , ...
+      'White', 7 , ...
+      'CSF'  , 5   ...
+    );
+    
+    % Map from tissue type to final label and conductivity
     DEFAULT_CONDUCTIVITY_MAP = struct(...
       'Scalp',    struct('Label',1,'Conductivity',0.43) ,...
-      'HardBone', struct('Label',2,'Conductivity',0.0064),...
-      'SoftBone', struct('Label',3,'Conductivity',0.02864),...
+      'Bone',     struct('Label',2,'Conductivity',0.01) ,...      
       'Gray',     struct('Label',4,'Conductivity',0.33),...
       'CSF',      struct('Label',5,'Conductivity',1.79),...
       'Air',      struct('Label',6,'Conductivity',1e-6),...
-      'White',    struct('Label',7,'Conductivity',0.142) );
+      'White',    struct('Label',7,'Conductivity',0.142),...
+      'HardBone', struct('Label',8,'Conductivity',0.0064),...
+      'SoftBone', struct('Label',9,'Conductivity',0.02864),...
+      'Sinus'   , struct('Label',10,'Conductivity',1e-6)...
+    );
     
     % Used to configure the default file names that the headData object
-    % will look for.
+    % will look for. Note that the search function
+    % (crlEEG.headData.scanForDefaults) will also preferentially select
+    % filenames with the suffix "_fixed", as it assumes these are manually
+    % corrected versions of the files output by the crkit automated
+    % pipeline.
     %
     % Format: 
     %  'FIELDNAME.SUBFIELD', 'NRRDTYPE', 'OPTIONS', {'DEFAULT1' 'DEFAULT2'}
     %
     % 
     DEFAULT_FILE_NAMES = {...
-      'nrrdT1',          'nrrd',   [],    { 'MRI_T1'       }; ...
-      'nrrdT2',          'nrrd',   [],    { 'MRI_T2'       }; ...
-      'nrrdDTI',         'nrrd',   [],    { 'tensors_crl'  }; ...
-      'nrrdBrain.CRL',   'nrrd',   [],    { 'seg_brain_crl'}; ...
-      'nrrdBrain.IBSR',  'nrrd',   [],    { 'seg_brain_ibsr'}; ...
-      'nrrdBrain.NMM',   'nrrd',   [],    {'seg_brain_nmm'}; ...
-      'nrrdBrain.NVM',   'nrrd',   [],    {'seg_brain_nvm'}; ...
-      'nrrdSkin',        'nrrd',   [],    {'seg_skin_crl_fixed' 'seg_skin_crl'}; ...
-      'nrrdSkull',       'nrrd',   [],    {'seg_skull_crl'}; ...
-      'nrrdICC',         'nrrd',   [],    {'seg_icc_crl'}; ...
-      'nrrdParcel.IBSR', 'parcel', 'IBSR',{'parcel_ibsr_crl'}; ...
-      'nrrdParcel.NMM',  'parcel', 'NMM', {'parcel_nmm_crl'}; ...      
-      'nrrdParcel.NVM',  'parcel', 'NVM', {'parcel_nvm_crl'}; ...
-      'nrrdSurfNorm.CRL',    'nrrd',   [],    {'vec_CortOrient_crl'};...
-      'nrrdSurfNorm.IBSR',    'nrrd',  [],    {'vec_CortOrient_ibsr'};...
-      'nrrdSurfNorm.NMM',    'nrrd',   [],    {'vec_CortOrient_nmm'};...
-      'nrrdSurfNorm.NVM',    'nrrd',   [],    {'vec_CortOrient_nvm'}};
+      'MRI.T1',          'nrrd',   [],    { 'MRI_T1'       }; ...
+      'MRI.T2',          'nrrd',   [],    { 'MRI_T2'       }; ...
+      'MRI.DTI',         'nrrd',   [],    { 'tensors_crl'  }; ...
+      'seg.brain.CRL',   'nrrd',   [],    { 'seg_brain_crl'}; ...
+      'seg.brain.IBSR',  'nrrd',   [],    { 'seg_brain_ibsr'}; ...
+      'seg.brain.NMM',   'nrrd',   [],    {'seg_brain_nmm'}; ...
+      'seg.brain.NVM',   'nrrd',   [],    {'seg_brain_nvm'}; ...
+      'seg.skin',        'nrrd',   [],    {'seg_skin_crl'}; ...
+      'seg.skull',       'nrrd',   [],    {'seg_skull_crl'}; ...
+      'seg.ICC',         'nrrd',   [],    {'seg_icc_crl'}; ...
+      'parcel.IBSR',   'parcel', 'IBSR',{'parcel_ibsr_crl'}; ...
+      'parcel.NMM',    'parcel', 'NMM', {'parcel_nmm_crl'}; ...      
+      'parcel.NVM',    'parcel', 'NVM', {'parcel_nvm_crl'}; ...
+      'surfNorm.CRL',    'nrrd',   [],    {'vec_CortOrient_crl'};...
+      'surfNorm.IBSR',    'nrrd',  [],    {'vec_CortOrient_ibsr'};...
+      'surfNorm.NMM',    'nrrd',   [],    {'vec_CortOrient_nmm'};...
+      'surfNorm.NVM',    'nrrd',   [],    {'vec_CortOrient_nvm'}};
     
   end
   
   %% Public Methods
   methods
+    
+    %% Main Constructor
     function obj = headData(varargin)
       % Object constructor
-      if nargin>0
+      if nargin>0        
         
-        %% If the first input was itself a data object, just copy the
-        %% values over and return the result
+        %% Return a copy of the input crlEEG.headData object
         if isa(varargin{1},'headData')
           crlEEG.disp('Just copying values over');
-          tmp = properties('headData');
-          for i = 1:length(tmp)
-            obj.(tmp{i}) = p.Results.headData.(tmp{i});
-          end
+          obj.options = p.Results.headData.options;
+          obj.images  = p.Results.headData.images;
+          obj.modelName = p.Results.headData.modelName;
           crlEEG.disp('END CONSTRUCTOR');
           return;
         end
         
-        %% Parse Inputs
+        %% Parse Inputs        
         p = inputParser;
         p.KeepUnmatched = true;
-        addOptional(p,'dirSearch',[],@(x) isa(x,'char'));
-        
-        % Add all nrrd* Properties as Parameter-Value Pairs
-        nrrdList = crlEEG.headData.nrrdList;
-        for i = 1:numel(nrrdList)
-          addParamValue(p,nrrdList{i},[],@(x) isa(x,'crlEEG.file.NRRD')|isempty(x));
-        end;
+        addOptional(p,'dirSearch',[],@(x) exist(x,'dir'));
+        addParamValue(p,'JSONLoad',[],@(x) exist(x,'file'));
+        addParamValue(p,'structDef',[],@(x) isstruct(x));      
         parse(p,varargin{:});
         
+        %% Set Default Options
+        obj.options = obj.DEFAULT_OPTIONS;                                
+        
         %% Assign values
-        if isempty(p.Results.dirSearch)
-          crlEEG.disp('Setting object properties');
-          for i = 1:length(nrrdList)
-            obj.(nrrdList{i}) = p.Results.(nrrdList{i});
-          end
-        else
+        if ~isempty(p.Results.dirSearch)
           obj.scanForDefaults(p.Results.dirSearch);
+        elseif ~isempty(p.Results.JSONLoad)
+          obj.loadFromJSON(p.Results.JSONLoad);
+        elseif ~isempty(p.Results.structDef)
+          obj.loadFromStruct(p.Results.structDef);
         end
-        
-        obj.condMap = obj.DEFAULT_CONDUCTIVITY_MAP;
-        
+                                 
       end;
       
       crlEEG.disp('END CONSTRUCTOR');
     end;
     
+    %% Public Methods for Load/Save
+    function loadFromStruct(obj,structDef)
+      % Load a crlEEG.headData object from a structure definition
+      %
+      % function loadFromStruct(obj,structDef)
+      obj.convert_StructToFiles(structDef);
+    end;
+
+    function loadFromJSON(obj,fpath)
+      % Load a crlEEG.headData object from a JSON definition
+      %
+      JSON = loadjson(fpath);
+      if isfield(JSON,'images')
+        obj.loadFromStruct(JSON.images);
+        if isfield(JSON,'options')
+          obj.options = JSON.options;
+        end
+      else
+        obj.loadFromStruct(JSON);
+      end;
+    end;
+    
+    function saveToJSON(obj,fpath)
+      objStruct.images = obj.convert_FilesToStruct;
+      objStruct.options = obj.options;
+      savejson('',objStruct,fpath);
+    end;
+    
+    
+    %% getImage()/setImage()
+    %
+    function out = getImage(obj,ref)
+      % Fetch a value from the crlEEG.headData.images structure
+      %
+      % function out = getImage(obj,ref)
+      %
+      % ref : A string reference into the obj.images structure of the form 
+      %         "FOO.BAR.BAZ.ImageName"
+      %
+      % Returns the image if it exists. If the image does not exist, it
+      % returns an empty array rather than error. This allows isempty() to
+      % be employed in testing for the existance of images, rather than
+      % having to use isfield()
+      %
+      
+      if isempty(ref), out = obj.images; return; end;
+      
+      % Strip leading period, if present
+      if ref(1)=='.', ref = ref(2:end); end
+      
+      fields = strsplit(ref,'.');
+      
+      ref = @() getfield(obj,'images');
+      for i = 1:numel(fields)
+        ref = @() getfield(ref(),fields{i});
+      end;
+      
+      try
+        out = ref();
+      catch
+        warning('Unable to locate requested image: Returning Empty Array');
+        out = [];
+      end                        
+    end
+    
+    function setImage(obj,ref,img)            
+      % Set a value in the crlEEG.headData.images structure
+      
+      % Strip leading period, if present
+      if ref(1)=='.', ref = ref(2:end); end
+      
+      fields = strsplit(ref,'.');
+      switch numel(fields)
+        case 1          
+          obj.images.(fields{1}) = img;
+        case 2
+          obj.images.(fields{1}).(fields{2}) = img;
+        case 3
+          obj.images.(fields{1}).(fields{2}).(fields{3}) = img;
+        otherwise
+          error('crlEEG.headData.setImage only supports field indexing to a depth of 3');
+      end
+        
+    end
     
     function out = isempty(obj)
       % function out = isempty(obj)
       %
-      % Overloaded isempty() method for data objects.  Returns true
-      % if all obj.nrrd* fields are empty.
-      nrrdList = obj.nrrdList;
-      out = true;
-      for idx = 1:numel(nrrdList)
-        if ~isempty(obj.(nrrdList{idx}))
-          out = false;
-        end;
-      end
+      % Overloaded isempty() method for data objects.  Returns true if
+      % obj.images is empty
+      %
+      out = isempty(obj.images);      
     end
     
     %% Get/Set Methods for Model Names
@@ -216,61 +286,10 @@ classdef headData < handle
     function out = get.DEFAULT_MODELNAME(obj)
       out = obj.genModelName;
     end;
-    
-    
+        
     scanForDefaults(obj,dir);
-    
-    function obj = purgeAll(obj)
-      % function obj = purgeAll(obj)
-      %
-      % Purge data from all nrrds associated with the data object
-      tmp = properties(obj);
-      for i = 1:length(tmp)
-        if strcmp(tmp{i}(1:4),'nrrd')
-          if ~isempty(obj.(tmp{i}))
-            obj.(tmp{i}).purgeData;
-          end
-        end
-      end
-    end
-    
-    %% Overloaded Set Properties For All NRRD Fields    
-    function set.nrrdSkin(obj,val)
-      obj.nrrdSkin = checkNRRD(obj,'nrrdSkin',val);
-    end
-    
-    function set.nrrdSkull(obj,val)
-      obj.nrrdSkull = checkNRRD(obj,'nrrdSkull',val);
-    end
-           
-    function set.nrrdICC(obj,val)
-      obj.nrrdICC = checkNRRD(obj,'nrrdICC',val);
-    end
-    
-    function set.nrrdT1(obj,val)
-      obj.nrrdT1 = checkNRRD(obj,'nrrdT1',val);
-    end
-    
-    function set.nrrdT2(obj,val)
-      obj.nrrdT2 =  checkNRRD(obj,'nrrdT2',val);
-    end
-    
-    function set.nrrdDTI(obj,val)
-      obj.nrrdDTI = checkNRRD(obj,'nrrdDiffTensors',val);
-    end
-    
-    function set.nrrdCSFFractions(obj,val)
-      obj.nrrdCSFFractions = checkNRRD(obj,'nrrdCSFFractions',val);
-    end
-    
-%     function set.nrrdSurfNorm(obj,val)
-%       obj.nrrdSurfNorm = checkNRRD(obj,'nrrdSurfNorm',val);
-%     end
-    
-    function set.nrrdPVSeg(obj,val)
-      obj.nrrdPVSeg =  checkNRRD(obj,'nrrdPVSeg',val);
-    end
-    
+
+
   end
   
   methods (Static=true)
@@ -278,27 +297,30 @@ classdef headData < handle
     %nrrdCond = get_DTIConductivities(nrrdCond,nrrdSeg,nrrdDiffTensors,whitelabel,DSLevel);
     symOut = convert_DiffTensorToCondTensor(diffTensorVals,varargin);
         
-    function nrrdList = nrrdList
-      % function nrrdList = nrrdList;
-      %
-      % Return a list of all crlEEG.headData properties that contain the
-      % string 'nrrd'. (IE: A list of all NRRDs stored within).
-      %
-      nrrdList = properties('crlEEG.headData');
-      keep = false(size(nrrdList));
-      for i = 1:length(nrrdList)
-        if (length(nrrdList{i})>4)&&(strcmpi(nrrdList{i}(1:4),'nrrd'))
-          keep(i) = true;
-        end;
-      end;
-      nrrdList = nrrdList(keep);
-    end
+%     function nrrdList = nrrdList
+%       % function nrrdList = nrrdList;
+%       %
+%       % Return a list of all crlEEG.headData properties that contain the
+%       % string 'nrrd'. (IE: A list of all NRRDs stored within).
+%       %
+%       nrrdList = properties('crlEEG.headData');
+%       keep = false(size(nrrdList));
+%       for i = 1:length(nrrdList)
+%         if (length(nrrdList{i})>4)&&(strcmpi(nrrdList{i}(1:4),'nrrd'))
+%           keep(i) = true;
+%         end;
+%       end;
+%       nrrdList = nrrdList(keep);
+%     end
     
   end
   
   methods (Access=private)
     
     out = genModelName(obj);
+    structOut = convert_FilesToStruct(obj);
+    convert_StructToFiles(obj,struct);    
+    
     
     function val = checkNRRD(obj,field,val)
       % function setNRRD(obj,field,val)

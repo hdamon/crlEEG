@@ -91,6 +91,8 @@ classdef togglePlot < crlEEG.gui.uipanel
       % Set Desired UIPanel properties
       obj.setUnmatched(p.Unmatched);
       
+      crlEEG.gui.util.setMinFigSize(gcf,obj);
+      
       %% Do Initial Display of Plot
       obj.updateImage;
     end
@@ -113,9 +115,12 @@ classdef togglePlot < crlEEG.gui.uipanel
     end
             
     function updateImage(obj)
-      axes(obj.axes);
-      cla;                 
-                  
+      
+      % Clear axis, and make sure the next plot doesn't modify callbacks
+      cla(obj.axes);
+      set(obj.axes,'NextPlot','add');
+         
+      % Plot
       if obj.doSplit % Do a split plot
         dispChan = obj.displayChannels;
         obj.plot = crlEEG.gui.render.timeseries.split(obj.timeseries(:,dispChan),obj.axes,...

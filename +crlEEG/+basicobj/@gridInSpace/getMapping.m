@@ -4,9 +4,6 @@ function mapOut = getMapping(gridIn,gridOut,mapType)
 %
 % Get linear mapping from one cnlGridSpace to another. 
 %
-% THIS NEEDS A LOT OF WORK. CURRENTLY IT JUST CHECKS TO MAKE SURE THE
-% ORIGINS ARE IN THE SAME PLACE, AND THEN ASSUMES THAT THE TWO GRIDS SPAN
-% THE SAME SPACE, AND INTERPOLATES FROM ONE TO ANOTHER.  
 %
 % This should be expanded to include both tent and nearest neighbor
 % mappings

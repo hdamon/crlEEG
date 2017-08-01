@@ -83,6 +83,10 @@ classdef grid3D < handle
       out = (obj.data(idx{:}));              
     end
     
+    function out = get.range(obj)
+      out = obj.range_internal;
+    end;
+    
   end
   
   methods (Access=protected)

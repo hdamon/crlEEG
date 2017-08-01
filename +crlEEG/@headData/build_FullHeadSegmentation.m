@@ -12,7 +12,7 @@ function [FullSegmentation] = build_FullHeadSegmentation(headData,varargin) %opt
 % 2008-2016
 %
 
-mydisp('Building Combined Segmentation from cnlHeadData object.');
+crlEEG.disp('Building Combined Segmentation from cnlHeadData object.');
 
 % Input Parsing
 p = inputParser;
@@ -29,45 +29,58 @@ if exist(fName,'dir'), fPath = fName; fName = []; end;
 %% Check if the Requested File Already Exists. Load and exit if it does.
 test = exist(fullfile(fPath,fName),'file');
 if test&&~(test==7) % Don't want directories
-  mydisp('Loading Existing Full Head Segmentation Image');
+  crlEEG.disp('Loading Existing Full Head Segmentation Image');
   FullSegmentation = file_NRRD(fName,fPath);
   return;
 end;
 
+% Segmentation and conductivity options, for easier reference
+segOpts = headData.options.segmentation;
+condOpts = headData.options.conductivity;
+
 %% Initialize with the Skin Segmentation
-mydisp(['Cloning Skin Segmentation to Begin']);
-mydisp(['Skin Segmentation: ' headData.nrrdSkin.fname]);
-FullSegmentation = clone(headData.nrrdSkin,fName,fPath);
+crlEEG.disp(['Cloning Skin Segmentation to Begin']);
+
+skinFile = headData.getImage(segOpts.useSkinSeg);
+
+crlEEG.disp(['Skin Segmentation: ' skinFile.fname]);
+FullSegmentation = clone(skinFile,fName,fPath);
 FullSegmentation.readOnly = false;
-FullSegmentation.data(FullSegmentation.data>0) = headData.condMap.Scalp.Label;
+FullSegmentation.data(FullSegmentation.data>0) = condOpts.condMap.Scalp.Label;
 
 %% Determine Skull Segmentation
-if isempty(headData.nrrdSkull)&&~isempty(headData.nrrdICC)&&(headData.skullThickness>0)
-  mydisp('Dilating ICC to obtain skull region');
-  mydisp(['ICC File: ' headData.nrrdICC.fname]);
-  mydisp(['Skull Thickness: ' num2str(headData.skullThickness)]);
+skullFile = headData.getImage(segOpts.useSkullSeg);
+ICCFile = headData.getImage(segOpts.useICCSeg);
+
+if isempty(skullFile) && ~isempty(ICCFile) && segOpts.skullThickness>0
+  % Use dilation of ICC when skull file is absent
+  crlEEG.disp('Dilating ICC to obtain skull region');
+  crlEEG.disp(['ICC File: ' ICCFile.fname]);
+  crlEEG.disp(['Skull Thickness: ' num2str(segOpts.skullThickness)]);
   
-  dilatedicc = dilate_ICC(headData.nrrdICC,headData.skullThickness);
+  dilatedicc = dilate_ICC(ICCFile,segOpts.skullThickness);
   Q = (dilatedicc>0);
-  FullSegmentation.data(Q) = headData.condMap.HardBone.Label;
+  FullSegmentation.data(Q) = condOpts.condMap.Bone.Label;
   
-elseif ~isempty(headData.nrrdSkull)
-  mydisp('Skull Segmentation Present');
-  mydisp(['SkullSeg File : ' headData.nrrdSkull.fname]);
+elseif ~isempty(skullFile)
+  % A skull file is provided
+  crlEEG.disp('Skull Segmentation Present');
+  crlEEG.disp(['SkullSeg File : ' skullFile.fname]);
   
   % Build the skull
-  if length(unique(headData.nrrdSkull.data(:)))==1
-    mydisp(['Skull segmentation has only a single compartment']);
+  if length(unique(skullFile.data(:)))==1
+    crlEEG.disp(['Skull segmentation has only a single compartment']);
     % One compartment skull model
-    Q = (headData.nrrdSkull.data>0);
-    FullSegmentation.data(Q) = headData.condMap.HardBone.Label;
-  elseif length(unique(headData.nrrdSkull.data(:)))==2
-    mydisp(['Skull segmentation has two compartments']);
-    % Two compartment skull model
-    Q = (headData.nrrdSkull.data==1);
-    FullSegmentation.data(Q) = headData.condMap.HardBone.Label; % Hard Bone
-    Q = (headData.nrrdSkull.data==2);
-    FullSegmentation.data(Q) = headData.condMap.SoftBone.Label; % Soft Bone
+    Q = (skullFile.data>0);
+    FullSegmentation.data(Q) = condOpts.condMap.Bone.Label;
+  elseif length(unique(skullFile.data(:)))<=3    
+    crlEEG.disp(['Skull segmentation has multiple compartments']);    
+    fields = filenames(segOpts.skullMap);
+    for i = 1:numel(fields)
+      Q = skullFile.data==segOpts.skullMap.(fields(i));
+      FullSegmentation.data(Q) = condOpts.condMap.(fields(i)).Label;
+    end
+    
   else
     error('Not sure what to do with this skull segmentation. Too many segments in it');
   end
@@ -78,59 +91,37 @@ end;
 
 %% Take the ICC and fill it with CSF
 if ~isempty(headData.nrrdICC)
-  mydisp(['ICC Present: Filling with CSF']);
-  mydisp(['ICC File: ' headData.nrrdICC.fname]);
+  crlEEG.disp(['ICC Present: Filling with CSF']);
+  crlEEG.disp(['ICC File: ' headData.nrrdICC.fname]);
   Qicc = headData.nrrdICC.data>0;
-  FullSegmentation.data(Qicc) = headData.condMap.CSF.Label;
+  FullSegmentation.data(Qicc) = condOpts.condMap.CSF.Label;
   headData.nrrdICC.data = [] ; % No need to keep the image around
 end
 
 
 %% Determine Internal Brain Segmentation
-mydisp('Incorporating Internal Brain Structure');
-brainNRRD = headData.nrrdBrain.(upper(headData.useBrainSeg));
+crlEEG.disp('Incorporating Internal Brain Structure');
+brainFile = headData.getImage(segOpts.useBrainSeg);
 
-% switch lower(headData.useBrainSeg)
-%   case 'crl',  brainNRRD = headData.nrrdBrain.CRL;
-%   case 'nmm',  brainNRRD = headData.nrrdBrain.NMM;
-%   case 'nvm',  brainNRRD = headData.nrrdBrain.NVM;
-%   case 'isbr', brainNRRD = headData.nrrdBrain.IBSR;
-% end
+assert(~isempty(brainFile),'Requested brain segmentation is empty');
 
-assert(~isempty(brainNRRD),'Requested brain segmentation is empty');
-
-Qbrain = (brainNRRD.data>0);
+% Mask w/ the ICC image
+Qbrain = (brainFile.data>0);
 if ~isempty(Qicc), Qbrain = Qbrain&Qicc; end;
-FullSegmentation.data(Qbrain) = brainNRRD.data(Qbrain);
 
-%   %% Add iEEG Electrodes
-%   if strcmpi(p.Results.type,'ieeg')
-%     mydisp('Adding iEEG Electrodes into Segmentation');
-%     %FullSegmentation.fname = 'nrrdFullSegmentation_iEEG.nhdr';
-%     for i = 1:numel(headData.nrrdIEEG)
-%       tmp = headData.nrrdIEEG(i).buildCondMap;
-%       Q = find(tmp);
-%       FullSegmentation.data(Q) = tmp(Q);
-%     end;
-%   end
+fields = fieldnames(segOpts.brainMap)
+for i = 1:numel(fields)
+  Qvalid = brainFile.data(Qbrain)==segOpts.brainMap.(fields(i));
+  FullSegmentation.data(Qbrain(Qvalid)) = condOpts.condMap.(fields(i)).Label;
+end
 
-%   %% Downsample Segmentation if Necessary
-%   if any(dwnSmpLvl_Seg>1)
-%     mydisp('Downsampling Segmentation');
-%     FullSegmentation.DownSample(dwnSmpLvl_Seg,'segmentation');% = nrrdDownsample(nrrdFullSegmentation,options.modelDownSampleLevel);
-%   end;
-%   FullSegmentation.write;
-
-
-
-
-mydisp('%%%% Completed Building Combined Segmentation');
+crlEEG.disp('%%%% Completed Building Combined Segmentation');
 end
 
 
 function [dilatedicc] = dilate_ICC(icc,skullThickness)
 tic
-mydisp('Computing Dilation of ICC Segmentation');
+crlEEG.disp('Computing Dilation of ICC Segmentation');
 aspect = icc.aspect;
 filterSize = ceil(skullThickness./aspect);
 filterSizeFull = 2*filterSize +1;
@@ -145,6 +136,6 @@ fZ = (-filterSize(3):filterSize(3))*aspect(3);
 dilationFilter = strel(sqrt(fX.^2 + fY.^2 + fZ.^2)<skullThickness);
 
 dilatedicc = imdilate(icc.data,dilationFilter);
-mydisp(['Completed Image Dilation in ' num2str(toc) ' seconds']);
+crlEEG.disp(['Completed Image Dilation in ' num2str(toc) ' seconds']);
 
 end

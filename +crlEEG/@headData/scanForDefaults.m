@@ -1,6 +1,8 @@
 function scanForDefaults(obj,searchDir)
 % Scan a directory for NRRDS with default file naming
 %
+% function scanForDefaults(obj,searchDir)
+%
 % crlEEG.headData method to scan a directory for default file names, as
 % defined in obj.DEFAULT_FILE_NAMES.
 %
@@ -63,6 +65,10 @@ end;
 end
 
 function obj = findDefault(obj,fieldData,filePath)
+% Search for default files
+%
+% function obj = findDefault(obj,fieldData,filePath)
+%
 
 fieldName  = fieldData{1};
 fieldType  = fieldData{2};
@@ -111,23 +117,15 @@ if ~foundOne, return; end;
 % Load it as the appropriate file type
 switch (lower(fieldType))
   case 'nrrd'
-    tmpData = crlEEG.file.NRRD(fName,filePath,true);
+    tmpData = crlEEG.file.NRRD(fName,filePath,'readOnly',true);
   case 'parcel'
     % To be replaced the parcellation filetype later.
-    tmpData = crlEEG.file.NRRD(fName,filePath,true);
+    tmpData = crlEEG.file.NRRD.parcellation(fName,filePath,'parcelType',fieldParam,'readOnly',true);
   otherwise
     error('Unknown field type');
 end;
 
-% Assign to Appropriate Place in headData object
-fields = strsplit(fieldName,'.');
-switch numel(fields)
-  case 1
-    obj.(fields{1}) = tmpData;
-  case 2
-    obj.(fields{1}).(fields{2}) = tmpData;
-  otherwise
-    error('checkNRRD only supports field indexing to a depth of 2');
-end
+% Set the field in the .images structure
+obj.setImage(fieldName,tmpData);
 
 end

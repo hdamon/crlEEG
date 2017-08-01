@@ -242,7 +242,7 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
     function out = get.data(obj)
       if ~obj.hasData
         try
-          mydisp(['Reading Data for ' obj.fname ]);
+          crlEEG.disp(['Reading Data for ' obj.fname ]);
           obj.readData;
           obj.hasData = true;
         catch
@@ -269,11 +269,11 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
       %
       dataSize = size(val);
       if all(dataSize==0)
-        mydisp('Clearing data field');
+        crlEEG.disp('Clearing data field');
         obj.data = '???';
         obj.hasData = false;
       elseif strcmpi(val,'???');
-        mydisp('Setting default data field');
+        crlEEG.disp('Setting default data field');
         obj.data = val;
         obj.hasData = false;
       elseif (numel(dataSize)==numel(obj.sizes))&&all(dataSize==obj.sizes)

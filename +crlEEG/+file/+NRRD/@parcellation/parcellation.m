@@ -40,13 +40,13 @@ classdef parcellation < crlEEG.file.NRRD
       p = inputParser;
       p.addOptional('fname',[],fnameFcn);
       p.addOptional('fpath',[],fpathFcn);
-      p.addParamValue('parcelType','none',@(x) ischar(validatestring(x,validParcels)));
+      p.addParamValue('parcelType','none',@(x) ischar(validatestring(lower(x),validParcels)));
       p.addParamValue('readOnly',false,@(x) islogical(x));
       parse(p,varargin{:});
       
       % Build base crlEEG.file.NRRD object and set object properties.
       obj = obj@crlEEG.file.NRRD(p.Results.fname,p.Results.fpath,'readOnly',p.Results.readOnly);
-      obj.parcelType = p.Results.parcelType;
+      obj.parcelType = lower(p.Results.parcelType);
                 
     end
     

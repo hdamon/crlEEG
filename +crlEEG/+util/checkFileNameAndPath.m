@@ -37,8 +37,7 @@ switch nargin
     if ~isempty(path)
       error('Define path in either fName or fPath, but not both');
     end
-    fName = [name ext];
-    fPath = path;
+    fName = [name ext];    
 end
 
 % Generate temporary filenames and paths, as needed
