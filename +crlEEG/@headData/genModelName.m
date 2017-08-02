@@ -16,41 +16,28 @@ if isempty(headDataObj)
   return;
 end
 
-if ~isempty(headDataObj.nrrdSkin)
+if ~isempty(headDataObj.getImage('seg.skin'))
   skinString = 'skinCRL';
 else
   error('Must have a skin segmentation to build a model');
 end
 
-if ~isempty(headDataObj.nrrdSkull)
+if ~isempty(headDataObj.getImage('seg.skull'))
   skullString = 'skullCRL';
 else
   skullString = 'skullNONE';
 end
 
+useBrainRef = headDataObj.options.segmentation.useBrainSeg;
+if ~isempty(headDataObj.getImage(useBrainRef))
+fields = strsplit(useBrainRef,'.');
+brainString = ['seg' fields{end}];
+else
+  brainString = 'segNONE';
+end
 
-brainString = ['seg' headDataObj.useBrainSeg];
-% if ~isempty(headDataObj.nrrdBrain)
-%   if ~isempty(findstr(headDataObj.nrrdBrain.fname,'brain_crl'));
-%     brainString = 'segCRL';
-%   elseif ~isempty(findstr(headDataObj.nrrdBrain.fname,'nvm_crl'));
-%     brainString = 'segNVM';
-%   elseif ~isempty(findstr(headDataObj.nrrdBrain.fname,'brain_nvm'));
-%     brainString = 'segNVM';
-%   elseif ~isempty(findstr(headDataObj.nrrdBrain.fname,'brain_nmm'));
-%     brainString = 'segNMM';
-%   elseif ~isempty(findstr(headDataObj.nrrdBrain.fname,'brain_ibsr'));
-%     brainString = 'segIBSR';
-%   elseif ~isempty(findstr(headDataObj.nrrdBrain.fname,'nmm_crl'));
-%     brainString = 'segNMM';
-%   elseif ~isempty(findstr(headDataObj.nrrdBrain.fname,'ibsr_crl'));
-%     brainString = 'segIBSR';
-%   end;
-% else
-%   brainString = 'segNONE';
-% end;
-
-if ~isempty(headDataObj.nrrdDTI)
+useDTIRef = headDataObj.options.conductivity.useTensorImg;
+if ~isempty(headDataObj.getImage(useDTIRef))
   wmString = 'wmCRL';
 else
   wmString = 'wmNONE';
