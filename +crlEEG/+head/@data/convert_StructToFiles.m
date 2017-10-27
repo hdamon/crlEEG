@@ -1,10 +1,20 @@
 function convert_StructToFiles(obj,structIn,forceClear)
-% Private method to load image files from 
+% Private method to load image files from a structure
+%
+% This is intended to be used in combination with convert_FilesToStruct so
+% that a basic Matlab structure can be saved to a .mat file along with the
+% main FDM file. This will make it significantly more accessible to other
+% users, as crlEEG won't be needed to make sense of the data.
+%
+% Should also get used with a JSON writing option.
+%
+% Written By: Damon Hyde
+% Part of the crlEEG Project
+% 2009-2017
+%
 
 if ~exist('forceClear','var'),forceClear = false; end;
-if forceClear
- obj.images = [];
-end;
+if forceClear, obj.images = []; end;
 
 recurse(obj,'',structIn);
 
@@ -19,8 +29,8 @@ if isfield(structIn,'type')
       tmpImg = crlEEG.file.NRRD(structIn.fname,structIn.fpath);
     case 'parcel'
       tmpImg = crlEEG.file.NRRD.parcellation(...
-        structIn.fname,structIn.fpath,...
-        'parcelType',structIn.options);
+                        structIn.fname,structIn.fpath,...
+                        'parcelType',structIn.options);
     case 'ieegmap'
       error('Not supported yet');
     otherwise
