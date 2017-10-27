@@ -316,7 +316,7 @@ classdef alphacolor < handle
         'Units','normalized',...
         'Position',[0.03 0.03 0.3 0.54],...
         'SelectionChangeFcn',@(h,evt)obj.updateColormapFromGUI);
-      cmaps = crlEEG.gui.alphacolor.colorMapList;
+      cmaps = crlEEG.gui.widget.alphacolor.colorMapList;
       cmaps(end+1).name = 'custom';
       setappdata(guiObj,'radioGroup',radioGroup);
       
@@ -511,7 +511,7 @@ classdef alphacolor < handle
     end
     
     function updateGUI(obj)
-      
+      disp('FOO')
       if isempty(obj.gui)||~ishghandle(obj.gui), return; end;
       
       adata = getappdata(obj.gui);

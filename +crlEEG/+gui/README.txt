@@ -5,6 +5,7 @@ The overall structure of the crlEEG.gui package is as follows:
 
 +render: Rendering functions for each of the datatypes in +data.
 
-+interface: Interfaces combine renderers with 
++interface: Interfaces combine renderers with user interface structures to 
+              permit exploration of the data.
 
-+widgets: Useful pieces of code for generating standardized UI interfaces.
++widget: Useful pieces of code for generating standardized UI interfaces.

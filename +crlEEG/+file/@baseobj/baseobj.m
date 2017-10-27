@@ -20,7 +20,9 @@ classdef (Abstract) baseobj < handle
 % Dependent Properties
 %   fname_short   :  Filename without extension
 %   fext          :  File extension alone (includes leading . )
-%   existsOnDisk  :  Boolean value.  Returs exist([obj.fpath obj.fname],'file');
+%   fullfile      :  Full file location with path
+%   existsOnDisk  :  Boolean value.  Returs exist([obj.fullfile],'file');
+%   date          :  Last edited date for the file
 %
 % Abstract Methods: (Must be defined in child classes)
 %   read(obj,varargin)   :  Method to read from disk
@@ -42,6 +44,7 @@ classdef (Abstract) baseobj < handle
     existsOnDisk;
     fname_short;
     fext;
+    fullfile;
     date;
   end
   
@@ -77,9 +80,9 @@ classdef (Abstract) baseobj < handle
         p.parse(varargin{:});
         
         [fName, fPath] = ...
-          crlEEG.util.checkFileNameAndPath(p.Results.fname,p.Results.fpath);
+          crlEEG.file.checkFileNameAndPath(p.Results.fname,p.Results.fpath);
         
-        fName = crlEEG.util.checkFileNameForValidExtension(fName,obj.validExts);
+        fName = crlEEG.file.checkFileNameForValidExtension(fName,obj.validExts);
         
         obj.fname = fName;
         obj.fpath = fPath;
@@ -92,8 +95,17 @@ classdef (Abstract) baseobj < handle
     %% Functionality for checking filenames
     function set.fname(obj,fname)
       % Set the filename, 
-      obj.fname = crlEEG.util.checkFileNameForValidExtension(fname,obj.validExts);           
+      obj.fname = crlEEG.file.validateFileExtension(fname,obj.validExts);           
     end;
+    
+    function out = get.fullfile(obj)
+      out = fullfile(obj.fpath,obj.fname);
+    end;
+    
+    function out = get.date(obj)
+      d = dir(obj.fullfile);
+      out = d.date;
+    end
     
     function out = get.fname_short(obj)
       % Returns the filename without its extension
