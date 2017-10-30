@@ -19,8 +19,8 @@ function [MatOut] = buildAnisoMat(nrrdIn,spaceScale)
 % potential values, the sources must be placed at the corner of the
 % appropriate voxel.
 %
-% Input Arguments:
-%
+% Inputs:
+% -------
 %     VolIn   : A 2-d or 3-d Cell Array.  Each cell should be a 3x3 matrix
 %                 describing the conductivity tensor at that location.
 %                 Construction on a regular X-Y-Z grid is assumed.
@@ -28,23 +28,24 @@ function [MatOut] = buildAnisoMat(nrrdIn,spaceScale)
 %                 axes
 %
 % Written By: Damon Hyde 
-% Last Edited: 09/03/09
+% Part of the crlEEG Project
+% 2009-2017
+%
 
+% Assume millimeter spacing if not otherwise provided
 if ~exist('spaceScale','var'), spaceScale = 1e-3; end;
 
-VolSize = nrrdIn.sizes(2:end);
-sizes = nrrdIn.aspect;
-sizes = spaceScale*sizes; % Convert from mm to meters
+% Validate the input NRRD as a tensor NRRD
+assert(crlEEG.head.model.EEG.finiteDifference.validateTensorNRRD(nrrdIn);
+
+sizes = spaceScale*nrrdIn.aspect;
 
 % The size of the voxelated space
-nX = nrrdIn.sizes(2);
-nY = nrrdIn.sizes(3);
-nZ = nrrdIn.sizes(4);
-nTot = nX*nY*nZ;
+nX = nrrdIn.sizes(2);  nY = nrrdIn.sizes(3);  nZ = nrrdIn.sizes(4);
 
 % The size of the FDM node-space
-nNodesX = nX+1;
-nNodesY = nY+1;
+nNodesX = nX+1;  
+nNodesY = nY+1;  
 nNodesZ = nZ+1;
 nNodesTot = nNodesX*nNodesY*nNodesZ;
 
@@ -53,56 +54,36 @@ delX = sizes(1);
 delY = sizes(2);
 delZ = sizes(3);
 
-
 %% Initialize Vectors
 % Each row of the FDM matrix will have 19 elements
-%listRow = (zeros(nNodesTot*19,1));
-%listCol = (zeros(nNodesTot*19,1));
-%listVal = (zeros(nNodesTot*19,1));
-
+% Reserve space for the maximum possible number of elements
 listRow = zeros(nNodesX,nNodesY,nNodesZ,19);
 listCol = zeros(nNodesX,nNodesY,nNodesZ,19);
 listVal = zeros(nNodesX,nNodesY,nNodesZ,19);
 
-%% Loop Across Elements
-idxList = 1;
-%h = waitbar(0,'Constructing FDM Matrix');
-currIdx = 0;
-outIdx = 1;
-
 % If the parallel processing pool hasn't been started yet, do it now.
 cnlStartMatlabPool
 
+% Pull nrrd data array to improve parfor performance
 data = nrrdIn.data; 
 
-
-parfor idxX = 1:nNodesX %2:(nNodesX-1)
-  tic
-  
-    sliceRow = zeros(nNodesY,nNodesZ,19);
+parfor idxX = 1:nNodesX 
+  % Reserve space for the Row-Col-Value triplets in this slice
+  sliceRow = zeros(nNodesY,nNodesZ,19);
   sliceCol = zeros(nNodesY,nNodesZ,19);
   sliceVal = zeros(nNodesY,nNodesZ,19);
-  for idxY = 1:nNodesY %2:(nNodesX-1)
-    for idxZ = 1:nNodesZ %2:(nNodesX-1)
-      currIdx = currIdx + 1;
-      %% For an anisotropic model, we need to pay attention to what
-      %% direction we're going in. There are 18 coefficients we need
-      %% to compute, each of which is the average of 8 variants,
-      %% constructed to satisfy the boundary conditions at the
-      %% central node.
-
-      %% Grab Indices to Tensors of Appropriate Elements
+  
+  %% Iterate Across the Slice
+  for idxY = 1:nNodesY 
+    for idxZ = 1:nNodesZ 
+      
+      % Get Indices to Neighboring Voxels
       elementX = idxX + [ -1 -1  0  0 -1 -1  0  0 ];
       elementY = idxY + [  0 -1 -1  0  0 -1 -1  0 ];
       elementZ = idxZ + [ -1 -1 -1 -1  0  0  0  0 ];
-
-      %% Make sure there's something interesting (ie - nonzero), nearby.
-      %% this is done so we're not doing lots of extra calculations when we
-      %% have all zeros
-
-      % Construct the tensors for each of the neighboring voxels.  It's a
-      % lot easier this way than trying to reference back into the NRRD.
       
+      % Construct the Tensors for Each of the Eight Voxels Neighboring the
+      % node under consideration.
       tensorElement = cell(8,1);
       exist_NonZeroElements = false;
       for idxE = 1:length(elementX)
@@ -123,15 +104,15 @@ parfor idxX = 1:nNodesX %2:(nNodesX-1)
         end;
       end
 
-
-      % If there is anything to do in the vicinity of this node, compute
-      % the appropriate
+      % Only continue is there are non-zero tensors around the current
+      % node.
       if exist_NonZeroElements
         % Get Indices of Neighboring Nodes
         nodeNeighborsX = idxX + [  1  0 -1  0  1 -1 -1  1  0  0  0  0  0  0  1 -1 -1  1 0];
         nodeNeighborsY = idxY + [  0  1  0 -1  1  1 -1 -1  0  0  1  1 -1 -1  0  0  0  0 0];
         nodeNeighborsZ = idxZ + [  0  0  0  0  0  0  0  0  1 -1  1 -1 -1  1  1  1 -1 -1 0];
 
+        % Linear indicies into output matrix
         nodeRef = -1*ones(length(nodeNeighborsX),1);
         for idxNode = 1:length(nodeNeighborsX)
           try
@@ -142,8 +123,7 @@ parfor idxX = 1:nNodesX %2:(nNodesX-1)
         end;
         useNodes = find(nodeRef ~= (-1));
 
-
-        %% Build the 18 Coefficients for each of the 18 Nodes
+        % Build the 18 Coefficients for each of the 18 Nodes
         A = zeros(19,1);
 
         A(1)  = (1/4)*(1/delX^2)*(tensorElement{3}(1,1) + tensorElement{4}(1,1) + tensorElement{7}(1,1) + tensorElement{8}(1,1));
@@ -186,29 +166,22 @@ parfor idxX = 1:nNodesX %2:(nNodesX-1)
 
         nNew = length(useNodes);
 
-        %% Add to the Vectors Describing the Sparse Matrix
-%         listRow(outIdx:outIdx+nNew-1) = (nodeRef(19)*ones(nNew,1));
-%         listCol(outIdx:outIdx+nNew-1) = (nodeRef(useNodes));
-%         listVal(outIdx:outIdx+nNew-1) = (      A(useNodes));
-%         outIdx = outIdx + nNew;
-        
-        sliceRow(idxY,idxZ,1:nNew) = (nodeRef(19)*ones(nNew,1));
-        sliceCol(idxY,idxZ,1:nNew) = (nodeRef(useNodes));
-        sliceVal(idxY,idxZ,1:nNew) = (      A(useNodes));     
-      end;
-    end
-    %toc
+        %% Assign the Row-Col-Value triplets        
+        sliceRow(idxY,idxZ,1:nNew) = ( nodeRef(19)*ones(nNew,1) );
+        sliceCol(idxY,idxZ,1:nNew) = ( nodeRef(useNodes)        );
+        sliceVal(idxY,idxZ,1:nNew) = (       A(useNodes)        );     
+      end
+    end    
   end
   
   listRow(idxX,:,:,:) = sliceRow;
   listCol(idxX,:,:,:) = sliceCol;
   listVal(idxX,:,:,:) = sliceVal;  
-  disp(['Completed iteration ' num2str(idxX) ' in ' num2str(toc) ' seconds']);  
-  % waitbar(idxX/nX,h,['Completed iteration ' num2str(idxX) ' in ' num2str(toc) ' seconds']);
+  disp(['Completed iteration ' num2str(idxX) ' in ' num2str(toc) ' seconds']);    
 end
-%close(h);
 
-mydisp('Extracting Row-Column Pairs and Values');
+%% Remove Row-Col-Value Triplets that are outside the volume.
+crlEEG.disp('Extracting Row-Column Pairs and Values');
 listRow = listRow(:);
 listCol = listCol(:);
 listVal = listVal(:);
@@ -217,13 +190,10 @@ listRow = listRow(~remove);
 listCol = listCol(~remove);
 listVal = listVal(~remove);
 
-%% Trim Trailing Zeros and Construct Sparse Output matrix
-% listRow(outIdx:end) = [];
-% listCol(outIdx:end) = [];
-% listVal(outIdx:end) = [];
-mydisp('Constructing Final Finite Difference Matrix');
+%% Construct Sparse Output Matrix
+crlEEG.disp('Constructing Final Finite Difference Matrix');
 MatOut = sparse(listRow,listCol,listVal,nNodesTot,nNodesTot);
-%disp('Completed Computation of FDM matrix.  Check things and then type "return" to continue');
-%keyboard;
 
-return;
+end
+
+
