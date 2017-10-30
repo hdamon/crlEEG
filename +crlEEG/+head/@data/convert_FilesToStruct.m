@@ -28,19 +28,19 @@ else
                 'fpath',[]); %,...
                 %'fullImage',[]);
   
-  assert(isa(curr,'crlEEG.file.baseobj'),'This should be a crlEEG.file object');
+  assert(isa(curr,'crlEEG.fileio.baseobj'),'This should be a crlEEG.file object');
   
   out.fieldName = ref;
   
   if curr.existsOnDisk
     
     switch class(curr)
-      case 'crlEEG.file.NRRD'
+      case 'crlEEG.fileio.NRRD'
         out.type = 'NRRD';
-      case 'crlEEG.file.NRRD.parcellation'
+      case 'crlEEG.fileio.NRRD.parcellation'
         out.type = 'parcel';
         out.options = curr.parcelType;
-      case 'crlEEG.file.NRRD.iEEGElectrodeMap'
+      case 'crlEEG.fileio.NRRD.iEEGElectrodeMap'
         out.type = 'iEEGMap';
       otherwise
         error('Unknown image type');

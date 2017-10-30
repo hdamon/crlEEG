@@ -1,6 +1,6 @@
 function [validatedName] = checkFileNameForValidExtension(varargin)
 % DEPRECATED FUNCTION STUB
 
-[validatedName ] = crlEEG.file.validateFileExtension(varargin{:});
+[validatedName ] = crlEEG.fileio.validateFileExtension(varargin{:});
 
 end

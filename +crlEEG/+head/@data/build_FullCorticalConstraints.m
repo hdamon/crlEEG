@@ -19,7 +19,7 @@ function [varargout] = build_FullCorticalConstraints(headData,surfNormImg,vararg
 %% Input Parsing
 p = inputParser;
 addRequired(p,'headData',@(x) isa(x,'crlEEG.headData'));
-addRequired(p,'surfNormImg',@(x) isa(x,'crlEEG.file.NRRD'));
+addRequired(p,'surfNormImg',@(x) isa(x,'crlEEG.fileio.NRRD'));
 addOptional(p,'fName','',@(x) ischar(x));
 addOptional(p,'fPath','',@(x) ischar(x));
 parse(p,headData,surfNormImg,varargin{:});
@@ -33,7 +33,7 @@ if exist(fName,'dir'), fPath = fName; fName = ''; end;
 test = exist(fullfile(fPath,fName),'file');
 if test && (test~=7)
   crlEEG.disp('Loading Existing Cortical Constraints');
-  nrrdCortConst = crlEEG.file.NRRD(fName,fPath);
+  nrrdCortConst = crlEEG.fileio.NRRD(fName,fPath);
   varargout{1} = nrrdCortConst;
   return;
 end;

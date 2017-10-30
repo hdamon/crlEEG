@@ -33,7 +33,7 @@ classdef infiniteSpace
     function obj = infiniteSpace(varargin)
       
       p = inputParser;
-      p.addOptional('nrrdCond',[],@(x) isa(x,'crlEEG.file.NRRD'));
+      p.addOptional('nrrdCond',[],@(x) isa(x,'crlEEG.fileio.NRRD'));
       p.addParamValue('electrodes',[],@(x) isa(x,'crlEEG.headModel.EEG.electrode');
       p.addParamValue('outputpoints',[]);
       p.addParamValue('conductivity',0.33);

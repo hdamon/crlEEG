@@ -1,6 +1,6 @@
 classdef (Abstract) baseobj < handle
 %
-% classdef crlEEG.file.BASEOBJ < handle
+% classdef crlEEG.fileio.BASEOBJ < handle
 %
 % Abstract superClass for all other filetypes.
 %
@@ -63,9 +63,9 @@ classdef (Abstract) baseobj < handle
       
       if nargin>0
         
-        % If a crlEEG.file.baseobj object was passed in, just copy
+        % If a crlEEG.fileio.baseobj object was passed in, just copy
         % parameters.
-        if isa(varargin{1},'crlEEG.file.baseobj')
+        if isa(varargin{1},'crlEEG.fileio.baseobj')
           obj.fname = varargin{1}.fname;
           obj.fpath = varargin{1}.fpath;   
           obj.readOnly = varargin{1}.readOnly;
@@ -80,9 +80,9 @@ classdef (Abstract) baseobj < handle
         p.parse(varargin{:});
         
         [fName, fPath] = ...
-          crlEEG.file.checkFileNameAndPath(p.Results.fname,p.Results.fpath);
+          crlEEG.fileio.checkFileNameAndPath(p.Results.fname,p.Results.fpath);
         
-        fName = crlEEG.file.checkFileNameForValidExtension(fName,obj.validExts);
+        fName = crlEEG.fileio.checkFileNameForValidExtension(fName,obj.validExts);
         
         obj.fname = fName;
         obj.fpath = fPath;
@@ -95,7 +95,7 @@ classdef (Abstract) baseobj < handle
     %% Functionality for checking filenames
     function set.fname(obj,fname)
       % Set the filename, 
-      obj.fname = crlEEG.file.validateFileExtension(fname,obj.validExts);           
+      obj.fname = crlEEG.fileio.validateFileExtension(fname,obj.validExts);           
     end;
     
     function out = get.fullfile(obj)
@@ -124,7 +124,7 @@ classdef (Abstract) baseobj < handle
             
     %% Functionality for Checking Paths
     function set.fpath(obj,fpath)
-      obj.fpath = crlEEG.file.baseobj.checkPath(fpath);
+      obj.fpath = crlEEG.fileio.baseobj.checkPath(fpath);
     end;
                            
   end % Methods

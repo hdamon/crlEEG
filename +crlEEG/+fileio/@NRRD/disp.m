@@ -1,7 +1,7 @@
 function disp(obj)
 % function disp(obj)
 %
-% Overload of display function for crlEEG.file.NRRD objects
+% Overload of display function for crlEEG.fileio.NRRD objects
 %
 % Written By: Damon Hyde
 % Part of the cnlEEG project

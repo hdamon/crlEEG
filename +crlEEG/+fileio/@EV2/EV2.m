@@ -1,4 +1,4 @@
-classdef EV2 < crlEEG.file.baseobj
+classdef EV2 < crlEEG.fileio.baseobj
   % Object class for EV2 Files
   %
   % classdef file_EV2 < file

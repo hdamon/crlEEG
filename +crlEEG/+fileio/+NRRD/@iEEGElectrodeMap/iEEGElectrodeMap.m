@@ -1,5 +1,5 @@
-classdef iEEGElectrodeMap < crlEEG.file.NRRD
-  % classdef cnliEE1GElectrodeMap < crlEEG.file.NRRD
+classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
+  % classdef cnliEE1GElectrodeMap < crlEEG.fileio.NRRD
   %
   % Class used to import iEEG electrode locations from a labelled NRRD
   % file.
@@ -41,7 +41,7 @@ classdef iEEGElectrodeMap < crlEEG.file.NRRD
       
       % Parsing Functions
       fnameFcn = @(x) (ischar(x)&& ~ismember(lower(x),{'gridtype'}))||...
-                          isa(x,'crlEEG.file.NRRD.iEEGElectrodeMap');
+                          isa(x,'crlEEG.fileio.NRRD.iEEGElectrodeMap');
       fpathFcn = @(x) (ischar(x)&& ~ismember(lower(x),{'gridtype'}));
             
       % InputParser Object
@@ -52,7 +52,7 @@ classdef iEEGElectrodeMap < crlEEG.file.NRRD
       p.parse(varargin{:});
                   
       %% Initialize parent Object
-      obj = obj@crlEEG.file.NRRD(fname,fpath);
+      obj = obj@crlEEG.fileio.NRRD(fname,fpath);
             
       %% Set Properties
       if isa(fname,'iEEGElectrodeMap')
@@ -64,9 +64,9 @@ classdef iEEGElectrodeMap < crlEEG.file.NRRD
     end
     
     function disp(obj)
-      % Overloaded disp() method for crlEEG.file.NRRD.iEEGElectrodeMap
+      % Overloaded disp() method for crlEEG.fileio.NRRD.iEEGElectrodeMap
       % objects
-      obj.disp@crlEEG.file.NRRD;
+      obj.disp@crlEEG.fileio.NRRD;
       disp(['          Grid Type: ' obj.gridType]);
       disp(['         Name Prefix: ' obj.namePrefix]);      
     end

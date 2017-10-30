@@ -49,7 +49,7 @@ test = exist(fullfile(fPath,fName),'file');
 if test&&(test~=7)
   %% If it's already been writtin out, just load it.
   crlEEG.disp('Loading Existing Anisotropic Conductivity');
-  nrrdAnisoCond = crlEEG.file.NRRD(fName,fPath);
+  nrrdAnisoCond = crlEEG.fileio.NRRD(fName,fPath);
   return;
 end;
 
@@ -114,16 +114,16 @@ function nrrdCond = get_DTIConductivities(nrrdCond,nrrdSeg,nrrdDiffTensors,white
 % function getDTIConductivities(nrrdCond,nrrdSeg,nrrdDiffTensors,whitelabel,DSLevel)
 %
 % Inputs:
-%    nrrdCond : crlEEG.file.NRRD of anisotropic conductivity image
-%    nrrdSeg  : crlEEG.file.NRRD of segmentation image
-%    nrrdDiffTensors : crlEEG.file.NRRD of diffusion tensors.
+%    nrrdCond : crlEEG.fileio.NRRD of anisotropic conductivity image
+%    nrrdSeg  : crlEEG.fileio.NRRD of segmentation image
+%    nrrdDiffTensors : crlEEG.fileio.NRRD of diffusion tensors.
 %
 % Optional Inputs:
 %    whitelabel : Labels of voxels to assign anisotropic conductivities
 %           `       (DEFAULT: 7)
 %
 % Outputs:
-%    nrrdCond : updated crlEEG.file.NRRD with anisotropic conductivities
+%    nrrdCond : updated crlEEG.fileio.NRRD with anisotropic conductivities
 %
 % Written By: Damon Hyde
 % Last Edited: Feb 4, 2016
@@ -134,10 +134,10 @@ crlEEG.disp('Using Anisotropic Conductivities From Diffusion Imaging');
 
 %% Input Parsing
 p = inputParser;
-p.addRequired('nrrdCond',@(x) isa(x,'crlEEG.file.NRRD')&&strcmpi(x.kinds{1},'3D-symmetric-matrix'));
-p.addRequired('nrrdSeg' ,@(x) isa(x,'crlEEG.file.NRRD')&&all(x.sizes==nrrdCond.sizes(2:end)));
+p.addRequired('nrrdCond',@(x) isa(x,'crlEEG.fileio.NRRD')&&strcmpi(x.kinds{1},'3D-symmetric-matrix'));
+p.addRequired('nrrdSeg' ,@(x) isa(x,'crlEEG.fileio.NRRD')&&all(x.sizes==nrrdCond.sizes(2:end)));
 p.addRequired('nrrdDiffTensors',@(x) ...
-  (isa(x,'crlEEG.file.NRRD') && validateSingleTensor(x,nrrdCond))||...
+  (isa(x,'crlEEG.fileio.NRRD') && validateSingleTensor(x,nrrdCond))||...
   (         iscell(x) &&  validateMultiTensor(x,nrrdCond))     );
 p.addOptional('whitelabel',7,   @(x) isnumeric(x));
 parse(p,nrrdCond,nrrdSeg,nrrdDiffTensors,whitelabel);

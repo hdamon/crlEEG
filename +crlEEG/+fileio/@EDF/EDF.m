@@ -1,5 +1,5 @@
-classdef EDF < crlEEG.file.baseobj
-  % classdef EDF < crlEEG.file.baseobj
+classdef EDF < crlEEG.fileio.baseobj
+  % classdef EDF < crlEEG.fileio.baseobj
   %
   % Object class for EDF files.
   %
@@ -50,7 +50,7 @@ classdef EDF < crlEEG.file.baseobj
       %% Input Parsing
       
       % Test Functions
-      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.file.EDF')||...
+      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.fileio.EDF')||...
         (ischar(x) && ~ismember(lower(x),'readonly'));
       fpathFcn = @(x) isempty(x)||...
         (ischar(x) && ~ismember(lower(x),'readonly'));
@@ -62,7 +62,7 @@ classdef EDF < crlEEG.file.baseobj
       p.addOptional('fpath',[],fpathFcn);
       p.parse(varargin{:});
       
-      obj = obj@crlEEG.file.baseobj(p.Results.fname,p.Results.fpath,...
+      obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...
         p.Unmatched);
     end
     

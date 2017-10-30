@@ -1,4 +1,4 @@
-classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
+classdef NRRD < crlEEG.fileio.baseobj & matlab.mixin.Copyable
   % Object for reading/manipulating NRRD files
   %  
   % Usage:
@@ -120,7 +120,7 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
       %% Input Parsing
       
       % Test Functions
-      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.file.NRRD')||...
+      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.fileio.NRRD')||...
                         (ischar(x) && ~ismember(lower(x),{'readonly'}));
       fpathFcn = @(x) isempty(x) || ...
                         (ischar(x) && ~ismember(lower(x),{'readonly'}));
@@ -133,12 +133,12 @@ classdef NRRD < crlEEG.file.baseobj & matlab.mixin.Copyable
       p.parse(varargin{:});
             
       %% Call Parent Constructor
-      obj = obj@crlEEG.file.baseobj(p.Results.fname,p.Results.fpath,...
+      obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...
                                       p.Unmatched);      
       
       %% Assign Properties
-      % If a crlEEG.file.NRRD object was 
-      if isa(varargin{1},'crlEEG.file.NRRD')    
+      % If a crlEEG.fileio.NRRD object was 
+      if isa(varargin{1},'crlEEG.fileio.NRRD')    
         obj.copyFields(varargin{1});
         return;
       end;

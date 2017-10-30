@@ -16,8 +16,8 @@ function scanForDefaults(obj,searchDir)
 %
 % nrrdType is the type of NRRD to load the file as. Currently supported
 % options are:
-%     'nrrd' : Load file as a crlEEG.file.NRRD object
-%   'parcel' : Load file as a crlEEG.file.NRRD.parcel object, with 
+%     'nrrd' : Load file as a crlEEG.fileio.NRRD object
+%   'parcel' : Load file as a crlEEG.fileio.NRRD.parcel object, with 
 %                parcellation labelling assigned as defined by the string
 %                in the <options> field.
 % 
@@ -117,10 +117,10 @@ if ~foundOne, return; end;
 % Load it as the appropriate file type
 switch (lower(fieldType))
   case 'nrrd'
-    tmpData = crlEEG.file.NRRD(fName,filePath,'readOnly',true);
+    tmpData = crlEEG.fileio.NRRD(fName,filePath,'readOnly',true);
   case 'parcel'
     % To be replaced the parcellation filetype later.
-    tmpData = crlEEG.file.NRRD.parcellation(fName,filePath,'parcelType',fieldParam,'readOnly',true);
+    tmpData = crlEEG.fileio.NRRD.parcellation(fName,filePath,'parcelType',fieldParam,'readOnly',true);
   otherwise
     error('Unknown field type');
 end;

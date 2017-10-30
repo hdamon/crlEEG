@@ -33,7 +33,7 @@ classdef finiteDifference
   % Object dependencies:
   % 
   % Requires:
-  %   crlEEG.file.NRRD
+  %   crlEEG.fileio.NRRD
   
   
   properties
@@ -78,8 +78,8 @@ classdef finiteDifference
         end
                        
         % Primary property is the conductivity NRRD
-        assert(isa(nrrdCond,'crlEEG.file.NRRD'),...
-                  'Input must be a crlEEG.file.NRRD object');
+        assert(isa(nrrdCond,'crlEEG.fileio.NRRD'),...
+                  'Input must be a crlEEG.fileio.NRRD object');
         obj.nrrdCond = nrrdCond;                        
       end;
       
@@ -107,7 +107,7 @@ classdef finiteDifference
       % function obj = set.nrrdCond(obj,val)
       %
       % crlEEG.head.model.EEG.finiteDifference.nrrdCond:
-      %   1) Must be a crlEEG.file.nrrdCond object
+      %   1) Must be a crlEEG.fileio.nrrdCond object
       %   2) Its first dimension must be of length 6
       %   3) Its first dimension must be of kind "3D-symmetric-matrix"
       %   4) It must have three spatial dimensions:

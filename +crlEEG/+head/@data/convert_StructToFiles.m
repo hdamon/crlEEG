@@ -26,9 +26,9 @@ if isfield(structIn,'type')
   curr = structIn;
   switch lower(structIn.type)
     case 'nrrd'
-      tmpImg = crlEEG.file.NRRD(structIn.fname,structIn.fpath);
+      tmpImg = crlEEG.fileio.NRRD(structIn.fname,structIn.fpath);
     case 'parcel'
-      tmpImg = crlEEG.file.NRRD.parcellation(...
+      tmpImg = crlEEG.fileio.NRRD.parcellation(...
                         structIn.fname,structIn.fpath,...
                         'parcelType',structIn.options);
     case 'ieegmap'

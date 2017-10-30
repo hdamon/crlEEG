@@ -1,7 +1,7 @@
-classdef parcellation < crlEEG.file.NRRD
-  % Extension of crlEEG.file.NRRD for parcellations
+classdef parcellation < crlEEG.fileio.NRRD
+  % Extension of crlEEG.fileio.NRRD for parcellations
   %
-  % classdef parcellation < crlEEG.file.NRRD
+  % classdef parcellation < crlEEG.fileio.NRRD
   %
   % Constructor Syntax:
   %   function obj = parcellation(fname,fpath,parcelType,readOnly)
@@ -30,9 +30,9 @@ classdef parcellation < crlEEG.file.NRRD
     function obj = parcellation(varargin)
       
       % Input Parsing      
-      validParcels = crlEEG.file.NRRD.parcellation.validParcels;
+      validParcels = crlEEG.fileio.NRRD.parcellation.validParcels;
       
-      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.file.NRRD.parcellation')||...
+      fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.fileio.NRRD.parcellation')||...
             (ischar(x)&& ~ismember(lower(x),{'parceltype' 'readonly'}));
       fpathFcn = @(x) isempty(x)||...
             (ischar(x)&& ~ismember(lower(x),{'parceltype' 'readonly'}));
@@ -44,8 +44,8 @@ classdef parcellation < crlEEG.file.NRRD
       p.addParamValue('readOnly',false,@(x) islogical(x));
       parse(p,varargin{:});
       
-      % Build base crlEEG.file.NRRD object and set object properties.
-      obj = obj@crlEEG.file.NRRD(p.Results.fname,p.Results.fpath,'readOnly',p.Results.readOnly);
+      % Build base crlEEG.fileio.NRRD object and set object properties.
+      obj = obj@crlEEG.fileio.NRRD(p.Results.fname,p.Results.fpath,'readOnly',p.Results.readOnly);
       obj.parcelType = lower(p.Results.parcelType);
                 
     end
@@ -62,7 +62,7 @@ classdef parcellation < crlEEG.file.NRRD
     %       if ~exist('fname','var'), fname = 'NewParcel.nhdr'; end;
     %       if ~exist('fpath','var'), fpath = './'; end;
     %
-    %       objOut = clone@crlEEG.file.NRRD(obj,fname,fpath);
+    %       objOut = clone@crlEEG.fileio.NRRD(obj,fname,fpath);
     %     %  objOut.parcelType = obj.parcelType;
     %
     %     end
@@ -74,7 +74,7 @@ classdef parcellation < crlEEG.file.NRRD
     function parcelOut = clone(parcelIn,fname,fpath)
       if ~exist('fname','var'), fname = []; end;
       if ~exist('fpath','var'), fpath = []; end;
-      tmpNrrd = clone@crlEEG.file.NRRD(parcelIn,fname,fpath);
+      tmpNrrd = clone@crlEEG.fileio.NRRD(parcelIn,fname,fpath);
       parcelOut = parcellation(tmpNrrd,[],parcelIn.parcelType);
     end
     

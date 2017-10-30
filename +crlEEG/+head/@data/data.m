@@ -368,7 +368,7 @@ classdef data < handle
       %
       % Helper function to do validity checking when setting NRRD fields.
       if ~obj.isFrozen
-        if isa(val,'crlEEG.file.NRRD');
+        if isa(val,'crlEEG.fileio.NRRD');
           if val.existsOnDisk
             crlEEG.disp([' Setting ' field ' to ' val.fname]);
           else

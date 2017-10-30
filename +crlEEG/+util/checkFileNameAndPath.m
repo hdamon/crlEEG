@@ -3,6 +3,6 @@ function [fName, fPath] = checkFileNameAndPath(varargin)
 
 warning('crlEEG.util.checkFileNameAndPath is deprecated. Use crlEEG.fileIO version instead');
 
-[fName,fPath] = crlEEG.file.checkFileNameAndPath(varargin{:});
+[fName,fPath] = crlEEG.fileio.checkFileNameAndPath(varargin{:});
 
 end
