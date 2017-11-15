@@ -44,6 +44,10 @@ classdef EDF < crlEEG.fileio.baseobj
     sampleRate
   end
   
+  properties (Constant,Hidden=true)
+    validExts = {'.edf'};
+  end
+  
   methods
     function obj = EDF(varargin)
       
@@ -51,9 +55,9 @@ classdef EDF < crlEEG.fileio.baseobj
       
       % Test Functions
       fnameFcn = @(x) isempty(x)||isa(x,'crlEEG.fileio.EDF')||...
-        (ischar(x) && ~ismember(lower(x),'readonly'));
+        (ischar(x) && ~isequal(lower(x),'readonly'));
       fpathFcn = @(x) isempty(x)||...
-        (ischar(x) && ~ismember(lower(x),'readonly'));
+        (ischar(x) && ~isequal(lower(x),'readonly'));
       
       % Input Parser
       p = inputParser;
@@ -66,7 +70,12 @@ classdef EDF < crlEEG.fileio.baseobj
         p.Unmatched);
     end
     
-    
+    function out = crlEEG.gui.data.timeseries(obj)
+      % Convert EDF file to a GUI data object
+      out = crlEEG.gui.data.timeseries(obj.data,obj.labels,...
+                          'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
+    end    
+        
     function obj = purge(obj)
       % function obj = purge(obj)
       %

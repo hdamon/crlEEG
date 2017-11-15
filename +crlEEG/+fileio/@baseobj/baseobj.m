@@ -82,7 +82,7 @@ classdef (Abstract) baseobj < handle
         [fName, fPath] = ...
           crlEEG.fileio.checkFileNameAndPath(p.Results.fname,p.Results.fpath);
         
-        fName = crlEEG.fileio.checkFileNameForValidExtension(fName,obj.validExts);
+        fName = crlEEG.fileio.validateFileExtension(fName,obj.validExts);
         
         obj.fname = fName;
         obj.fpath = fPath;
