@@ -46,7 +46,7 @@ classdef timeplay < crlEEG.gui.uipanel
   end
     
   properties (Hidden=true)
-    % Things that should be getting set by anyone, but which are nice to
+    % Things that shouldn't be getting set by anyone, but which are nice to
     % leave exposed just in case. 
     stepTime = 1;
     pauseTime = 0.1;
@@ -231,7 +231,7 @@ classdef timeplay < crlEEG.gui.uipanel
         'Style','text',...
         'String','1',...
         'Units','normalized',...
-        'HorizontalAlignment', 'center',...
+        'HorizontalAlignment', 'right',...
         'Position',allPositions(10,:));      
     end;
     

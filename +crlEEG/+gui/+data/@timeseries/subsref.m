@@ -26,6 +26,8 @@ switch s(1).type
           % Get Output Electrode Indexing
           if isnumeric(s.subs{2}) % Numeric indexing
             outIdx = s.subs{2};
+          elseif islogical(s.subs{2})
+            outIdx = s.subs{2};
           elseif isequal(s.subs{2},':') 
             outIdx = 1:size(obj.data,2);
           elseif iscellstr(s.subs{2})

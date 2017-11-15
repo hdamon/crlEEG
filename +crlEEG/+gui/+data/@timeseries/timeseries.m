@@ -7,6 +7,18 @@ classdef timeseries < handle
   % this is used exclusively in the crlEEG.gui rendering package to provide
   % a common interface.
   %
+  % obj = crlEEG.gui.data.timeseries(data,labels,varargin)
+  %
+  % Inputs
+  % ------
+  %   data : nTime x nChannels array of time series data
+  %   labels : (Optional) Cell array of length nChannels containing label strings
+  %   
+  % Param-Value Pairs
+  % -----------------
+  %   xvals : Timings associated with each sample. Plots sample indices if
+  %             this is not provided.
+  %
   % Written By: Damon Hyde
   % Part of the crlEEG Project
   % 2009-2017
@@ -14,6 +26,8 @@ classdef timeseries < handle
   
   properties
     data
+    xScale = 'uV';
+    yScale = 'sec';
   end;
   
   properties (Dependent = true)
@@ -29,19 +43,21 @@ classdef timeseries < handle
     
   methods
     
-    function obj = timeseries(data,varargin)
+    function obj = timeseries(varargin)
       
       %% Input Parsing
-      p = inputParser;
-      p.addRequired('data',@(x) isnumeric(x)&&ismatrix(x));
-      p.addOptional('labels',[],@(x) isempty(x)||iscellstr(x));        
-      p.addParamValue('xvals',[],@(x) isempty(x)||isvector(x));        
-      p.parse(data,varargin{:});
-      
-      %% Set Object Properties
-      obj.data   = p.Results.data;
-      obj.labels = p.Results.labels;
-      obj.xvals  = p.Results.xvals;
+      if nargin>0
+        p = inputParser;
+        p.addRequired('data',@(x) isnumeric(x)&&ismatrix(x));
+        p.addOptional('labels',[],@(x) isempty(x)||iscellstr(x));
+        p.addParamValue('xvals',[],@(x) isempty(x)||isvector(x));
+        p.parse(varargin{:});
+        
+        %% Set Object Properties
+        obj.data   = p.Results.data;
+        obj.labels = p.Results.labels;
+        obj.xvals  = p.Results.xvals;
+      end;
     end
     
     function out = size(obj,dim)
@@ -56,6 +72,7 @@ classdef timeseries < handle
       rangeOut = [min(obj.data(:)) max(obj.data(:))];
     end;
     
+    %% Set/Get Methods for obj.labels
     function out = get.labels(obj)
       if ~isempty(obj.labels_internal)
         out = obj.labels_internal;
@@ -86,6 +103,8 @@ classdef timeseries < handle
       obj.labels_internal = val;
     end;
             
+    %% obj.xvals is the publically available interface 
+    % for the internal property obj.xvals_internal.
     function out = get.xvals(obj)
       if ~isempty(obj.xvals_internal)
         out = obj.xvals_internal;

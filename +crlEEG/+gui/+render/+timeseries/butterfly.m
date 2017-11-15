@@ -51,6 +51,7 @@ if XLim(1)==XLim(2), XLim = XLim + [-0.1 0.1]; end;
 
 % Make the y limits symmetric.
 YLim = max(abs(yrange));
+if YLim(1)==0, YLim = 0.1; end;
 
 axis([XLim(1) XLim(2) -YLim YLim]);
 

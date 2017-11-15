@@ -96,7 +96,7 @@ classdef uipanel < handle & matlab.mixin.SetGet
         
     function setUnmatched(obj,unmatched)
       % A bit of a hack to make sure that the units field is set first, so
-      % resizing of teh uipanel works correctly.
+      % resizing of the uipanel works correctly.
       if isfield(unmatched,'units')
         obj.Units = unmatched.units;
         rmfield(unmatched,'units');

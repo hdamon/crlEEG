@@ -23,7 +23,7 @@ p = inputParser;
 p.addRequired('timeseries',@(x) isa(x,'crlEEG.gui.data.timeseries'));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
 p.addParamValue('yrange',timeseries.yrange,@(x) isvector(x)&&(numel(x)==2));
-p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
+p.addParamValue('scale',0.1,@(x) isnumeric(x)&&numel(x)==1);
 p.parse(timeseries,varargin{:});
 
 ax = p.Results.ax;
@@ -49,7 +49,7 @@ for i = 1:size(data,2)
   offset = size(data,2) - (i -1);
   plotOut(i) = plot(xvals,data(:,i)+offset,'k',...
     'ButtonDownFcn',get(ax,'ButtonDownFcn'));
-  set(ax,'ButtonDownFcn',get(plotOut(i),'ButtonDownFcn'));
+ % set(ax,'ButtonDownFcn',get(plotOut(i),'ButtonDownFcn'));
 end;
 
 axis([xvals(1) xvals(end) 0 size(data,2) + 1]);
