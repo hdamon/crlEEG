@@ -23,7 +23,7 @@ function plotOut = butterfly(timeseries,varargin)
 
 %% Input Parsing
 p = inputParser;
-p.addRequired('timeseries',@(x) isa(x,'crlEEG.gui.data.timeseries'));
+p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
 p.addParamValue('yrange',timeseries.yrange,@(x) isvector(x)&&(numel(x)==2));
 p.parse(timeseries,varargin{:});

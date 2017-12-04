@@ -3,7 +3,7 @@ classdef timeseries < handle
   %
   % Data is stored as: time X channels
   %
-  % While this duplicates some of the functionality of other datatypes,
+  % While this duplicates some of the functionality of other type.datas,
   % this is used exclusively in the crlEEG.gui rendering package to provide
   % a common interface.
   %
@@ -48,7 +48,8 @@ classdef timeseries < handle
       %% Input Parsing
       if nargin>0
         p = inputParser;
-        p.addRequired('data',@(x) isnumeric(x)&&ismatrix(x));
+        p.addRequired('data',@(x) (isnumeric(x)&&ismatrix(x))||...
+                                    isa(x,'crlEEG.type.data.timeseries'));
         p.addOptional('labels',[],@(x) isempty(x)||iscellstr(x));
         p.addParamValue('xvals',[],@(x) isempty(x)||isvector(x));
         p.parse(varargin{:});
@@ -108,14 +109,13 @@ classdef timeseries < handle
     function out = get.xvals(obj)
       if ~isempty(obj.xvals_internal)
         out = obj.xvals_internal;
-      else
-        warning('Shouldn''t be getting here');
+      else        
         out = 1:size(obj.data,1);
       end;
     end
     
     function set.xvals(obj,val)
-      if isempty(val), obj.xvals_internal = 1:size(obj.data,1); return; end;
+      if isempty(val), obj.xvals_internal = []; return; end;
       assert( isvector(val) && numel(val)==size(obj.data,1),...
             'xVals vector length must match size(obj.data,1)');
       assert( issorted(val), 'xVals should be a sorted list of time values');

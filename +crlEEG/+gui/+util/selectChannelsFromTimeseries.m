@@ -1,11 +1,11 @@
 classdef selectChannelsFromTimeseries < handle
-  % Select a subset of channels from a crlEEG.gui.data.timeseries object
+  % Select a subset of channels from a crlEEG.type.data.timeseries object
   %
   % obj = crlEEG.gui.util.selectChannelsFromTimeseries(timeseries)
   %
   % Input
   % -----
-  %   timeseries : crlEEG.gui.data.timeseries object
+  %   timeseries : crlEEG.type.data.timeseries object
   %
   %
   properties    
@@ -63,8 +63,8 @@ classdef selectChannelsFromTimeseries < handle
     end
     
     function set.input(obj,timeseries)
-      assert(isa(timeseries,'crlEEG.gui.data.timeseries'),...
-              'Input must be a crlEEG.gui.data.timeseries object');
+      assert(isa(timeseries,'crlEEG.type.data.timeseries'),...
+              'Input must be a crlEEG.type.data.timeseries object');
       if ~isequal(obj.inputInternal,timeseries)
         obj.inputInternal = timeseries;
         

@@ -106,8 +106,6 @@ classdef NRRD < crlEEG.fileio.baseobj & matlab.mixin.Copyable
     hasData = false;
   end
   
-
-  
   methods
     
     function obj = NRRD(varargin)

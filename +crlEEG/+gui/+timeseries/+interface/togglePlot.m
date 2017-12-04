@@ -1,5 +1,5 @@
 classdef togglePlot < crlEEG.gui.uipanel
-  % An interface for crlEEG.gui.data.timeseries data 
+  % An interface for crlEEG.type.data.timeseries data 
   %
   % classdef toggle < uitools.cnlUIObj
   %
@@ -47,7 +47,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       %% Input Parsing
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.gui.data.timeseries'));      
+      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));      
       p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));      
       p.addParamValue('yrange',[],@(x) isvector(x)&&(numel(x)==2));
       p.addParamValue('scale',0.5,@(x) isnumeric(x)&&numel(x)==1);
@@ -137,8 +137,8 @@ classdef togglePlot < crlEEG.gui.uipanel
     end
     
     function set.timeseries(obj,val)
-      assert(isa(val,'crlEEG.gui.data.timeseries'),...
-              'Must be a crlEEG.gui.data.timeseries object');            
+      assert(isa(val,'crlEEG.type.data.timeseries'),...
+              'Must be a crlEEG.type.data.timeseries object');            
       if ~isequal(obj.timeseries,val)
         % Only update if there's a change.
         obj.timeseries = val;  
@@ -281,10 +281,10 @@ classdef togglePlot < crlEEG.gui.uipanel
         % Plot
         if obj.doSplit % Do a split plot
           dispChan = obj.displayRange(1):obj.displayRange(2);
-          obj.plot = crlEEG.gui.render.timeseries.split(obj.timeseries(:,dispChan),obj.axes,...
+          obj.plot = crlEEG.gui.timeseries.render.split(obj.timeseries(:,dispChan),obj.axes,...
             'yrange',obj.yrange,'scale',obj.scale);
         else % Just do a butterfly plot
-          obj.plot = crlEEG.gui.render.timeseries.butterfly(obj.timeseries,obj.axes,...
+          obj.plot = crlEEG.gui.timeseries.render.butterfly(obj.timeseries,obj.axes,...
             'yrange',obj.yrange);
         end;
         

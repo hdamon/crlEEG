@@ -86,6 +86,11 @@ classdef gridInSpace < crlEEG.basicobj.grid
             
     end
     
+    %% Get/Set 
+    function set.aspect(obj,val)
+      error('Cannot directly set the aspect property of a crlEEG.basicobj.gridInSpace object');
+    end;
+    
     function out = get.aspect(obj)
       % Returns the aspect ratio of the crlEEG.basicobj.gridInSpace object
       out = sqrt(sum(obj.directions.^2,1));

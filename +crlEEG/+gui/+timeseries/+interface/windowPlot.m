@@ -63,7 +63,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       %% Input Parsing
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.gui.data.timeseries'));
+      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
       parse(p,timeseries,varargin{:});
       
       %% Initialize Base Object
@@ -130,18 +130,18 @@ classdef windowPlot < crlEEG.gui.uipanel
         val = obj.storedVals.timeseries;
       else
         % Return an empty timeseries?
-        val = []; %crlEEG.gui.data.timeseries;
+        val = []; %crlEEG.type.data.timeseries;
       end;
     end;
     
     function set.timeseries(obj,val)
-      % Set Method for crlEEG.gui.interface.timeseries.windowPlot
+      % Set Method for crlEEG.gui.timeseries.interface.windowPlot
       %
       %
       
       % Input Checking
       if isempty(val), obj.storedVals.timeseries = []; return; end;
-      crlEEG.assert.instanceOf('crlEEG.gui.data.timeseries',val);
+      crlEEG.assert.instanceOf('crlEEG.type.data.timeseries',val);
       
       if isfield(obj.storedVals,'timeseries')
         if ~isequal(obj.storedVals.timeseries,val)
@@ -316,9 +316,9 @@ classdef windowPlot < crlEEG.gui.uipanel
     end;
     
     function out = get.windowData(obj)
-      warning(['crlEEG.gui.interface.timeseries.windowPlot.windowData '...
+      warning(['crlEEG.gui.timeseries.interface.windowPlot.windowData '...
                'is deprecated. Use '...
-               'crlEEG.gui.interface.timeseries.windowPlot.windowSeries ' ...
+               'crlEEG.gui.timeseries.interface.windowPlot.windowSeries ' ...
                'instead.']);
       out = obj.windowSeries;
     end
@@ -337,13 +337,13 @@ classdef windowPlot < crlEEG.gui.uipanel
       axes(obj.axes);
             
       if (size(obj.timeseries,1) < 10000)
-        crlEEG.gui.render.timeseries.butterfly(obj.timeseries,'ax',obj.axes);
+        crlEEG.gui.timeseries.render.butterfly(obj.timeseries,'ax',obj.axes);
       else
         % For data sets with greater than 10k data points, only plot a
         % subsample of the data 
         useIdx = round(linspace(1,size(obj.timeseries,1),10000));
         useIdx = unique(useIdx);
-        crlEEG.gui.render.timeseries.butterfly(obj.timeseries(useIdx,:),'ax',obj.axes);
+        crlEEG.gui.timeseries.render.butterfly(obj.timeseries(useIdx,:),'ax',obj.axes);
       end      
       
       % Catch zero-length X axes definitions.

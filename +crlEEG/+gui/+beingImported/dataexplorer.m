@@ -32,7 +32,7 @@ classdef dataexplorer < crlEEG.gui.uipanel
     function obj = dataexplorer(timeseries,varargin)
       
       p = inputParser;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.gui.data.timeseries'));
+      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
       p.addParamValue('title','TITLE', @(x) ischar(x));
       parse(p,timeseries);           
            
