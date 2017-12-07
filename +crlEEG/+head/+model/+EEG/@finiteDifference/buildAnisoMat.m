@@ -36,7 +36,7 @@ function [MatOut] = buildAnisoMat(nrrdIn,spaceScale)
 if ~exist('spaceScale','var'), spaceScale = 1e-3; end;
 
 % Validate the input NRRD as a tensor NRRD
-assert(crlEEG.head.model.EEG.finiteDifference.validateTensorNRRD(nrrdIn);
+assert(isTensor(nrrdIn),'Input NRRD must be a tensor image');
 
 sizes = spaceScale*nrrdIn.aspect;
 
@@ -68,6 +68,7 @@ cnlStartMatlabPool
 data = nrrdIn.data; 
 
 parfor idxX = 1:nNodesX 
+  tic
   % Reserve space for the Row-Col-Value triplets in this slice
   sliceRow = zeros(nNodesY,nNodesZ,19);
   sliceCol = zeros(nNodesY,nNodesZ,19);

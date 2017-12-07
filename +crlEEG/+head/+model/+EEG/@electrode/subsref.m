@@ -17,21 +17,28 @@ switch s(1).type
         % Provided a cell array of strings
         outIdx = getIdxFromStringCell(s.subs{1});
         varargout = {obj(outIdx)};
-        %elseif ischar(s.subs{1})
-        %  % Provided a single character string
-        %  outIdx = getIdxFromStringCell({s.subs{1}});
-        %  varargout = {cnlLabelledData(obj.data(outIdx,:),obj.labels(outIdx),...
-        %    'epochstart',obj.epochs_start, 'epochend',obj.epochs_end)};
       else
-        % Poorly defined indexing. Don't allow it.
+        % 
         varargout = {builtin('subsref',obj,s)};
       end;
       
     elseif length(s) == 2 && strcmp(s(2).type,'.')
       % Implement obj(ind).PropertyName
+      
+%       if iscellstr(s(1).subs{1})|ischar(s(1).subs{1})
+%        % Get the referenced element      
+%        outIdx = getIdxFromStringCell(s(1).subs{1});
+%        tmpObj = obj(outIdx);
+%       else
+%         tmpObj = builtin('subsref',obj,s(1));
+%       end;
+%                   
+%       varargout = {builtin('subsref',tmpObj,s(2))};
+      
       varargout = {builtin('subsref',obj,s)};
     elseif length(s) == 3 && strcmp(s(2).type,'.') && strcmp(s(3).type,'()')
       % Implement obj(indices).PropertyName(indices)
+            
       varargout = {builtin('subsref',obj,s)};
     else
       % Use built-in for any other expression

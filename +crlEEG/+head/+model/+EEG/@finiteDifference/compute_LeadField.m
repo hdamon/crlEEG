@@ -23,7 +23,7 @@ function matLeadField = compute_LeadField(FDModel,elecIdx,gndIdx,baseSolSpace,va
 
 %% Input Parsing
 p = inputParser;
-p.addRequired('FDModel',@(x) isa(x,'cnlFDModel'));
+p.addRequired('FDModel',@(x) isa(x,'crlEEG.head.model.EEG.finiteDifference'));
 p.addRequired('elecIdx');
 p.addRequired('gndIdx');
 p.addRequired('baseSolSpace',@(x) isa(x,'cnlSolutionSpace'));
@@ -59,11 +59,7 @@ end
 
 %% Get All Input Current Maps
 mydisp('Computing Input Currents');
-Currents_In = sparse(size(FDModel.matFDM,1),numel(elecIdx),numel(elecIdx)*2);
-
-for i = 1:numel(elecIdx)
-  Currents_In(:,i) = FDModel.getCurrents(elecIdx(i),gndIdx(i));
-end;
+Currents_In = FDModel.getCurrents(gndIdx,-1,elecIdx,1);
 
 %% Parallel computation flag
 doParallelComp = p.Results.doParallelComp;
@@ -73,15 +69,17 @@ if doParallelComp
   cnlStartMatlabPool;
   mydisp('Parallel pool started. Ready to compute leadfield');
   
-  tol = FDModel.tol;
-  maxIt = FDModel.maxIt;
+  % Convert the FD Model into a very standard matlab variables. THis is to
+  % to make the parallel computation faster. Matlab seems to get quite
+  % confused if you try to pass the FD object.
+  tol         = FDModel.tol;
+  maxIt       = FDModel.maxIt;
   sizeCondImg = FDModel.imgSize;
-  aspect = FDModel.aspect;
-  voxInVol = FDModel.voxInside;
-  nElec = FDModel.electrodes.nElec;
-  matFDM = FDModel.matFDM;
+  aspect      = FDModel.aspect;
+  voxInVol    = FDModel.voxInside;  
+  matFDM      = FDModel.matFDM;
   
-  tmp = cell(FDModel.electrodes.nElec,1);
+  tmp = cell(size(Currents_In,2),1);
   parfor i = 1:numel(elecIdx)
     mydisp(['Started solution for electrode ' num2str(i)]);
     tmp{i} = solveElectrode(matFDM,full(Currents_In(:,i)),matDownSample,...
@@ -91,6 +89,7 @@ if doParallelComp
   matLeadField = cat(2,tmp{:});
   
 else
+  
   matLeadField = zeros(3*origSolSpace.nVoxels,FDModel.electrodes.nElec);
   %Do Computations Serially
   mydisp('Using Serial Computation');

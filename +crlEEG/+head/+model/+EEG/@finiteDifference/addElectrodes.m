@@ -10,8 +10,8 @@ end
 function obj = addElectrode(obj,electrode)
   % Add a single electrode to the FDM object
   
-  assert(isa(electrode,'crlEEG.head.model.electrode'),...
-            'Input must be a crlEEG.head.model.electrode object');
+  assert(isa(electrode,'crlEEG.head.model.EEG.electrode'),...
+            'Input must be a crlEEG.head.model.EEG.electrode object');
   assert(numel(electrode)==1,['Input must be a single object '...
                               '(And why are we getting here?)']);
   
@@ -22,7 +22,7 @@ function obj = addElectrode(obj,electrode)
   end;
        
   % Check that the electrode can be added
-  if ~isempty(intersect(electrode.Voxels,obj.voxInside))
+  if ~isempty(intersect(electrode.voxels,obj.voxInside))
     if obj.isBuilt
      error(['Cannot add electrode: ' electrode.label ...
             'Electrode volume overlaps with '...
@@ -30,14 +30,16 @@ function obj = addElectrode(obj,electrode)
             'Clear obj.matFDM to proceed. Adding this electrode will' ...
             'require recomputation of the finite difference matrix.'...
             ]);
-    else       
-      obj.electrodes(end+1) = electrode;
-      
-      % Set Conductivities in the Volume.
-      if isequal(electrode.model,'completeModel')
-        obj.nrrdCond.data(electrode.voxels) = electrode.conductivities;
-      end;
-    end
+    end;
+    
+  
   end
-        
+  
+  %% Add it to the list.
+  if isempty(obj.electrodes)
+    obj.electrodes = electrode;
+  else
+    obj.electrodes(end+1) = electrode;               
+  end;
+  
 end

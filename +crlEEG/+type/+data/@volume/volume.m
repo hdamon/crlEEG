@@ -5,18 +5,29 @@ classdef volume
   
   properties
     name
-    data    
+    data 
+    elementSize
     grid    
   end
+  
+  properties (Dependent = true)
+    range
+    displayRange
+  end
+    
   
   methods
     
     function obj = volume(varargin)
       
+      p = inputParser;
+      
       
       
     end
     
+    
+
     
     
   end

@@ -20,6 +20,7 @@ classdef gridInSpace < crlEEG.basicobj.grid
   %               dimension   < cnlGrid
   %         New:  origin
   %               directions
+  %               orientation
   %               centering = 'cell'
   %
   % Written By: Damon Hyde
@@ -32,6 +33,7 @@ classdef gridInSpace < crlEEG.basicobj.grid
     % dimension
     origin
     directions
+    orientation = 'Left-Posterior-Superior';
     centering = 'cell';
   end
   

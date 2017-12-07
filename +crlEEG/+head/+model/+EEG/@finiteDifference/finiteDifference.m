@@ -6,11 +6,81 @@ classdef finiteDifference
   %
   % To construct a finite difference model, execute a call as:
   %    FDModel = crlEEG.head.model.EEG.finiteDifference(nrrdCond)
+  %  
+  % Where nrrdCond is a file_NRRD of symmetric conductivity tensors.
   %
   % The constructor can also be called without any arguments, but nrrdCond
-  % will need to be set before much else can be done.
+  % will need to be set before much else can be done.  
   %
-  % Where nrrdCond is a file_NRRD of symmetric conductivity tensors.
+  % Setting the Conductivity Map
+  % ----------------------------
+  %   The first thing to do is to set the conductivity map that will be
+  %   used for model construction. Most methods will simply error out until
+  %   this has been completed.
+  %
+  %   This can be done as part of the initial constructor call by providing
+  %   a tensor volume object as the first parameter:
+  %     FDModel = crlEEG.head.model.EEG.finiteDifference(nrrdCond)
+  %
+  %   Or by setting the 
+  %
+  % Adding Electrodes 
+  % -----------------
+  %   Electrodes are added to the model as crlEEG.head.model.EEG.electrode
+  %   objects.
+  %
+  %   This can be done during the initial constructor call:
+  %    FDModel =
+  %    crlEEG.head.model.EEG.finiteDifference(nrrdCond,'electrodes',electrodeObj)
+  %
+  %   Or by calling the addElectrodes method:
+  %    obj = obj.addElectrodes(electrodeObj);
+  %
+  %   Duplicate electrodes will only be added once, and electrodes using
+  %   the complete electrode model or otherwise occupying physical space
+  %   (ie: electrode.voxels field is not empty) can not be added after the
+  %   model has been configured.
+  %
+  % Completing the Configuration
+  % ----------------------------
+  %   Once the conductivity map and electrodes have been assigned, the
+  %   model needs to be configured prior to constructing the system matrix.
+  %   This is done by calling:
+  %
+  %   obj = obj.configure;
+  %
+  %   Running this method also sets the obj.isConfigured flag to true. Once
+  %   configured, the model will no longer allow changes to the electrodes
+  %   without changing that flag back to false (which will subsequently
+  %   require rerunning the configuration method again).
+  %
+  % Building the FD Matrix
+  % ----------------------
+  %   
+  %   
+  %
+  % AFTER THE MODEL IS BUILT:
+  % -------------------------
+  %
+  % Once the model is fully constructed, there are several things you can
+  % do with it. See the help files for each individual method for more
+  % detailed usage instructions.
+  %
+  % Compute an Induced Voltage Field
+  % --------------------------------
+  %
+  % Compute the Gradient of an Induced Voltage Field
+  % ------------------------------------------------
+  %
+  % Build a LeadField Matrix
+  % ------------------------
+  %  Probably the most common use. 
+  %
+  %  lField = obj.compute_LeadField(elecIdx,gndIdx,baseSolSpace,varargin)
+  %
+  % 
+  %
+  %
   %
   % Properties:
   %   fname : File name where finite difference matrix is stored
@@ -35,36 +105,50 @@ classdef finiteDifference
   % Requires:
   %   crlEEG.fileio.NRRD
   
+  %%
+  properties  
+    % NRRD object with the spatial map of conductivity tensors.
+    %  NOTE: This will eventually be changed to use a new internal datatype
+    %           for arbitrary volumetric images, which will make it easier
+    %           to incorporate data from image types other than just .NRRDs
+    nrrdCond                
+  end
+  
+  properties (GetAccess=public,SetAccess=protected)   
+    nrrdCondModified
+    matFDM        % The finite difference system matrix
+    electrodes    % An array of crlEEG.head.model.EEG.electrode objects
+  end
   
   properties
-    fname  = 'FDModel.mat';
-    fpath  = './';
+    % Filename and path to save the system matrix to
+    fname = 'FDModel.mat';
+    fpath = './';
     
-    nrrdCond              
-  end
-  
-  properties (GetAccess=public,SetAccess=protected)    
-    matFDM
-    electrodes
-  end
-  
-  properties (Hidden=true)
     % Convergence Properties
     tol          = 1e-6;
     maxIt        = 2500;
     spaceScaling = 1e-3;
     
-    isBuilt = false;        
+    % Flags to ensure the model is properly constructed before certain
+    % methods are called.
+    isConfigured = false;
+    isBuilt      = false;      
+    
+  end
+  
+  properties (Hidden=true)          
+    idxRow_Electrode % Individual row in the model associated with each electrode
   end
   
   properties (Dependent=true) 
     imgSize
     aspect
     voxInside
-    nElectrodes
-    modelSize
+    nElectrodes    
   end
    
+  %%
   methods
     
     function obj = finiteDifference(nrrdCond,varargin)
@@ -115,12 +199,11 @@ classdef finiteDifference
       %
                  
       if ~isempty(nrrdCond) % Only test if we're not clearing it.
-        assert(obj.validateTensorNRRD(nrrdCond);
+        assert(nrrdCond.isTensor,'obj.nrrdCond value must be a tensor nrrd');
       end;
       
-      % Assignment
-      obj.nrrdCond = clone(nrrdCond,'internalFDCond.nrrd');
-            
+      % Assignment. Save a copy of the original input.
+      obj.nrrdCond = clone(nrrdCond,'internalFDCond.nrrd');            
     end
     
     function obj = set.matFDM(obj,val)
@@ -130,28 +213,25 @@ classdef finiteDifference
       % and that the size of matFDM matches the size of nrrdCond
       %
       % This method is likely unneeded, as matFDM has private setaccess,
-      % and should only be assiged from obj.build()
-      if ~isempty(obj.nrrdCond)
-        imgSize = obj.nrrdCond.sizes(obj.nrrdCond.domainDims);
+      % and should only be assiged from obj.build()                    
+      
+      if ~isempty(obj.nrrdCond)        
+        % Clearing the value
+        if isempty(val) 
+          obj.matFDM = []; 
+          obj.isBuilt = false;
+          crlEEG.disp('Cleared matFDM field');
+          return; 
+        end;
         
-        % Test Conditions
-        matchImgSize = prod(imgSize+[1 1 1])==size(val,1);
-        matchImgSizePlus = ...
-                  ( prod(imgSize+[1 1 1]) + obj.nElectrodes )==size(val,1);
-        
-        isPEM = ismatrix(val)&&matchImgSize;
-        isCEM = ismatrix(val)&&matchImgSizePlus;
-        
-        isValid = isPEM||isCEM;
-        
-        if (isValid)
-          obj.matFDM = val;
-        elseif isempty(val)
-          mydisp('Clearing matFDM field');
-          obj.matFDM = [];    
-        else
-          error('Unknown error');
-        end
+        % Assertions
+        assert(ismatrix(val)&&(size(val,1)==size(val,2)),...
+                'matFDM should be a square matrix');
+        assert(isequal(size(val,1),obj.getModelSize('noelec'))||...
+               isequal(size(val,1),obj.getModelSize('full')),...
+                'matFDM does not match the expected size');
+              
+        obj.matFDM = val;        
       else
         error('obj.nrrdCond needs to be set before setting obj.matFDM');
       end;
@@ -159,31 +239,58 @@ classdef finiteDifference
     
     %% Dependent Get Methods
     function out = get.imgSize(obj)
+      % Returns the size of the current conductivity image
       if isempty(obj.nrrdCond), out = []; return; end;
       out = obj.nrrdCond.sizes(obj.nrrdCond.domainDims);
     end
+
+    function sizeOut = getModelSize(obj,opt)      
+      % Returns the size of the model. This is larger then the image size
+      % because the model places the computational nodes at the corners of
+      % each physical voxel, and electrodes using the complete electrode
+      % model add additional rows/columns of boundary conditions.
+                  
+        % Base # of rows in a FD model
+        baseRows = prod(obj.imgSize+[1 1 1]);
+        
+        numComplete = 0;
+        for i = 1:numel(obj.electrodes)
+          if isequal(obj.electrodes(i).model,'completeModel')
+            numComplete = numComplete + 1;
+          end;
+        end;      
+        
+        if ~exist('opt','var'),opt = 'full'; end;
+        switch opt
+          case 'noelec'
+            sizeOut = baseRows;
+          case 'full'
+            sizeOut = baseRows + numComplete;
+          case 'otherwise'
+            error('Unknown size requested')
+        end
+    end;    
     
     function out = get.voxInside(obj)
+      % Returns a list of all the non-zero voxels in the volume
       if isempty(obj.nrrdCond), out = []; return; end;
       out = obj.nrrdCond.nonZeroVoxels;
     end
     
     function out = get.aspect(obj)
+      % Returns the physical aspect ratio of the model
       if isempty(obj.nrrdCond), out = []; return; end;
       out = obj.nrrdCond.aspect;
     end;
     
     function out = get.nElectrodes(obj)
+      % Returns the number of electrodes in the model
       out = numel(obj.electrodes);
     end;
-    
-    function out = get.modelSize(obj)
-      if isempty(obj.nrrdCond), out = []; return; end;
-      out = obj.nrrdCond.sizes = [1 1 1];
-    end;
-        
-    %% Main Build Method    
-    function obj = build(obj)
+                
+    %% Main Build Methods    
+     
+     function obj = build(obj)
       % function obj = build(obj)
       %
       % finiteDifference method to construct the actual finite difference matrix.
@@ -195,14 +302,23 @@ classdef finiteDifference
             
       [matFDM,loaded] = tryLoad(obj);
       
-      if ~loaded            
+        
+      if ~loaded       
+        assert(~isempty(obj.nrrdCond),...
+                  'finiteDifference.nrrdCond must be defined before calling the build function');
+                                        
         % Build from scratch
         if ~isempty(obj.nrrdCond)          
-          crlEEG.disp('Computing Finite Difference Matrix');
-          tmpCond = clone(obj.nrrdCond,'FDModel_Cond.nrrd',obj.fpath);
-          obj.nrrdCond = obj.elecModel.modifyConductivity(obj.electrodes,tmpCond);          
+          crlEEG.disp('Computing Finite Difference Matrix');          
+          %tmpCond = clone(obj.nrrdCond,'FDModel_Cond.nrrd',obj.fpath);
           
-          matFDM = obj.buildAnisoMat(obj.nrrdCond,obj.spaceScaling);         
+          % Update Conductivity to Include Electrodes Using Complete Model
+          obj = obj.modifyConductivityMap;          
+          
+          % Construct the Stiffness Matrix
+          matFDM = obj.buildAnisoMat(obj.nrrdCond,obj.spaceScaling); 
+          
+          % Save the matrix and conductivity
           save([obj.fpath obj.fname],'matFDM','-v7.3');
           obj.nrrdCond.write;
         else
@@ -211,13 +327,11 @@ classdef finiteDifference
       end
       
       % Add auxilliary nodes to incorporate electrode boundary conditions
-      obj.matFDM = obj.elecModel.modifyFDMatrix(obj.electrodes,matFDM);            
+      obj = obj.addElectrodesToFDMMatrix; 
+      obj.isBuilt = true;
     end
        
-    function currents = getCurrents(FDModel,AnodeIdx,CathodeIdx)
-      currents = FDModel.elecModel.getCurrents(...
-        FDModel.electrodes,FDModel.imgSize+[1 1 1],AnodeIdx,CathodeIdx);
-    end
+   
     
     function [matFDM,success] = tryLoad(obj)
       % function [matFDM,success] = tryLoad(obj) 
@@ -226,9 +340,9 @@ classdef finiteDifference
       % successful, return success=true and the matrix stored in matFDM.
       % Otherwise, return an empty matrix in matFDM and success=FALSE
       
-      if exist([obj.fpath obj.fname],'file')
+      if exist(fullfile(obj.fpath, obj.fname),'file')
         mydisp('Successfully found existing FD Model File');
-        load([obj.fpath obj.fname]);
+        load(fullfile(obj.fpath, obj.fname));
         success = true;
       else
         matFDM = [];
@@ -275,33 +389,7 @@ classdef finiteDifference
     
   end
   
-  methods (Static=true,Access=private)
-    matOut = buildAnisoMat(nrrdIn,spaceScale);    
-    
-    function isTensorNRRD = validateTensorNRRD(nrrdCond)
-      % Returns true if nrrdCond is a tensor NRRD
-      %
-      % Otherwise, returns an error
-      %
-      
-        % Tests
-        isNRRD   = isa(nrrdCond,'file_NRRD');
-        isTensor = (nrrdCond.sizes(1)==6) && ...
-          (strcmpi(nrrdCond.kinds{1},'3D-symmetric-matrix'));
-        is3D     = sum(nrrdCond.domainDims)==3;
-                        
-        % Assertions
-        assert(isNRRD,'Input nrrdCond must be a file_NRRD object');
-        assert(isTensor,'Input nrrdCond must be a map of conductivity tensors');
-        assert(is3D,'Input nrrdCond must have three spatial dimensions');
-        
-        % nrrdCond is valid if we reach here.
-        isTensorNRRD = true;
-    end
-    
-    
-  end
-  
+  %% Public Static Methods
   methods (Static=true)
     function obj = loadobj(S)
       mydisp('Loading FDModel Object');
@@ -309,10 +397,160 @@ classdef finiteDifference
       obj = reload(obj,S);
     end
     
-    [anisoNodes] = convert_NodesIsoToAniso(IsoNodes,isoImgSize);
-    
-    Potentials = solveForPotentials_Static(FDModel,Currents_In);
-    gradOut = solveForGradient_Static(FDModel,Currents_In);
+    [anisoNodes] = convert_NodesIsoToAniso(IsoNodes,isoImgSize);    
   end
+  
+  %% Private Methods
+  methods (Access=private)
+     %%
+     function obj = modifyConductivityMap(obj)
+      % Update the conductivity map to include the conductivities in each
+      % model that will be using the complete electrode model. Point
+      % electrodes leave the conductivities unchanged.
+      %
+      
+      % Create a copy of the original provided conductivity map
+      obj.nrrdCondModified = clone(obj.nrrdCond);
+      obj.nrrdCondModified.fname = 'nrrdCond_FDMModified.nrrd';
+      obj.nrrdCondModified.encoding = 'gzip';
+      
+      % Add Electrodes
+      for i = 1:numel(obj.electrodes)
+        switch obj.electrodes(i).model
+          case 'pointModel'
+            continue;
+          case 'completeModel'
+            obj.nrrdCondModified.data(obj.electrodes(i).voxels) = ...
+              obj.electrodes(i).conductivities;
+          otherwise
+            error('Unknown electrode type');
+        end
+      end
+     end
+     
+     %%
+     function obj = addElectrodesToFDMMatrix(obj)
+       
+       [row,col,val] = find(obj.matFDM);
+       
+       nNodes = obj.getModelSize('noelec');
+       nElec = numel(obj.electrodes);
+       offset = 0;
+       % List of rows used to access the electrode
+       %
+       % This is a cell array because while point and complete electrode
+       % models use
+       obj.idxRow_Electrode = cell(1,numel(obj.electrodes));
+       
+       for i = 1:numel(obj.electrodes)
+         switch (obj.electrodes(i).model)
+           case 'pointModel'
+             % Use the node list from the electrode
+             obj.idxRow_Electrode{i} = obj.electrodes(i).nodes;
+           case 'completeModel'
+             %
+             offset = offset+1;
+             eNodes = obj.electrodes(i).nodes;
+             
+             % Index of new row/column
+             newRow = nNodes + offset;
+             newCol = newRow;
+             
+             obj.idxRow_Electrode{i} = newRow;
+             
+             newVals = -1./(obj.electrodes(i).impedance*ones(numel(eNodes),1));
+             
+             % New Row
+             row = [row ; newRow*ones(numel(eNodes),1)];
+             col = [col ; eNodes(:)];
+             val = [val ; newVals];
+             
+             % New Column
+             row = [row ; eNodes(:)];
+             col = [col ; newCol*ones(numel(eNodes),1)];
+             val = [val ; newVals];
+             
+             % Value on Diagonal
+             row = [row ; newRow];
+             col = [col ; newCol];
+             val = [val ; -sum(newVals)];
+             
+           otherwise
+             error('Unknown electrode model');
+         end
+       end
+       
+       % Build Modified System Matrix
+       obj.matFDM = sparse(row,col,val,...
+                         obj.getModelSize('full'),obj.getModelSize('full'));
+       
+     end
+    
+    %%
+    function currents = getCurrents(FDModel,AnodeIdx,totalAnodeCurrent,CathodeIdx,totalCathodeCurrent)
+      % Construct matrix of input currents between one or more pairs of
+      % electrodes
+      %
+      %
+      
+      if ~FDModel.isBuilt 
+        error('finiteDifference model must be built before constructing currents'); 
+      end;
+      
+      assert(isscalar(totalAnodeCurrent)||...
+              isequal(size(AnodeIdx),size(totalAnodeCurrent)),...
+              ['totalAnodeCurrent must either be a scalar, or a vector ' ...
+              'with a size matching AnodeIdx']);
+            
+      assert(isscalar(totalCathodeCurrent)||...
+              isequal(size(CathodeIdx),size(totalCathodeCurrent)),...
+              ['totalCathodeCurrent must either be a scalar, or a vector ' ...
+              'with a size matching CathodeIdx']);            
+            
+      assert(isscalar(AnodeIdx)||isscalar(CathodeIdx)||...
+                isequal(size(AnodeIdx),size(CathodeIdx)),...
+                ['Either the size of AnodeIdx and CathodeIdx must match, ' ...
+                 'or one must be a scalar']);
+            
+      if isscalar(AnodeIdx)
+        AnodeIdx = AnodeIdx*ones(size(CathodeIdx));
+      end
+      
+      if isscalar(totalAnodeCurrent)
+        totalAnodeCurrent = totalAnodeCurrent*ones(size(AnodeIdx));
+      end;
+      
+      if isscalar(CathodeIdx)
+        CathodeIdx = CathodeIdx*ones(size(AnodeIdx));
+      end;
+      
+      if isscalar(totalCathodeCurrent)
+        totalCathodeCurrent = totalCathodeCurrent*ones(size(CathodeIdx));
+      end;
+      
+      currents = sparse(FDModel.getModelSize,numel(AnodeIdx),numel(AnodeIdx)*2);
+      
+      for i = 1:numel(AnodeIdx)
+        anodeCurrent = zeros(FDModel.getModelSize,1);
+        cathodeCurrent = zeros(FDModel.getModelSize,1);
+        
+        anodeRows = FDModel.idxRow_Electrode{AnodeIdx(i)};
+        cathodeRows = FDModel.idxRow_Electrode{CathodeIdx(i)};
+        
+        anodeCurrent(anodeRows) = totalAnodeCurrent(i)/numel(anodeRows);
+        cathodeCurrent(cathodeRows) = totalCathodeCurrent(i)/numel(cathodeRows);
+        
+        currents(:,i) = sparse(anodeCurrent + cathodeCurrent);
+      end;
+    end
+  end
+  
+  %% Private Static Methods
+  methods (Static=true,Access=private)
+    %% Static method to build the system matrix
+    matOut = buildAnisoMat(nrrdIn,spaceScale);              
+  end
+  
+
   
 end

@@ -296,6 +296,15 @@ classdef NRRD < crlEEG.fileio.baseobj & matlab.mixin.Copyable
       out = obj.getMatlabType;
     end;
     
+    function out = cnlGridSpace(obj)
+      out = cnlGridSpace(obj.sizes(obj.domainDims),obj.spaceorigin,obj.spacedirections);      
+    end
+    
+    function out = crlEEG.basicobj.gridInSpace(obj)
+      out = crlEEG.basicobj.gridInSpace(obj.sizes(obj.domainDims),...
+        'origin',obj.spaceorigin,'directions',obj.spacedirections);
+    end;
+    
     function out = get.gridSpace(obj)
       % function out = get.gridSpace(obj)
       %
@@ -306,10 +315,11 @@ classdef NRRD < crlEEG.fileio.baseobj & matlab.mixin.Copyable
       % domain dimensions.
       assert(~isempty(obj.spaceorigin)&&~isempty(obj.spacedirections),...
         'NRRD must have a valid spaceorigin and spacedirections to obtain a gridSpace');
-      
-      
+            
       sizes = obj.sizes(obj.domainDims);
-      out = cnlGridSpace(sizes,obj.spaceorigin,obj.spacedirections);
+      out = crlEEG.basicobj.gridInSpace(sizes,...
+                                'origin',obj.spaceorigin,...
+                                'directions',obj.spacedirections);
     end
     
     function out = get.domainDims(obj)
