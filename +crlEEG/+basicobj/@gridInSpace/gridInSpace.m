@@ -158,7 +158,7 @@ classdef gridInSpace < crlEEG.basicobj.grid
       % Set the center of teh
       currCenter = obj.center;
       shiftVec = val - currCenter;
-      mydisp(['Shifting by' num2str(shiftVec)]);
+      crlEEG.disp(['Shifting by' num2str(shiftVec)]);
       obj.origin = obj.origin+shiftVec;
     end
     

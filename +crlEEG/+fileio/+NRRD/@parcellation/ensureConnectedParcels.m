@@ -14,7 +14,7 @@ function parcelOut = ensureConnectedParcels(parcelIn,varargin)
 % Part of the cnlEEG Project
 %
 
-mydisp(['Ensuring all parcels are simply connected'],4);
+crlEEG.disp(['Ensuring all parcels are simply connected'],4);
 
 %% Input Parsing
 p = inputParser;
@@ -43,7 +43,7 @@ stdSize = std(nVoxInParcel);
 parcelOut = clone(parcelIn,p.Results.fname,p.Results.fpath);
 parcelOut.data = zeros(parcelOut.sizes);
 
-mydisp('Labelling all floating connected components');
+crlEEG.disp('Labelling all floating connected components');
 for idxP = 1:nParcel
   currLabel     = parcelLabels(idxP);      
   currParcelImg = (parcelIn.data==currLabel);
@@ -73,7 +73,7 @@ for idxP = 1:nParcel
   end;
   
   % If more than once connected component was identified, we need to 
-  mydisp(['Found ' num2str(CC.NumObjects) ' connected components in parcel ' num2str(idxP)],5);
+  crlEEG.disp(['Found ' num2str(CC.NumObjects) ' connected components in parcel ' num2str(idxP)],5);
  
   % Get maximum length
   lengths = zeros(CC.NumObjects,1);
@@ -120,7 +120,7 @@ end;
 imgConn = parcelOut.gridSpace.getGridConnectivity;
 CC = bwconncomp(parcelOut.data==outLabel,6);
 
-mydisp('Merging unconnected components into other parcels');
+crlEEG.disp('Merging unconnected components into other parcels');
 for idxCC = 1:CC.NumObjects
   tmpConn = imgConn(:,CC.PixelIdxList{idxCC});
   tmpConn = sum(tmpConn,2);
@@ -153,7 +153,7 @@ for idxCC = 1:CC.NumObjects
      end;     
     end;
 
-    mydisp(['Merged floating component into parcel ' num2str(mostCommonLabel)],5);    
+    crlEEG.disp(['Merged floating component into parcel ' num2str(mostCommonLabel)],5);    
   else    
     newParcelVal = 0;
   end
@@ -163,6 +163,6 @@ for idxCC = 1:CC.NumObjects
 end
 
   
-mydisp(['Completed merging of disconnected parcels'],4);  
+crlEEG.disp(['Completed merging of disconnected parcels'],4);  
 
 end

@@ -156,7 +156,7 @@ classdef finiteDifference
       if nargin>0
         % Check if we were handed a finiteDifference
         if isa(nrrdCond,'crlEEG.head.model.EEG.finiteDifference')
-          mydisp('Passed finiteDifference to constructor.  Returning passed model');
+          crlEEG.disp('Passed finiteDifference to constructor.  Returning passed model');
           obj = nrrdCond;
           return;                  
         end
@@ -341,7 +341,7 @@ classdef finiteDifference
       % Otherwise, return an empty matrix in matFDM and success=FALSE
       
       if exist(fullfile(obj.fpath, obj.fname),'file')
-        mydisp('Successfully found existing FD Model File');
+        crlEEG.disp('Successfully found existing FD Model File');
         load(fullfile(obj.fpath, obj.fname));
         success = true;
       else
@@ -392,7 +392,7 @@ classdef finiteDifference
   %% Public Static Methods
   methods (Static=true)
     function obj = loadobj(S)
-      mydisp('Loading FDModel Object');
+      crlEEG.disp('Loading FDModel Object');
       obj = crlEEG.head.model.EEG.finiteDifference;
       obj = reload(obj,S);
     end

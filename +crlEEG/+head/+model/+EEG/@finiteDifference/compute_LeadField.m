@@ -58,7 +58,7 @@ else
 end
 
 %% Get All Input Current Maps
-mydisp('Computing Input Currents');
+crlEEG.disp('Computing Input Currents');
 Currents_In = FDModel.getCurrents(gndIdx,-1,elecIdx,1);
 
 %% Parallel computation flag
@@ -67,7 +67,7 @@ doParallelComp = p.Results.doParallelComp;
 %% Compute Solution for all Electrode-Ground Pairs
 if doParallelComp
   cnlStartMatlabPool;
-  mydisp('Parallel pool started. Ready to compute leadfield');
+  crlEEG.disp('Parallel pool started. Ready to compute leadfield');
   
   % Convert the FD Model into a very standard matlab variables. THis is to
   % to make the parallel computation faster. Matlab seems to get quite
@@ -81,7 +81,7 @@ if doParallelComp
   
   tmp = cell(size(Currents_In,2),1);
   parfor i = 1:numel(elecIdx)
-    mydisp(['Started solution for electrode ' num2str(i)]);
+    crlEEG.disp(['Started solution for electrode ' num2str(i)]);
     tmp{i} = solveElectrode(matFDM,full(Currents_In(:,i)),matDownSample,...
                 tol,maxIt,sizeCondImg,aspect,voxInVol);
   end;
@@ -92,9 +92,9 @@ else
   
   matLeadField = zeros(3*origSolSpace.nVoxels,FDModel.electrodes.nElec);
   %Do Computations Serially
-  mydisp('Using Serial Computation');
+  crlEEG.disp('Using Serial Computation');
   for i = 1:FDModel.electrodes.nElec
-    mydisp(['Started solution for electrode ' num2str(i)]);
+    crlEEG.disp(['Started solution for electrode ' num2str(i)]);
     tmp = solveElectrode(FDModel,i,gndIdx,matDownSample);
     matLeadField(:,i) = tmp(:);
   end;
@@ -113,7 +113,7 @@ function rowOut = solveElectrode(matFDM,Currents_In,matDownSample,...
 % post-computation downsampling, and a list of voxels to be kept
 
 % Set Input Currents
-%mydisp('Setting currents');
+%crlEEG.disp('Setting currents');
 %Currents_In = setCurrents(FDModel.imgSize+[1 1 1],ElecNode,GndNode);
 %Currents_In = FDModel.getCurrents(ElecIdx,GndIdx);
 
@@ -121,25 +121,25 @@ disp(['Input currents of size: ' num2str(size(Currents_In))]);
 disp(['Model of size: ' num2str(size(matFDM))]);
 
 % Compute Leadfield Row - Potential Gradient at Each Voxel Center
-mydisp('Solving for gradient');
+crlEEG.disp('Solving for gradient');
 %gradV_atVoxCenters = FDModel.solveForGradient(Currents_In);
 tStart = clock;
 [Potentials, Flag, Residual, Iters] = minres(matFDM,Currents_In,tol,maxIt);
 
 % Display a few things
-mydisp(['Completed solution for Electrode in ' num2str(etime(clock,tStart)) ' seconds']);
+crlEEG.disp(['Completed solution for Electrode in ' num2str(etime(clock,tStart)) ' seconds']);
 if Flag==0
-  mydisp(['MINRES Converged in ' num2str(Iters) ' iterations to within ' num2str(tol)]);
+  crlEEG.disp(['MINRES Converged in ' num2str(Iters) ' iterations to within ' num2str(tol)]);
 elseif Flag==1
-  mydisp(['MINRES Completed AFter ' num2str(Iters) ' iterations to residual ' num2str(Residual)]);
+  crlEEG.disp(['MINRES Completed AFter ' num2str(Iters) ' iterations to residual ' num2str(Residual)]);
 else
-  mydisp('ERROR While Running MINRES');
+  crlEEG.disp('ERROR While Running MINRES');
 end;
 
 % Compute and display the residual error
 err = matFDM*Potentials(:)-Currents_In;
 err = norm(err(:))/norm(Currents_In);
-mydisp(['FD Model Solution Obtained with Relative Error: ' num2str(err)]);
+crlEEG.disp(['FD Model Solution Obtained with Relative Error: ' num2str(err)]);
 
 % The only time we should get a NaN number in the error is if Current_In is
 % zero.
@@ -159,14 +159,14 @@ gradV_atVoxCenters = getGradient(Potentials,sizeCondImg,aspect,voxInVol);
 
 % Do the pre-save downsampling.  This should hopefully end up being
 % unneeded soon.
-mydisp('Downsampling to resolution for output');
+crlEEG.disp('Downsampling to resolution for output');
 gradV_atVoxCenters = reshape(gradV_atVoxCenters,[3 prod(sizeCondImg)]);
 gradV_atVoxCenters = gradV_atVoxCenters*matDownSample;
 %gradV_atVoxCenters = gradV_atVoxCenters;
 
-%mydisp(['Downsampled in ' num2str(etime(clock,tStep)) ' seconds']);
+%crlEEG.disp(['Downsampled in ' num2str(etime(clock,tStep)) ' seconds']);
 rowOut =  gradV_atVoxCenters(:);
-mydisp('Finished solving for electrode');
+crlEEG.disp('Finished solving for electrode');
 
 end
 
@@ -174,13 +174,13 @@ function gradOut = getGradient(Potentials,sizeCondImg,aspect,voxInVol)
 Potentials = reshape(Potentials,sizeCondImg+[1 1 1]);
 
 % Compute change along each edge of each cell
-mydisp('Get Delta X/Y/Z');
+crlEEG.disp('Get Delta X/Y/Z');
 deltaX = (Potentials(2:end,:,:) - Potentials(1:end-1,:,:))/aspect(1);
 deltaY = (Potentials(:,2:end,:) - Potentials(:,1:end-1,:))/aspect(2);
 deltaZ = (Potentials(:,:,2:end) - Potentials(:,:,1:end-1))/aspect(3);
 
 % Take the mean across each set of four parallel edges and vectorize
-mydisp('Take mean of Delta');
+crlEEG.disp('Take mean of Delta');
 meanX = deltaX(:,1:end-1,1:end-1)+deltaX(:,2:end,1:end-1) + ...
   deltaX(:,1:end-1,2:end) + deltaX(:,2:end,2:end);
 meanY = deltaY(1:end-1,:,1:end-1)+deltaY(2:end,:,1:end-1) + ...
@@ -193,7 +193,7 @@ meanX = meanX(:); meanY = meanY(:); meanZ = meanZ(:);
 % Form this into a vector image, with nonzero values only at those voxels
 % with nonzero conductivity.  Otherwise, sensitivities will exist outside
 % the volume.
-mydisp('Building Gradient Volume');
+crlEEG.disp('Building Gradient Volume');
 
 %voxInVol = FDModel.voxInside;
 gradOut = zeros(3,prod(sizeCondImg));

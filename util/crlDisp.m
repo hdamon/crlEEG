@@ -1,7 +1,7 @@
 function crlDisp(stringIn,priority,offset,disablefdisp)
   % Replacement for disp() with added functionality.
   %
-  % function mydisp(stringIn,varargin)
+  % function crlEEG.disp(stringIn,varargin)
   %
   % Inputs:
   %    stringIn : String to display

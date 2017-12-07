@@ -34,11 +34,11 @@ sizeOut = gridOut.sizes;
 
 switch lower(method)
   case 'segmentation'
-    mydisp('Starting Downsample of Segmentation');
+    crlEEG.disp('Starting Downsample of Segmentation');
     newData = dwnsmpSegmentation(nrrdIn,gridOut);
     newSize = sizeOut;
   case 'tent'
-    mydisp('Using tent downsampling');
+    crlEEG.disp('Using tent downsampling');
     map = getMapGridToGrid(gridIn,gridOut);
     %tmp = reshape(nrrdIn.data,prod(size(tmp.data)),1);
     switch lower(nrrdIn.kinds{1})
@@ -73,7 +73,7 @@ function newSeg = dwnsmpSegmentation(nrrdIn,gridOut)
 % Function for downsampling segmentations.  Computes a tent-type
 % interpolation function, and assigns the labels on the new grid according
 % to which label in the old grid contributes most to the next voxel
-mydisp('Using Segmentation Downsampling Technique');
+crlEEG.disp('Using Segmentation Downsampling Technique');
 segVals = unique(nrrdIn.data);
 
 map = getMapGridToGrid(nrrdIn.gridSpace,gridOut);
@@ -163,7 +163,7 @@ end
 %
 %   nrrdIn.data = dataOut;
 %
-%   mydisp('%%%% Completed Downsample of Segmentation');
+%   crlEEG.disp('%%%% Completed Downsample of Segmentation');
 %
 % %% We're dealing with a vector NRRD
 % elseif (length(nrrdIn.sizes)==4)&&(nrrdIn.sizes(1)==3)

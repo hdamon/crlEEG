@@ -18,7 +18,7 @@ assert(numel(nrrdObj.data)==prod(nrrdObj.sizes),...
 
 %% Open the appropriate file, and make sure it's closed when done.
 if ~isempty(nrrdObj.data_fname)
-  mydisp(['Writing data to separate file: ' nrrdObj.data_fname]);
+  crlEEG.disp(['Writing data to separate file: ' nrrdObj.data_fname]);
   fid = fopen(nrrdObj.data_fname,'w+');
   assert(fid>0,['Failed to open NRRD data file ' nrrdObj.data_fname]);
 else

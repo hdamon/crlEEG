@@ -8,7 +8,7 @@ function [Potentials varargout] = solveForPotentials(FDModel,Currents_In,varargi
 %          Potentials  : Returns the voltage potential at each node in the
 %                         FDM matrix
 
-mydisp(['Solving FD Model to Compute Potential Distribution']);
+crlEEG.disp(['Solving FD Model to Compute Potential Distribution']);
 
 p = inputParser;
 p.addParamValue('M1',[]);
@@ -27,19 +27,19 @@ tStart = clock;
   p.Results.X0);  
 
 % Display a few things
-mydisp(['Completed solution for Electrode in ' num2str(etime(clock,tStart)) ' seconds']);
+crlEEG.disp(['Completed solution for Electrode in ' num2str(etime(clock,tStart)) ' seconds']);
 if Flag==0
-  mydisp(['MINRES Converged in ' num2str(Iters) ' iterations to within ' num2str(tol)]);
+  crlEEG.disp(['MINRES Converged in ' num2str(Iters) ' iterations to within ' num2str(tol)]);
 elseif Flag==1
-  mydisp(['MINRES Completed AFter ' num2str(Iters) ' iterations to residual ' num2str(Residual)]);
+  crlEEG.disp(['MINRES Completed AFter ' num2str(Iters) ' iterations to residual ' num2str(Residual)]);
 else
-  mydisp('ERROR While Running MINRES');
+  crlEEG.disp('ERROR While Running MINRES');
 end;
 
 % Compute and display the residual error
 err = FDModel.matFDM*Potentials(:)-Currents_In;
 err = norm(err(:))/norm(Currents_In);
-mydisp(['FD Model Solution Obtained with Relative Error: ' num2str(err)]);
+crlEEG.disp(['FD Model Solution Obtained with Relative Error: ' num2str(err)]);
 
 % The only time we should get a NaN number in the error is if Current_In is
 % zero.

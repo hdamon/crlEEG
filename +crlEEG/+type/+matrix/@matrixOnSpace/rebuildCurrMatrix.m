@@ -23,12 +23,12 @@ function obj = rebuildCurrMatrix(obj)
 
 if obj.disableRebuild
   % Silent return of empty matrix if rebuild has been diabled;
- % mydisp('Rebuild currently disabled. Returning empty matrix');
+ % crlEEG.disp('Rebuild currently disabled. Returning empty matrix');
   obj.currMatrix = [];
   return;
 end;
 
-mydisp('Started rebuilding cnlMatrixOnSpace object');
+crlEEG.disp('Started rebuilding cnlMatrixOnSpace object');
 
 if ~obj.canRebuild
   warning('Cannot currently rebuild matrix. Returning empty array');
@@ -46,6 +46,6 @@ end;
 
 obj.currMatrix = obj.currMatrix*matTransform;
 
-mydisp('Completed rebuilding cnlMatrixOnSpace object');
+crlEEG.disp('Completed rebuilding cnlMatrixOnSpace object');
 
 end

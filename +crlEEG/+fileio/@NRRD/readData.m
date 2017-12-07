@@ -7,7 +7,7 @@ cd(nrrdObj.fpath);
 
 %% Open the appropriate file, and make sure it's closed when done.
 if ~isempty(nrrdObj.data_fname)
-  mydisp(['Reading data from separate file: ' nrrdObj.data_fname]);
+  crlEEG.disp(['Reading data from separate file: ' nrrdObj.data_fname]);
   fid = fopen(nrrdObj.data_fname,'rb');
   assert(fid>0,['Failed to open NRRD data file ' nrrdObj.data_fname]);
 else

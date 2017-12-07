@@ -26,12 +26,12 @@ if ~exist('conSize','var'), conSize = 6; end;
 % end
 
 if ismember(conSize,[6 18 26])
-  mydisp(['Using special case of ' num2str(conSize) ' connectivity']);
+  crlEEG.disp(['Using special case of ' num2str(conSize) ' connectivity']);
 else
-  mydisp(['Connecting to all voxels in neighborhood with radius ' num2str(conSize)]);
+  crlEEG.disp(['Connecting to all voxels in neighborhood with radius ' num2str(conSize)]);
 end;
 
-%mydisp('Starting Computation of Grid Connectivity');
+%crlEEG.disp('Starting Computation of Grid Connectivity');
 
 SpaceSize = grid.sizes;
 
@@ -41,10 +41,10 @@ elseif length(SpaceSize)==2
   SpaceSize = [SpaceSize 1];
 end;
 
-%mydisp('Getting initial grid');
+%crlEEG.disp('Getting initial grid');
 [idxX, idxY, idxZ] = ndgrid(1:SpaceSize(1),1:SpaceSize(2),1:SpaceSize(3));
 
-%mydisp('Preallocating space for neighors');
+%crlEEG.disp('Preallocating space for neighors');
 if ismember(conSize,[6 18 26]);
   idxX2 = kron(idxX(:),ones(conSize,1));
   idxY2 = kron(idxY(:),ones(conSize,1));
@@ -56,29 +56,29 @@ else
   idxZ2 = kron(idxZ(:),ones(nTotal,1));
 end;
 
-%mydisp('Computing neighbor locations');
+%crlEEG.disp('Computing neighbor locations');
 switch conSize
   case 6
     % Convert to Indices of Neighbors
     %idxX2 = idxX2 + kron(ones(numel(idxX),1),[ 1 -1  0  0  0  0 ]');
     %idxY2 = idxY2 + kron(ones(numel(idxY),1),[ 0  0  1 -1  0  0 ]');
     %idxZ2 = idxZ2 + kron(ones(numel(idxZ),1),[ 0  0  0  0  1 -1 ]');
-  %  mydisp('Computing 6-connectivity');
+  %  crlEEG.disp('Computing 6-connectivity');
     idxX2 = idxX2 + repmat([1 -1 0  0 0  0]',numel(idxX),1);
     idxY2 = idxY2 + repmat([0  0 1 -1 0  0]',numel(idxY),1);
     idxZ2 = idxZ2 + repmat([0  0 0  0 1 -1]',numel(idxZ),1);
   case 18
-  %  mydisp('Computing 18-connectivity');
+  %  crlEEG.disp('Computing 18-connectivity');
     idxX2 = idxX2 + repmat([-1 -1 -1 -1 -1  0  0  0  0  0  0  0  0  1  1  1  1  1]',numel(idxX),1);
     idxY2 = idxY2 + repmat([-1  1  0  0  0 -1 -1 -1  0  0  1  1  1 -1  1  0  0  0]',numel(idxY),1);
     idxZ2 = idxZ2 + repmat([ 0  0 -1  1  0 -1  0  1 -1  1 -1  0  1  0  0 -1  1  0]',numel(idxZ),1);
   case 26
-  %  mydisp('Computing 26-connectivity');
+  %  crlEEG.disp('Computing 26-connectivity');
     idxX2 = idxX2 + repmat([-1 -1 -1 -1 -1 -1 -1 -1 -1  0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  1]',numel(idxX),1);
     idxY2 = idxY2 + repmat([-1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1]',numel(idxY),1);
     idxZ2 = idxZ2 + repmat([-1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1]',numel(idxZ),1);
   otherwise
-  %  mydisp(['Computing connectivity in a radius of ' num2str(conSize)]);
+  %  crlEEG.disp(['Computing connectivity in a radius of ' num2str(conSize)]);
     [Xoff Yoff Zoff] = ndgrid(-conSize:conSize,-conSize:conSize,-conSize:conSize);
     test = (Xoff==0)&(Yoff==0)&(Zoff==0);
     Xoff = Xoff(~test);
@@ -90,30 +90,30 @@ switch conSize
 end
 
 % Trim Those that Fall Outside the Image Volume
-%mydisp('Trimming to retain only neighbors within volume');
+%crlEEG.disp('Trimming to retain only neighbors within volume');
 Q = ( ( idxX2<1 ) | ( idxX2>SpaceSize(1) ) | ( idxY2<1 ) | ( idxY2>SpaceSize(2) ) | ( idxZ2<1 ) | ( idxZ2>SpaceSize(3) ) );
 idxX2 = idxX2(~Q); idxY2 = idxY2(~Q); idxZ2 = idxZ2(~Q);
 
 %idxX2(Q)  = []; idxY2(Q)  = []; idxZ2(Q)  = [];
 
 % Column and Row Indexes Into Sparse matrix
-%mydisp('Finding column indices');
+%crlEEG.disp('Finding column indices');
 colIdx    = sub2ind(SpaceSize,idxX2,idxY2,idxZ2);
 
-%mydisp('Finding row indices');
+%crlEEG.disp('Finding row indices');
 rowIdx = 1:prod(SpaceSize);
 rowIdx = kron(rowIdx(:),ones(conSize,1));
 rowIdx = rowIdx(~Q);
 
 if nargout ==1
- % mydisp('Constructing sparse connectivity matrix');
+ % crlEEG.disp('Constructing sparse connectivity matrix');
   varargout{1} = sparse(rowIdx,colIdx,ones(size(colIdx)),prod(SpaceSize),prod(SpaceSize));
 elseif nargout ==2
   varargout{1} = rowIdx;
   varargout{2} = colIdx;
 end;
 
-mydisp('Completed Computation of Connectivity');
+crlEEG.disp('Completed Computation of Connectivity');
 end
 
 

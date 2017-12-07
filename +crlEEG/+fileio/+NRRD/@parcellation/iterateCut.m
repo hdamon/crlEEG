@@ -4,7 +4,7 @@ if ~exist('depth','var'), depth = 0; end;
 if ~exist('avgSize','var'), avgSize = size(cMatrix,1)/nFinal; end;
 if ~exist('cutsPerLvl','var'), cutsPerLvl = 2; end;
 
-mydisp(['Running iterateCut at a depth of ' num2str(depth)]);
+crlEEG.disp(['Running iterateCut at a depth of ' num2str(depth)]);
 
 finalDepth = ceil(log2(nFinal));
 
@@ -51,10 +51,10 @@ for i = 1:size(Ncut,2)
   else
     if size_Cut<cutsPerLvl*avgSize
       % The region is too small to provide 
-      mydisp('Region sufficiently small. Returning final cut.');
+      crlEEG.disp('Region sufficiently small. Returning final cut.');
       Cut = Ncut(:,i);
     else
-      mydisp('Iterating cut');
+      crlEEG.disp('Iterating cut');
       mat1 = cMatrix(Ncut(:,i),Ncut(:,i));
       [tmpCut1] = cnlParcellation.iterateCut(mat1,nFinal,cutsPerLvl,avgSize,depth+1);
       Cut = zeros(size(Ncut,1),size(tmpCut1,2));

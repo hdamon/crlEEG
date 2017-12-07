@@ -42,26 +42,26 @@ graph = cnlImageGraph(nrrdVec.data,3,'voxList',voxLField,'distType',type,...
 tic
 for i = 2:length(segLabels)
 
- mydisp(['Subparcellating Label #' num2str(i)]);
+ crlEEG.disp(['Subparcellating Label #' num2str(i)]);
  voxIdx = find(nrrdIn.data(voxLField)==segLabels(i));
        
- mydisp(['There are ' num2str(length(voxIdx)) ' voxels in this parcel']);
+ crlEEG.disp(['There are ' num2str(length(voxIdx)) ' voxels in this parcel']);
  
  nTarget = length(voxIdx)/avgSize;
  
  if length(voxIdx)>1.5*avgSize
-   mydisp(['Subparcellating into ' num2str(nTarget) ' regions']);
+   crlEEG.disp(['Subparcellating into ' num2str(nTarget) ' regions']);
    Ncut = cnlParcellation.iterateCut(graph.Cmatrix(voxIdx,voxIdx),nTarget);
  else
-   mydisp(['Parcel too small to subparcellate. Leaving as is']);
+   crlEEG.disp(['Parcel too small to subparcellate. Leaving as is']);
    Ncut = ones(length(voxIdx),1);
  end;
  
  cutSize = sum(Ncut,1);
  
- mydisp(['Divided parcel into ' num2str(size(Ncut,2)) ' regions']);
- mydisp(['Maximum size: ' num2str(max(cutSize))]);
- mydisp(['Minimum size: ' num2str(min(cutSize))]);
+ crlEEG.disp(['Divided parcel into ' num2str(size(Ncut,2)) ' regions']);
+ crlEEG.disp(['Maximum size: ' num2str(max(cutSize))]);
+ crlEEG.disp(['Minimum size: ' num2str(min(cutSize))]);
  
  OutImg{i} = Ncut*(1:size(Ncut,2))';
    

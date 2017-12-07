@@ -26,7 +26,7 @@ function [nrrdParcelOut] = mapToSegmentation(nrrdParcel,varargin)
 % Part of the cnlEEG Project
 %
 
-mydisp('Parcellating Segmentation');
+crlEEG.disp('Parcellating Segmentation');
 
 %% Input Parsing
 p = inputParser;
@@ -48,13 +48,13 @@ whitelabel = p.Results.whitelabel;
 parcelMap = cnlParcellation.getMapping(nrrdParcel.parcelType);
 
 % Initialize Output
-mydisp('Initializing Output Parcellation');
+crlEEG.disp('Initializing Output Parcellation');
 nrrdParcelOut = clone(nrrdSeg,nrrdName,nrrdPath);
 nrrdParcelOut = cnlParcellation(nrrdParcelOut,[],nrrdParcel.parcelType);
 nrrdParcelOut.data = zeros(size(nrrdParcelOut.data));
 
 %% Indicies of Cortex/SubCortex/White Matter in Parcellation
-mydisp('Working on cortical labels');
+crlEEG.disp('Working on cortical labels');
 ParcelCortex    = ismember(nrrdParcel.data,[parcelMap.cortexLabels parcelMap.subcorticalLabels]);
 ParcelSubCortex = ismember(nrrdParcel.data,[parcelMap.subcorticalLabels]);
 ParcelWhite     = ismember(nrrdParcel.data,[parcelMap.whiteLabels]);
@@ -81,7 +81,7 @@ nrrdParcelOut.data(segCortexA) = nrrdParcel.data(nearest)    ;
 nrrdParcelOut.data(segCortexB) = nrrdParcel.data(segCortexB) ;
 
 % Do it all again for the white matter
-mydisp('Working on White matter Labels');
+crlEEG.disp('Working on White matter Labels');
 segWhite = nrrdSeg.data==whitelabel;
 segWhiteA = segWhite & (~ParcelWhite);
 segWhiteB = segWhite & ( ParcelWhite);
@@ -100,7 +100,7 @@ nrrdParcelOut.data(segWhiteA) = nrrdParcel.data(nearest);
 nrrdParcelOut.data(segWhiteB) = nrrdParcel.data(segWhiteB);
 
 %nrrdParcelOut = nrrdParcelOut.ensureConnectedParcels;
-mydisp('Done parcellating segmentation');
+crlEEG.disp('Done parcellating segmentation');
 end
 
 function nearest = getNearest(imgSize,targetLoc,startLoc)
