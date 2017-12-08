@@ -32,15 +32,14 @@ if exist(fName,'dir'), fPath = fName; fName = ''; end;
 %% If the file already exists on disk, just load it.
 test = exist(fullfile(fPath,fName),'file');
 if test && (test~=7)
-  crlEEG.disp('Loading Existing Cortical Constraints');
+  crlEEG.disp(['Loading Existing Cortical Constraints From: ' fName]);  
   nrrdCortConst = crlEEG.fileio.NRRD(fName,fPath);
   varargout{1} = nrrdCortConst;
   return;
 end;
 
 %% Compute Constraint Vectors, if Necessary
-crlEEG.disp('Computing Cortical Constraint Vectors from Surface Normals');
-
+crlEEG.disp(['Computing Cortical Constraint Vectors from: ' surfNormImg.fname]);
 % Convert StreamLine Vectors to Cortical Tangents
 nrrdCortConst = clone(surfNormImg, fName,fPath);
 nrrdCortConst.data = -nrrdCortConst.data;
@@ -59,14 +58,14 @@ imgICC = headData.getImage(ref);
 toCheck = find(imgICC.data>0);
 
 % Preemptively remove those voxels which already have vectors.
-crlEEG.disp('Excluding points with vectors already computed');
+%crlEEG.disp('Excluding points with vectors already computed');
 Vectors = nrrdCortConst.data(:,toCheck);
 Vectors = reshape(Vectors,[3,numel(toCheck)]);
 Vectors = sum(Vectors,1);
 toCheck(find(Vectors)) = [];
 
 crlEEG.disp(['Computing Approximate Surface Normals for Voxels ' ...
-  ' Outside Extracted Grey Matter Region']);
+  'Outside Extracted Grey Matter Region']);
 
 Vectors = nrrdCortConst.data;
 
@@ -76,14 +75,14 @@ tic
 nIt = 0;
 while ~done
   nIt = nIt+1;
-  crlEEG.disp([num2str(length(toCheck)) ' Voxels remain to be checked']);
+  %crlEEG.disp([num2str(length(toCheck)) ' Voxels remain to be checked']);
   
   % Loop across voxels and update vector approximations
   for i = 1:length(toCheck)
     index = toCheck(i);
     % Get all vectors in the neighboring regions
     
-    [x y z] = ind2sub(sizes,index);    
+    [x, y, z] = ind2sub(sizes,index);    
     xRange = x-1:x+1; xRange(xRange<1) = []; xRange(xRange>sizes(1)) = [];
     yRange = y-1:y+1; yRange(yRange<1) = []; yRange(yRange>sizes(2)) = [];
     zRange = z-1:z+1; zRange(zRange<1) = []; zRange(zRange>sizes(3)) = [];
@@ -92,7 +91,7 @@ while ~done
     tmpVec = reshape(tmpVec,[3 numel(tmpVec)/3]);
     if any(tmpVec(:))
       % We have some neighbors with vectors
-      [u s v] = svd(tmpVec);
+      [u, s, v] = svd(tmpVec);
       Vectors(:,x,y,z) = u(:,1); % Take the first singular vector as the vector at this point
       toCheck(i) = -1;
     end;
@@ -112,7 +111,7 @@ while ~done
     % loop without doing anything.
     done = true;
   end;
-  disp(['Completed iteration for a total of ' num2str(toc) ' seconds']);
+  %crlEEG.disp(['Completed iteration for a total of ' num2str(toc) ' seconds']);
 end;
 
 % Update the data in the nrrdCortConst object and save

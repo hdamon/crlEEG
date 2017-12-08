@@ -128,10 +128,10 @@ classdef togglePlot < crlEEG.gui.uipanel
     end
     
     function set.yrange(obj,val)
-      disp('setting y range');
+      %disp('setting y range');
       if ~isequal(obj.internalYRange,val)
         obj.internalYRange = val;
-        disp('Updating from y range')
+        %disp('Updating from y range')
         obj.updateImage;
       end;       
     end

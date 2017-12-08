@@ -41,22 +41,20 @@ classdef finiteDifference
   %   (ie: electrode.voxels field is not empty) can not be added after the
   %   model has been configured.
   %
-  % Completing the Configuration
+  % Building the FD Matrix
   % ----------------------------
   %   Once the conductivity map and electrodes have been assigned, the
   %   model needs to be configured prior to constructing the system matrix.
   %   This is done by calling:
   %
-  %   obj = obj.configure;
+  %   obj = obj.build;
   %
   %   Running this method also sets the obj.isConfigured flag to true. Once
   %   configured, the model will no longer allow changes to the electrodes
   %   without changing that flag back to false (which will subsequently
   %   require rerunning the configuration method again).
   %
-  % Building the FD Matrix
-  % ----------------------
-  %   
+  %   This process will typically require some time to complete.
   %   
   %
   % AFTER THE MODEL IS BUILT:

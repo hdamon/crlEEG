@@ -70,9 +70,9 @@ classdef EDF < crlEEG.fileio.baseobj
         p.Unmatched);
     end
     
-    function out = crlEEG.gui.data.timeseries(obj)
+    function out = crlEEG.type.data.timeseries(obj)
       % Convert EDF file to a GUI data object
-      out = crlEEG.gui.data.timeseries(obj.data,obj.labels,...
+      out = crlEEG.type.data.timeseries(obj.data,obj.labels,...
                           'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
     end    
         

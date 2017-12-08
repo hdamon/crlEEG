@@ -7,7 +7,7 @@ classdef timeseries < handle
   % this is used exclusively in the crlEEG.gui rendering package to provide
   % a common interface.
   %
-  % obj = crlEEG.gui.data.timeseries(data,labels,varargin)
+  % obj = crlEEG.type.data.timeseries(data,labels,varargin)
   %
   % Inputs
   % ------
