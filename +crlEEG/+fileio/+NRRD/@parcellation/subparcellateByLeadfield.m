@@ -21,7 +21,7 @@ function nrrdOut = subparcellateByLeadfield(nrrdIn,nrrdVec,type,LeadField,nFinal
 %% Input Parsing
 % p = inputParser;
 % p.addOptional('type','basic');
-% p.addParamValue('nrrdVec',[],@(x) isa(x,'file_NRRD'));
+% p.addParamValue('nrrdVec',[],@(x) isa(x,'crlEEG.fileio.NRRD'));
 % p.addParamValue('LeadField',[],@(x) isa(x,'cnlLeadField'));
 % p.addParamValue('
 

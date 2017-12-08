@@ -1,5 +1,5 @@
 function [varargout] = view(nrrdObj,varargin)
-  % VIEW View slices from a file_NRRD object.
+  % VIEW View slices from a crlEEG.fileio.NRRD object.
   %
   % function nrrdView = view(nrrdObj,varargin)
   %
@@ -12,7 +12,7 @@ function [varargout] = view(nrrdObj,varargin)
    
   p = inputParser;
   p.KeepUnmatched = true;
-  p.addOptional('nrrdOverlay',[],@(x)isa(x,'file_NRRD')||isa(x,'function_handle'));
+  p.addOptional('nrrdOverlay',[],@(x)isa(x,'crlEEG.fileio.NRRD')||isa(x,'function_handle'));
   p.addParamValue('cmap',[]);
   p.addParamValue('disptype',[]);
   p.addParamValue('overalpha',0.5);

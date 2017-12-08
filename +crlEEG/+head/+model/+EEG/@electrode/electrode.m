@@ -1,6 +1,8 @@
 classdef electrode
   % Class for EEG electrode objects in crlEEG
   %
+  % 
+  %
   % Properties:
   % -----------
   %  label          : Electrode Name
@@ -17,6 +19,7 @@ classdef electrode
   % 2009-2017
   %
   
+  %%
   properties
     label
     position
@@ -31,8 +34,10 @@ classdef electrode
     validModelTypes = {'pointModel','completeModel'};
   end
   
+  %%
   methods
     
+    %%
     function obj = electrode(varargin)
       
       % Return an empty object
@@ -161,6 +166,7 @@ classdef electrode
       
     end % END electrode() constructor
     
+    %%
     function obj = validate(obj)
       % Validate match between number of conductivities and number of
       % voxels
@@ -253,34 +259,47 @@ classdef electrode
     
   end
   
+  %%
   methods
     % Calls to the following three methods are redirected to the associated
     % package associated witht he model type.
     %
     
+    %%
+    function outIdx = getNumericIndex(obj,cellIn)
+      % Get the numeric indices associated with specific electrode names.
+      %
+      % Returns NaN's if an electrode requested by name is not present in
+      % the array.
+      %
+      
+      % Just spit it back if it's already numeric.
+      if isnumeric(cellIn)
+        outIdx = cellIn;
+        return;
+      end;
+      
+      assert(iscellstr(cellIn)||ischar(cellIn),'FOOERR');
+      if ischar(cellIn), cellIn = {cellIn}; end;
+      outIdx = zeros(1,numel(cellIn));
+      for idx = 1:numel(outIdx)
+        tmp = find(strcmp(cellIn{idx},{obj.label}));
+        if isempty(tmp), tmp = nan; end;
+        assert(numel(tmp)==1,'Multiple Electrodes Match Requested Label');
+        outIdx(idx) = tmp;
+      end
+    end
+    
+    %%
     function s = struct(obj)
+      % Typecast an electrode object to a struct
       s.label = obj.label;
       s.position = obj.position;
       s.voxels = obj.voxels;
       s.conductivities = obj.conductivities;
       s.impedance = obj.impedance;
       s.model = obj.model;
-    end
-    
-    % Method to get the input currents associated with this electrode
-    function currents = getCurrents(Electrode,ModelSize,Current)
-      currents = crlEEG.headModel.EEG.(Electrode.model).getCurrents(Electrode,ModelSize,Current);
-    end;
-    
-    % Method to Modify the Conductivity of nrrdIn Appropriately
-    function nrrdOut = modifyConductivity(Electrode,nrrdIn)
-      nrrdOut = crlEEG.headModel.EEG.(Electrode.model).modifyConductivity(Electrode,nrrdIn);
-    end;
-    
-    % Method to Modify a Finite Difference Matrix
-    function matOut  = modifyFDMatrix(Electrode,matIn)
-      matOut = crlEEG.headModel.EEG.(Electrode.model).modifyFDMatrix(Electrode,matIn);
-    end;
+    end                
   end
   
 end

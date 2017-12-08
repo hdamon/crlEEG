@@ -2,7 +2,7 @@ function objOut = clone(obj,fname,fpath)
 % function objOut = clone(obj,fname,fpath)
 %
 % Uses the abilities of matlab.mixin.Copyable to create a copy of a
-% file_NRRD object.  Does both a shallow copy of the object, and a
+% crlEEG.fileio.NRRD object.  Does both a shallow copy of the object, and a
 % deep copy of both the header and data files.
 %
 % Written By: Damon Hyde
@@ -34,7 +34,7 @@ if ~obj.hasData&(obj.existsOnDisk)
   obj.readData;
 end;
 
-% Construct a fresh file_NRRD
+% Construct a fresh crlEEG.fileio.NRRD
 objOut = copy(obj); % First copy the NRRD
 
 % Cloned NRRDs are by default write-capable

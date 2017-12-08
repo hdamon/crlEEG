@@ -28,7 +28,7 @@ function [nrrdAnisoCond] = build_FullHeadConductivity(headData,varargin)
 
 % Input Parsing
 p = inputParser;
-addRequired(p,'headData',@(x) isa(x,'crlEEG.headData'));
+addRequired(p,'headData',@(x) isa(x,'crlEEG.head.data'));
 addOptional(p,'fName','',@(x) ischar(x));
 addOptional(p,'fPath','',@(x) ischar(x));
 parse(p,headData,varargin{:});

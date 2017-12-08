@@ -3,7 +3,7 @@ function rangeOut = getImageRange(obj,type,collapseVec)
 %
 % Returns the image range
 
-error('file_NRRD.getImageRange is deprecated. Please cease use.');
+error('crlEEG.fileio.NRRD.getImageRange is deprecated. Please cease use.');
 
 if ~exist('type','var'), type = 'true'; end;
 if ~exist('collapseVec','var'), collapseVec = true; end;
@@ -16,7 +16,7 @@ found = false;
 while ~found
   idx = idx+1;
   if idx>numel(allTypes)
-    error('file_NRRD:unknownType',...
+    error('crlEEG.fileio.NRRD:unknownType',...
       'Unknown display type');
   end
   found = strcmpi(type,allTypes(idx).name);

@@ -1,5 +1,5 @@
 function nrrdView = threeview(nrrdObj,varargin)
-% THREEVIEW - file_NRRD Viewer with Three Viewing Windows
+% THREEVIEW - crlEEG.fileio.NRRD Viewer with Three Viewing Windows
 %
 % function nrrdView = threeview(nrrdObj,varargin)
 %
@@ -8,7 +8,7 @@ function nrrdView = threeview(nrrdObj,varargin)
 %
 
 p = inputParser;
-p.addOptional('nrrdOverlay',[],@(x)isa(x,'file_NRRD')||isa(x,'function_handle'));
+p.addOptional('nrrdOverlay',[],@(x)isa(x,'crlEEG.fileio.NRRD')||isa(x,'function_handle'));
 p.addParamValue('parent',[],@(h) ishandle(h))
 p.addParamValue('origin',[0 0],@(x) isvector(x) && numel(x)==2);
 p.addParamValue('size',[530 530]);
@@ -45,7 +45,7 @@ for idx = 1:3
   viewer{idx}.sliceControl.selectedAxis = idx;
   viewer{idx}.sliceImg.fhnd_linkedUpdate = @()updateAll;
   
-  if isa(nrrdOverlay,'file_NRRD')
+  if isa(nrrdOverlay,'crlEEG.fileio.NRRD')
     viewer{idx}.fhnd_getOverlaySlice = ...
       @(a,b)nrrdOverlay.getSlice('axis',a,'slice',b);
     viewer{idx}.sliceImg.overlayRange = ...
@@ -149,7 +149,7 @@ nrrdView.panel = panel;
 %       'type',colorcontrol.currType,'cmap',colorcontrol.currCMap);
 %
 %     if ~isempty(nrrdOverlay)
-%       if isa(nrrdOverlay,'file_NRRD');
+%       if isa(nrrdOverlay,'crlEEG.fileio.NRRD');
 %       sliceImg{idx}.fhnd_getOverlaySlice = ...
 %         @(a,b)nrrdOverlay.getSlice_RGB('axis',a,'slice',b,...
 %         'type',color2.currType,'cmap',color2.currCMap);

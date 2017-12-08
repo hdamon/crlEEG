@@ -4,7 +4,7 @@ function [varargout] = build_FullCorticalConstraints(headData,surfNormImg,vararg
 % function [nrrdCortConst] = BUILD_FULLCORTICALCONSTRAINTS(headData,fName,fPath)
 %
 % Given a cnlHeadData object whose obj.nrrdCortConst field is not empty,
-% returns a new file_NRRD object with cortical orientation vectors
+% returns a new crlEEG.fileio.NRRD object with cortical orientation vectors
 % interpolated to fill all available white matter and CSF spaces.
 %
 % If no filename is provided, the returned NRRD will have a random
@@ -18,7 +18,7 @@ function [varargout] = build_FullCorticalConstraints(headData,surfNormImg,vararg
 
 %% Input Parsing
 p = inputParser;
-addRequired(p,'headData',@(x) isa(x,'crlEEG.headData'));
+addRequired(p,'headData',@(x) isa(x,'crlEEG.head.data'));
 addRequired(p,'surfNormImg',@(x) isa(x,'crlEEG.fileio.NRRD'));
 addOptional(p,'fName','',@(x) ischar(x));
 addOptional(p,'fPath','',@(x) ischar(x));

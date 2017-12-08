@@ -15,7 +15,7 @@ switch s(1).type
       % Implement obj(indices)
       if iscellstr(s.subs{1})|ischar(s.subs{1})
         % Provided a cell array of strings
-        outIdx = getIdxFromStringCell(s.subs{1});
+        outIdx = obj.getNumericIndex(s.subs{1});
         varargout = {obj(outIdx)};
       else
         % 
@@ -27,7 +27,7 @@ switch s(1).type
       
 %       if iscellstr(s(1).subs{1})|ischar(s(1).subs{1})
 %        % Get the referenced element      
-%        outIdx = getIdxFromStringCell(s(1).subs{1});
+%        outIdx = obj.getNumericIndex(s(1).subs{1});
 %        tmpObj = obj(outIdx);
 %       else
 %         tmpObj = builtin('subsref',obj,s(1));
@@ -59,16 +59,7 @@ switch s(1).type
     error('Not a valid indexing expression')
 end
 
- function outIdx = getIdxFromStringCell(cellIn)
-    assert(iscellstr(cellIn)||ischar(cellIn),'FOOERR');
-    if ischar(cellIn), cellIn = {cellIn}; end;
-    outIdx = zeros(1,numel(cellIn));
-    for idx = 1:numel(outIdx)
-      tmp = find(strcmp(cellIn{idx},{obj.label}));
-      assert(numel(tmp)==1,'Multiple Electrodes Match Requested Label');
-      outIdx(idx) = tmp;
-    end
-  end
+ 
 
 end
 

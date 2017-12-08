@@ -109,9 +109,9 @@ classdef NRRD < crlEEG.fileio.baseobj & matlab.mixin.Copyable
   methods
     
     function obj = NRRD(varargin)
-      % Constructor for file_NRRD objects.
+      % Constructor for crlEEG.fileio.NRRD objects.
       %
-      % function obj = file_NRRD(fname,fpath)
+      % function obj = crlEEG.fileio.NRRD(fname,fpath)
       %
           
       
@@ -255,7 +255,7 @@ classdef NRRD < crlEEG.fileio.baseobj & matlab.mixin.Copyable
     function set.data(obj,val)
       % function set.data(obj,val)
       %
-      % Overloaded set function for file_NRRDData.data.  This does a bunch
+      % Overloaded set function for crlEEG.fileio.NRRDData.data.  This does a bunch
       % of data checking to make sure that the NRRD isn't getting too
       % screwed up.
       %

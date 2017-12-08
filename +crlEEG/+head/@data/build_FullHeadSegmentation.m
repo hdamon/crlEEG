@@ -16,7 +16,7 @@ crlEEG.disp('Building Combined Segmentation from cnlHeadData object.');
 
 % Input Parsing
 p = inputParser;
-addRequired(p,'headData',@(x) isa(x,'crlEEG.headData'));
+addRequired(p,'headData',@(x) isa(x,'crlEEG.head.data'));
 addOptional(p,'fName','',@(x) ischar(x));
 addOptional(p,'fPath','',@(x) ischar(x));
 parse(p,headData,varargin{:});
@@ -30,7 +30,7 @@ if exist(fName,'dir'), fPath = fName; fName = ''; end;
 test = exist(fullfile(fPath,fName),'file');
 if test&&~(test==7) % Don't want directories
   crlEEG.disp('Loading Existing Full Head Segmentation Image');
-  FullSegmentation = file_NRRD(fName,fPath);
+  FullSegmentation = crlEEG.fileio.NRRD(fName,fPath);
   return;
 end;
 

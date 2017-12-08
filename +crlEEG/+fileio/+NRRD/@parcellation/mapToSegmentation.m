@@ -30,7 +30,7 @@ crlEEG.disp('Parcellating Segmentation');
 
 %% Input Parsing
 p = inputParser;
-p.addRequired('nrrdSeg',@(x) isa(x,'file_NRRD'));
+p.addRequired('nrrdSeg',@(x) isa(x,'crlEEG.fileio.NRRD'));
 p.addParamValue('fname'     ,'ParcelOut.nhdr')
 p.addParamValue('fpath'     ,'./'            ,@(x) (exist(x,'dir')) );
 p.addParamValue('greylabel' ,4               ,@(x) isnumeric(x) && (numel(x)==1) );

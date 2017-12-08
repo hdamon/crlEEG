@@ -7,7 +7,7 @@ classdef finiteDifference
   % To construct a finite difference model, execute a call as:
   %    FDModel = crlEEG.head.model.EEG.finiteDifference(nrrdCond)
   %  
-  % Where nrrdCond is a file_NRRD of symmetric conductivity tensors.
+  % Where nrrdCond is a crlEEG.fileio.NRRD of symmetric conductivity tensors.
   %
   % The constructor can also be called without any arguments, but nrrdCond
   % will need to be set before much else can be done.  
@@ -85,7 +85,7 @@ classdef finiteDifference
   % Properties:
   %   fname : File name where finite difference matrix is stored
   %   fpath : Path where the matrix file is stored
-  %   nrrdCond : file_NRRD of conductivity tensors from which the finite
+  %   nrrdCond : crlEEG.fileio.NRRD of conductivity tensors from which the finite
   %                 difference model is constructed
   %   matFDM   : The finite difference matrix itself.  This is a transient
   %                 property that is only stored on disk and not stored 
@@ -326,8 +326,8 @@ classdef finiteDifference
         end;
       end
       
-      % Add auxilliary nodes to incorporate electrode boundary conditions
-      obj = obj.addElectrodesToFDMMatrix; 
+      % Add auxilliary nodes to incorporate electrode boundary conditions      
+      obj.matFDM = obj.addElectrodesToFDMMatrix(matFDM); 
       obj.isBuilt = true;
     end
        
@@ -429,9 +429,9 @@ classdef finiteDifference
      end
      
      %%
-     function obj = addElectrodesToFDMMatrix(obj)
+     function matFDM = addElectrodesToFDMMatrix(obj,matFDM)
        
-       [row,col,val] = find(obj.matFDM);
+       [row,col,val] = find(matFDM);
        
        nNodes = obj.getModelSize('noelec');
        nElec = numel(obj.electrodes);
@@ -481,7 +481,7 @@ classdef finiteDifference
        end
        
        % Build Modified System Matrix
-       obj.matFDM = sparse(row,col,val,...
+       matFDM = sparse(row,col,val,...
                          obj.getModelSize('full'),obj.getModelSize('full'));
        
      end

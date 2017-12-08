@@ -1,6 +1,33 @@
+% Add one or more electrodes to a crlEEG.head.model.EEG.finiteDifference
+% object
+%
+% function obj = addElectrodes(obj,electrodes)
+%
+% finiteDifference.addElectrodes() adds one or more electrodes to the
+% finite difference model. 
+%
+% Electrodes that are already present in the model will not be added again.
+%
+% If the system matrix has already been constructed, additional electrodes
+% can still be added, as long as they do not require modification of the
+% conductivity map. This typically occurs when using the complete electrode
+% model to incorporate implanted ECOG/sEEG electrodes.
+%
+% Inputs:
+% -------
+%   obj : crlEEG.head.model.EEG.finiteDifference object
+%   electrodes : array of crlEEG.head.model.EEG.electrode objects
+%
+% Outputs:
+% --------
+%   obj : crlEEG.head.model.EEG.finiteDifference object with electrodes
+%             added.
+%
+%
+%
+
 function obj = addElectrodes(obj,electrodes)
-  % Add an array of electrodes to the FDM object
-  
+  % Just a loop across the elements of the electrodes array.  
   for i = 1:numel(electrodes)
     obj = addElectrode(obj,electrodes(i));
   end;

@@ -18,7 +18,7 @@ if ~exist('fpath','var'), fpath = './'; end;
 map = cnlParcellation.getMapping(parcel.parcelType);
 
 segOut = clone(parcel,fname,fpath);
-segOut = file_NRRD(segOut);
+segOut = crlEEG.fileio.NRRD(segOut);
 
 segOut.data(ismember(parcel.data,map.cortexLabels)) = 4;
 segOut.data(ismember(parcel.data,map.subcorticalLabels)) = 4;

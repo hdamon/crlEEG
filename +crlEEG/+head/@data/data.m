@@ -8,9 +8,9 @@ classdef data < handle
   % segmentation and associated anisotropic conductivity image.
   %
   % Options and Defaults:
-  % nrrdT1       : file_NRRD Object to T1 Image
-  % nrrdT2       : file_NRRD Object to T2 Image
-  % nrrdDTI      : file_NRRD Object to Single Tensor Image
+  % nrrdT1       : crlEEG.fileio.NRRD Object to T1 Image
+  % nrrdT2       : crlEEG.fileio.NRRD Object to T2 Image
+  % nrrdDTI      : crlEEG.fileio.NRRD Object to Single Tensor Image
   % nrrdSkin     : NRRD file for skin segmentation
   % nrrdSkull    : NRRD file for skull segmentation
   % nrrdICC      : NRRD file for ICC segmentation
@@ -49,7 +49,7 @@ classdef data < handle
     DEFAULT_MODELNAME
   end
   
-  properties (Constant=true,Access=protected)
+  properties (Constant=true,Hidden=true)
     OBJECT_VERSION = '1.0';
      
     % Definition for root options structure

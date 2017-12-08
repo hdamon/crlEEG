@@ -12,7 +12,7 @@ isTensor = (nrrdCond.sizes(1)==6) && ...
 is3D     = sum(nrrdCond.domainDims)==3;
 
 % Assertions
-assert(isNRRD,'Input nrrdCond must be a file_NRRD object');
+assert(isNRRD,'Input nrrdCond must be a crlEEG.fileio.NRRD object');
 assert(isTensor,'Input nrrdCond must be a map of conductivity tensors');
 assert(is3D,'Input nrrdCond must have three spatial dimensions');
 

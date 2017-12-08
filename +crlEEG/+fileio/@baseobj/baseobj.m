@@ -7,6 +7,10 @@ classdef (Abstract) baseobj < handle
 % To use in the constructor for a derived class:
 %    f = obj@FILE(fname,fpath,validExts);
 %
+% crlEEG.fileio.basobj is an abstract class definition for file
+% reader/writer objects. It provides basic filename and path handling, as
+% well as 
+%
 % Creates a file object for the file located at [fpath fname]. Checks that
 % the file extension for fname is in the list validExts.  If fpath is not
 % provided (or is empty), then tries to identify a path from fname.  If

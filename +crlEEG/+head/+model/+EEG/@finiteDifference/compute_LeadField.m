@@ -46,6 +46,11 @@ assert(numel(gndIdx)==numel(elecIdx),...
   ['Number of ground nodes must either be 1 or match the number ' ...
    'of electrode nodes']);
 
+ % Add support for char string and cellstr defined electrodes/grounds
+ gndIdx = obj.electrodes.getNumericIndex(gndIdx);
+ elecIdx = obj.electrodes.getNumericIndex(elecIdx);
+
+ 
 %% Obtain a Mapping from the Initial Solution Space to the Final Desired
 %% Output Space
 if isempty(p.Results.origSolSpace)
