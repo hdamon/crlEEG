@@ -17,7 +17,7 @@ function ptsOut = getGridPoints(grid,idx)
 %
 
 % Get indices of each cell/node, using start-at-zero indexing
-pts = getGridPoints@cnlGrid(grid,IndexType.startatZero);
+pts = getGridPoints@crlEEG.basicobj.grid(grid,IndexType.startatZero);
 
 % Get location of each cell/node
 ptsOut = pts*grid.directions' + repmat(grid.origin,size(pts,1),1);

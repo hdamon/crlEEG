@@ -73,7 +73,7 @@ classdef gridInSpace < crlEEG.basicobj.grid
       p.addOptional('sizes',[1 1 1],      @(x) isnumeric(x) && isvector(x) );
       p.addParamValue('origin',[0 0 0],   @(x) isnumeric(x) && isvector(x) );
       p.addParamValue('directions',eye(3),@(x) isnumeric(x) && ismatrix(x) );
-      p.addParamValue('centering','cell',@(x) validatestring(x,{'cell' 'node'}));
+      p.addParamValue('centering','cell',@(x) ismember(x,{'cell' 'node'}));
       p.parse(varargin{:});
                   
       obj.sizes      = p.Results.sizes;

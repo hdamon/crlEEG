@@ -49,6 +49,15 @@ classdef electrode
         return;
       end;
       
+      % Legacy support for previous crlEEG version
+      if (nargin>0)&&(isa(varargin{1},'cnlElectrodes'))
+        crlEEG.disp('Converting from old cnlElectrodes object');
+        obj = crlEEG.head.model.EEG.electrode(...
+          'label',varargin{1}.Labels,...
+          'position',varargin{1}.Positions);
+        return;
+      end
+      
       % Input Validation Functions
       validateLabels    = @(x) isempty(x)||ischar(x)||iscellstr(x);
       validatePositions = @(x) ismatrix(x)&&any(size(x)==3);
@@ -257,6 +266,9 @@ classdef electrode
       end;                              
     end
     
+    
+    
+    
   end
   
   %%
@@ -264,6 +276,10 @@ classdef electrode
     % Calls to the following three methods are redirected to the associated
     % package associated witht he model type.
     %
+    
+    varargout = plot2D(obj,origin,basis,varargin);
+    varargout = plot3D(obj,varargin);
+    mapToNodes(obj,nrrdIn,mapType,pushToSurf);
     
     %%
     function outIdx = getNumericIndex(obj,cellIn)

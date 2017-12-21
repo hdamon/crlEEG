@@ -141,7 +141,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       
       % Input Checking
       if isempty(val), obj.storedVals.timeseries = []; return; end;
-      crlEEG.assert.instanceOf('crlEEG.type.data.timeseries',val);
+      crlEEG.util.assert.instanceOf('crlEEG.type.data.timeseries',val);
       
       if isfield(obj.storedVals,'timeseries')
         if ~isequal(obj.storedVals.timeseries,val)

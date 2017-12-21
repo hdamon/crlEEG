@@ -2,49 +2,71 @@ function varargout = subsref(obj,s)
 switch s(1).type
   case '.'
     if length(s) == 1
-      % Implement obj.PropertyName
-      varargout = {builtin('subsref',obj,s)};
+      % Implement obj.PropertyName      
+      switch s(1).subs
+        case {'plot3D','plot2D'}
+          % This is really a bit of a hack, and something should be done to
+          % improve this behavior.
+          %obj.(s(1).subs);
+          varargout = {obj.(s(1).subs)};
+          return;
+          
+        otherwise          
+          tmp = cell(size(obj));
+          for i = 1:numel(obj)
+            tmp{i} = builtin('subsref',obj(i),s);
+          end;
+          
+          switch s(1).subs
+            case 'position'
+              % This returns an array
+              varargout = {cat(1,tmp{:})};
+            otherwise
+              % Everything else returns a cell array
+              varargout = {tmp};
+          end;          
+      end;
+      %varargout = {builtin('subsref',obj,s)};
+      
     elseif length(s) == 2 && strcmp(s(2).type,'()')
       % Implement obj.PropertyName(indices)
-      varargout = {builtin('subsref',obj,s)};
+      switch s(1).subs
+        case {'plot2D', 'plot3D'}
+          % This if for calling these with additional arguments
+          %obj.(s(1).subs)(s(2).subs{:});
+          varargout = {obj.(s(1).subs)(s(2).subs{:})};
+        otherwise
+          tmp = obj.subsref(s(1));
+          varargout = {builtin('subsref',tmp,s(2))};
+      end;
+      
     else
       varargout = {builtin('subsref',obj,s)};
     end
+    
   case '()'
     if length(s) == 1
       % Implement obj(indices)
-      if iscellstr(s.subs{1})|ischar(s.subs{1})
-        % Provided a cell array of strings
-        outIdx = obj.getNumericIndex(s.subs{1});
-        varargout = {obj(outIdx)};
-      else
-        % 
-        varargout = {builtin('subsref',obj,s)};
-      end;
+      varargout = {indexObj(obj,s)};     
       
     elseif length(s) == 2 && strcmp(s(2).type,'.')
       % Implement obj(ind).PropertyName
+      [tmpObj,remS] = indexObj(obj,s);
+      varargout = {tmpObj.subsref(remS)};      
       
-%       if iscellstr(s(1).subs{1})|ischar(s(1).subs{1})
-%        % Get the referenced element      
-%        outIdx = obj.getNumericIndex(s(1).subs{1});
-%        tmpObj = obj(outIdx);
-%       else
-%         tmpObj = builtin('subsref',obj,s(1));
-%       end;
-%                   
-%       varargout = {builtin('subsref',tmpObj,s(2))};
-      
-      varargout = {builtin('subsref',obj,s)};
     elseif length(s) == 3 && strcmp(s(2).type,'.') && strcmp(s(3).type,'()')
-      % Implement obj(indices).PropertyName(indices)
-            
-      varargout = {builtin('subsref',obj,s)};
+      % Implement obj(indices).PropertyName(indices)      
+      [tmpObj,remS] = indexObj(obj,s);
+      varargout = {tmpObj.subsref(remS)};
+      
     else
       % Use built-in for any other expression
-      varargout = {builtin('subsref',obj,s)};
+      [tmpObj,remS] = indexObj(obj,s);
+      varargout = {tmpObj.subsref(remS)};
     end
+    
   case '{}'
+    error('Brace indexing not supported by crlEEG.head.model.EEG.electrode');
     if length(s) == 1
       % Implement obj{indices}
       varargout = {builtin('subsref',obj,s)};
@@ -59,8 +81,21 @@ switch s(1).type
     error('Not a valid indexing expression')
 end
 
- 
+
 
 end
 
+
+function [objOut,remS] = indexObj(obj,s)
+
+if iscellstr(s(1).subs{1})||ischar(s(1).subs{1})
+  % Get the referenced element
+  outIdx = obj.getNumericIndex(s(1).subs{1});
+  objOut = obj(outIdx);
+else
+  objOut = builtin('subsref',obj,s(1));
+end;
+
+remS = s(2:end);
+end
 

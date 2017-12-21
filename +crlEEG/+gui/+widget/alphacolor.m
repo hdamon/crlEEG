@@ -511,7 +511,10 @@ classdef alphacolor < handle
     end
     
     function updateGUI(obj)
-      disp('FOO')
+      % If a valid GUI object exists, update the GUI to be consistent with
+      % the internal state of the alphacolor object.%
+      %
+      
       if isempty(obj.gui)||~ishghandle(obj.gui), return; end;
       
       adata = getappdata(obj.gui);

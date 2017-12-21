@@ -32,7 +32,7 @@ switch lower(type)
       nDim = length(obj.sizes);
       newOrigin = obj.origin + (0.5*obj.directions*ones(nDim,1))';
       newDirections = obj.directions;
-      objOut = crlEEG.basicobj.gridInSpace(newSizes,newOrigin,newDirections,'cell');
+      objOut = crlEEG.basicobj.gridInSpace(newSizes,'origin',newOrigin,'directions',newDirections,'centering','cell');
     end
   case 'node'
     if strcmpi(obj.centering,'node')
@@ -42,7 +42,7 @@ switch lower(type)
       nDim = length(obj.sizes);
       newOrigin = obj.origin - (0.5*obj.directions*ones(nDim,1))';
       newDirections = obj.directions;
-      objOut = crlEEG.basicobj.gridInSpace(newSizes,newOrigin,newDirections,'node');
+      objOut = crlEEG.basicobj.gridInSpace(newSizes,'origin',newOrigin,'directions',newDirections,'centering','node');
     end;
   otherwise
     error('Unknown centering type');
