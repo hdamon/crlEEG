@@ -122,5 +122,9 @@ classdef timeseries < handle
       obj.xvals_internal = val;
     end;            
     
+    function out = plot(obj)
+      out = crlEEG.gui.timeseries.interface.dualPlot(obj);
+    end
+    
   end;
 end

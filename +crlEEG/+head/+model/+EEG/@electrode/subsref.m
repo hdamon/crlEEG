@@ -4,12 +4,20 @@ switch s(1).type
     if length(s) == 1
       % Implement obj.PropertyName      
       switch s(1).subs
-        case {'plot3D','plot2D'}
+        case {'plot3D','plot2D','center','basis'}
           % This is really a bit of a hack, and something should be done to
           % improve this behavior.
           %obj.(s(1).subs);
           varargout = {obj.(s(1).subs)};
           return;
+        
+        case {'center'}
+          % More hack code
+          varargout = {obj.center};
+                          
+        case 'basis'
+          % More hack code
+          varargout = {obj.basis};
           
         otherwise          
           tmp = cell(size(obj));
@@ -21,6 +29,7 @@ switch s(1).type
             case 'position'
               % This returns an array
               varargout = {cat(1,tmp{:})};
+                         
             otherwise
               % Everything else returns a cell array
               varargout = {tmp};
@@ -31,7 +40,7 @@ switch s(1).type
     elseif length(s) == 2 && strcmp(s(2).type,'()')
       % Implement obj.PropertyName(indices)
       switch s(1).subs
-        case {'plot2D', 'plot3D'}
+        case {'plot2D', 'plot3D', 'getNumericIndex'}
           % This if for calling these with additional arguments
           %obj.(s(1).subs)(s(2).subs{:});
           varargout = {obj.(s(1).subs)(s(2).subs{:})};
@@ -91,7 +100,11 @@ function [objOut,remS] = indexObj(obj,s)
 if iscellstr(s(1).subs{1})||ischar(s(1).subs{1})
   % Get the referenced element
   outIdx = obj.getNumericIndex(s(1).subs{1});
-  objOut = obj(outIdx);
+  if ~any(isnan(outIdx))
+   objOut = obj(outIdx);
+  else
+    error('Invalid index');
+  end;
 else
   objOut = builtin('subsref',obj,s(1));
 end;

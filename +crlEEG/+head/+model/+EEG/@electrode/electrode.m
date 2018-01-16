@@ -30,6 +30,7 @@ classdef electrode
     model
   end
   
+  
   properties (Constant,Hidden)
     validModelTypes = {'pointModel','completeModel'};
   end
@@ -52,9 +53,14 @@ classdef electrode
       % Legacy support for previous crlEEG version
       if (nargin>0)&&(isa(varargin{1},'cnlElectrodes'))
         crlEEG.disp('Converting from old cnlElectrodes object');
-        obj = crlEEG.head.model.EEG.electrode(...
-          'label',varargin{1}.Labels,...
-          'position',varargin{1}.Positions);
+        
+        opts.label = varargin{1}.Labels;
+        opts.position = varargin{1}.Positions;        
+        opts.voxels = varargin{1}.Voxels;        
+        opts.impedance = varargin{1}.Impedance;       
+        opts.nodes = varargin{1}.Nodes;        
+                  
+        obj = crlEEG.head.model.EEG.electrode(opts);
         return;
       end
       
@@ -149,7 +155,12 @@ classdef electrode
         
         if numel(nodes)==1
           if ~isempty(nodes{1})
-            error('Must provide node list for each electrode individually');
+            if numel(nodes{1})==nElec
+              % Input vector with a single node per electrode
+              nodes = num2cell(nodes{1});
+            else
+             error('Must provide node list for each electrode individually');
+            end;
           else
             nodes = repmat(nodes,1,nElec);
           end;
@@ -267,15 +278,55 @@ classdef electrode
     end
     
     
+    function val = center(obj)
+      % Returns the center of the electrode cloud      
+      val = mean(subsref(obj,substruct('.','position')),1);
+    end
     
+    
+    function val = basis(obj)
+      % Get a set of basis functions for identification of polar
+      % coordinates
+      %      
+      % Generally, it's best to avoid using this, and just get polar
+      % locations from a headNet object, as this will more consistently
+      % have the appropriate fiducials available.
+      %
+      
+      origin = obj.center;
+      
+      try
+        % For clinical EEG systems, use Cz and Nz as the reference points
+        upPos = subsref(obj,substruct('()',{'Cz'}));
+        upPos = upPos.position;
+        frontPos = subsref(obj,substruct('()',{'Nz'}));
+        frontPos = frontPos.position;
+      catch
+        % If that fails, maybe it's an EGI 128 Lead System.
+        try
+          upPos = subsref(obj,substruct('()',{'E80'}));
+          upPos = upPos.position;
+          frontPos = subsref(obj,substruct('()',{'E17'}));
+          frontPos = frontPos.position;
+        catch
+          error('Could not locate an appropriate set of reference points');
+        end;
+      end;
+      
+      vecZ = upPos - origin; vecZ = vecZ./norm(vecZ);
+      vecX = frontPos - origin; vecX = vecX./norm(vecX);
+      vecX = vecX - vecZ*(vecZ*vecX'); vecX = vecX./norm(vecX);
+      
+      vecY = cross(vecZ,vecX);
+      
+      val = [vecX(:) vecY(:) vecZ(:)];
+    end
     
   end
   
   %%
   methods
-    % Calls to the following three methods are redirected to the associated
-    % package associated witht he model type.
-    %
+ 
     
     varargout = plot2D(obj,origin,basis,varargin);
     varargout = plot3D(obj,varargin);

@@ -18,7 +18,12 @@ function varargout = plot2D(elec,varargin)
 %   label : Logical value turning display of labels on/off (Default: OFF)
 %    axis : Handle to axis to display plot in
 %
-
+% Needed Updates
+% --------------
+%  An EEG headnet object should be created that merges the electrode and
+%  fiducial positions, internally stores the reference orientations, and
+%  does the conversion to polar coordinates
+%
 p = inputParser;
 p.addOptional('origin',[],@(x) isequal(size(x),[1 3]));
 p.addOptional('basis',[],@(x) isequal(size(x),[3 3]));
@@ -26,6 +31,7 @@ p.addParamValue('label',false,@(x) islogical(x));
 p.addParamValue('scale',0.95,@(x) isscalar(x));
 p.addParamValue('figure',[],@(x) isa(x,'matlab.ui.Figure'));
 p.addParamValue('axis',[],@(x) isa(x,'matlab.graphics.axis.Axes'));
+p.addParamValue('plotlabels',[],@(x) iscellstr(x));
 p.parse(varargin{:});
 
 labelOn = p.Results.label;
@@ -51,35 +57,39 @@ basis = p.Results.basis;
 
 % Try and compute these if they weren't provided
 if ~exist('origin','var')||isempty(origin)
-  warning('Estimating electrode cloud center. This may not work correctly');
-  origin = mean(subsref(elec,substruct('.','position')),1);
+  origin = elec.center;
+  %warning('Estimating electrode cloud center. This may not work correctly');
+  %origin = mean(subsref(elec,substruct('.','position')),1);
 end;
 
 if ~exist('basis','var')||isempty(basis)
   crlEEG.disp('Attempting to identify an appropriate basis set');
-  try
-   upPos = subsref(elec,substruct('()',{'Cz'}));
-   upPos = upPos.position;
-   frontPos = subsref(elec,substruct('()',{'Nz'}));
-   frontPos = frontPos.position;
-  catch
-    try 
-      upPos = subsref(elec,substruct('()',{'E80'}));
-      upPos = upPos.position;
-      frontPos = subsref(elec,substruct('()',{'E17'}));
-      frontPos = frontPos.position;
-    catch
-      error('Could not locate an appropriate set of reference points');
-    end;
-  end;
-  
-  vecZ = upPos - origin; vecZ = vecZ./norm(vecZ);
-  vecX = frontPos - origin; vecX = vecX./norm(vecX);
-  vecX = vecX - vecZ*(vecZ*vecX'); vecX = vecX./norm(vecX);
-  
-  vecY = cross(vecZ,vecX);
-  
-  basis = [vecX(:) vecY(:) vecZ(:)];              
+  basis = elec.basis;
+%   try
+%    % For clinical EEG systems, use Cz and Nz as the reference points
+%    upPos = subsref(elec,substruct('()',{'Cz'}));
+%    upPos = upPos.position;
+%    frontPos = subsref(elec,substruct('()',{'Nz'}));
+%    frontPos = frontPos.position;
+%   catch
+%     % If that fails, maybe it's an EGI 128 Lead System.
+%     try 
+%       upPos = subsref(elec,substruct('()',{'E80'}));
+%       upPos = upPos.position;
+%       frontPos = subsref(elec,substruct('()',{'E17'}));
+%       frontPos = frontPos.position;
+%     catch
+%       error('Could not locate an appropriate set of reference points');
+%     end;
+%   end;
+%   
+%   vecZ = upPos - origin; vecZ = vecZ./norm(vecZ);
+%   vecX = frontPos - origin; vecX = vecX./norm(vecX);
+%   vecX = vecX - vecZ*(vecZ*vecX'); vecX = vecX./norm(vecX);
+%   
+%   vecY = cross(vecZ,vecX);
+%   
+%   basis = [vecX(:) vecY(:) vecZ(:)];              
 end
 
 % Get positions relative to center
@@ -98,6 +108,12 @@ theta = 2*theta/pi;
 %drawHeadCartoon(gca);
 x = -theta.*sin(phi);
 y = theta.*cos(phi);
+
+if ~isempty(p.Results.plotlabels)
+ idx = elec.getNumericIndex(p.Results.plotlabels);
+ x = x(idx);
+ y = y(idx);
+end;
 
 currHold = ishold(gca);
 hold on;

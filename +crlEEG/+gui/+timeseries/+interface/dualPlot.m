@@ -1,7 +1,7 @@
-classdef dataexplorer < crlEEG.gui.uipanel
+classdef dualPlot < crlEEG.gui.uipanel
   % Tool for exploring time series timeseries
   %
-  % classdef dataexplorer < uitools.baseobjs.gui
+  % classdef dualPlot < uitools.baseobjs.gui
   %
   % Written By: Damon Hyde
   % Last Edited: June 10, 2016
@@ -29,7 +29,7 @@ classdef dataexplorer < crlEEG.gui.uipanel
   
   methods
     
-    function obj = dataexplorer(timeseries,varargin)
+    function obj = dualPlot(timeseries,varargin)
       
       p = inputParser;
       p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
@@ -137,7 +137,7 @@ classdef dataexplorer < crlEEG.gui.uipanel
     end;
     
     function out = get.selectedX(obj)
-      warning('dataexplorer.selectedX is a deprecated property. Use dataexplorer.currIdx instead');
+      warning('dualPlot.selectedX is a deprecated property. Use dualPlot.currIdx instead');
       out = obj.currIdx;
     end
     

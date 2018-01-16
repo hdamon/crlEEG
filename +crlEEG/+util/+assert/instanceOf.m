@@ -1,4 +1,7 @@
 function instanceOf(type,obj)
+% Assert object type and throw as caller is failed.
+%
+%
 
 try
   assert(isa(obj,type),...

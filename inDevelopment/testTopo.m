@@ -8,7 +8,7 @@ function varargout = testTopo(data,x,y,varargin)
   p.addParamValue('cmap',[]);
   p.parse(varargin{:});
  
-  if isempty(p.Results.cmap),
+  if isempty(p.Results.cmap)
     cmap = crlEEG.gui.widget.alphacolor;
     cmap.range = [min(data(:)) max(data(:))];
   else
@@ -21,6 +21,7 @@ function varargout = testTopo(data,x,y,varargin)
   
   x = scale*x; y = scale*y;
   F = scatteredInterpolant(x(:),y(:),data(:));
+  %F.ExtrapolationMethod = 'none';
   
   xGrid = linspace(-diam/2,diam/2,500);
   yGrid = linspace(-diam/2,diam/2,500);
@@ -38,6 +39,8 @@ function varargout = testTopo(data,x,y,varargin)
   holdStatus = ishold(gca);
   hold on;
   topoOut.img = image(xGrid,yGrid,Dimg);
+  topoOut.img.AlphaData = ones(size(D));
+  topoOut.img.AlphaData(isnan(D)) = 0;
   if ~holdStatus, hold off; end;
   
   a = gca; a.YDir = 'normal'; axis off;
