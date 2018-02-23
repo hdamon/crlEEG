@@ -23,7 +23,8 @@ p = inputParser;
 p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
 p.addParamValue('yrange',timeseries.yrange,@(x) isvector(x)&&(numel(x)==2));
-p.addParamValue('scale',0.1,@(x) isnumeric(x)&&numel(x)==1);
+p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
+p.addParamValue('plotAll',false,@(x) islogical(x));
 p.parse(timeseries,varargin{:});
 
 ax = p.Results.ax;
@@ -36,19 +37,29 @@ labels = timeseries.labels;
 if isempty(ax), figure; ax = axes; end;
 axes(ax);
 
+%% For long time series, only render a subset of timepoints      
+if ( size(timeseries,1) > 10000 )&&~p.Results.plotAll
+  useIdx = round(linspace(1,size(timeseries,1),10000));
+  useIdx = unique(useIdx);
+else
+  useIdx = ':';
+end;
+
 % Get data range and scale
 delta = yrange(2)-yrange(1);
-delta = delta*scale;
+
+delta = max(abs(yrange));
 
 % Scale Data
-data = timeseries.data./delta;
+data = timeseries.data(useIdx,:)./delta;
+data = data*scale;
 
 % Plot things.
 hold on;
 for i = 1:size(data,2)
   offset = size(data,2) - (i -1);
-  plotOut(i) = plot(xvals,data(:,i)+offset,'k',...
-    'ButtonDownFcn',get(ax,'ButtonDownFcn'));
+  plotOut(i) = plot(xvals(useIdx),data(:,i)+offset,'k',...
+                      'ButtonDownFcn',get(ax,'ButtonDownFcn'));
  % set(ax,'ButtonDownFcn',get(plotOut(i),'ButtonDownFcn'));
 end;
 

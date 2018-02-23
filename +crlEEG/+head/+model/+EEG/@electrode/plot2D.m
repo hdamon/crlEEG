@@ -52,62 +52,9 @@ else
   axes(p.Results.axis);
 end
 
-origin = p.Results.origin;
-basis = p.Results.basis;
-
-% Try and compute these if they weren't provided
-if ~exist('origin','var')||isempty(origin)
-  origin = elec.center;
-  %warning('Estimating electrode cloud center. This may not work correctly');
-  %origin = mean(subsref(elec,substruct('.','position')),1);
-end;
-
-if ~exist('basis','var')||isempty(basis)
-  crlEEG.disp('Attempting to identify an appropriate basis set');
-  basis = elec.basis;
-%   try
-%    % For clinical EEG systems, use Cz and Nz as the reference points
-%    upPos = subsref(elec,substruct('()',{'Cz'}));
-%    upPos = upPos.position;
-%    frontPos = subsref(elec,substruct('()',{'Nz'}));
-%    frontPos = frontPos.position;
-%   catch
-%     % If that fails, maybe it's an EGI 128 Lead System.
-%     try 
-%       upPos = subsref(elec,substruct('()',{'E80'}));
-%       upPos = upPos.position;
-%       frontPos = subsref(elec,substruct('()',{'E17'}));
-%       frontPos = frontPos.position;
-%     catch
-%       error('Could not locate an appropriate set of reference points');
-%     end;
-%   end;
-%   
-%   vecZ = upPos - origin; vecZ = vecZ./norm(vecZ);
-%   vecX = frontPos - origin; vecX = vecX./norm(vecX);
-%   vecX = vecX - vecZ*(vecZ*vecX'); vecX = vecX./norm(vecX);
-%   
-%   vecY = cross(vecZ,vecX);
-%   
-%   basis = [vecX(:) vecY(:) vecZ(:)];              
-end
-
-% Get positions relative to center
-relPos = subsref(elec,substruct('.','position')) - repmat(origin,numel(elec),1);
-newPos = (basis'*relPos')';
-X = newPos(:,1); Y = newPos(:,2); Z = newPos(:,3);
-
-% Compute Polar Coordinates
-r = sqrt(X.^2 + Y.^2 + Z.^2);
-theta = acos(Z./r);
-phi = atan(Y./X);
-phi(X<0) = phi(X<0) + pi;
-
-%theta = (p.Results.scale/max(theta))*theta;
-theta = 2*theta/pi;
-%drawHeadCartoon(gca);
-x = -theta.*sin(phi);
-y = theta.*cos(phi);
+[x,y] = elec.projPos('origin',p.Results.origin,...
+                     'basis',p.Results.basis,...
+                     'scale',p.Results.scale);
 
 if ~isempty(p.Results.plotlabels)
  idx = elec.getNumericIndex(p.Results.plotlabels);

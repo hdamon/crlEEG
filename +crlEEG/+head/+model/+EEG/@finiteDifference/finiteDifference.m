@@ -76,10 +76,6 @@ classdef finiteDifference
   %
   %  lField = obj.compute_LeadField(elecIdx,gndIdx,baseSolSpace,varargin)
   %
-  % 
-  %
-  %
-  %
   % Properties:
   %   fname : File name where finite difference matrix is stored
   %   fpath : Path where the matrix file is stored

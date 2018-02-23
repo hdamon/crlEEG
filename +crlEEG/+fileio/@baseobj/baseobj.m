@@ -1,5 +1,4 @@
-classdef (Abstract) baseobj < handle
-%
+classdef (Abstract) baseobj < handle 
 % classdef crlEEG.fileio.BASEOBJ < handle
 %
 % Abstract superClass for all other filetypes.
@@ -67,8 +66,8 @@ classdef (Abstract) baseobj < handle
       
       if nargin>0
         
-        % If a crlEEG.fileio.baseobj object was passed in, just copy
-        % parameters.
+        % If a crlEEG.fileio.baseobj object was passed in, return a new
+        % object with the properties copied.
         if isa(varargin{1},'crlEEG.fileio.baseobj')
           obj.fname = varargin{1}.fname;
           obj.fpath = varargin{1}.fpath;   

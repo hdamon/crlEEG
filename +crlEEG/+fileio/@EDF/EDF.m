@@ -67,14 +67,24 @@ classdef EDF < crlEEG.fileio.baseobj
       p.parse(varargin{:});
       
       obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...
-        p.Unmatched);
+                                        p.Unmatched);
     end
     
+    %% Typecasting
     function out = crlEEG.type.data.timeseries(obj)
       % Convert EDF file to a GUI data object
       out = crlEEG.type.data.timeseries(obj.data,obj.labels,...
+                          'yscale',obj.header.PhysDim,...
+                          'samplerate',obj.header.SampleRate,...
                           'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
     end    
+    
+    function out = crlEEG.type.data.EEG(obj)
+      out = crlEEG.type.data.EEG(obj.data,obj.labels,...
+                          'yscale',obj.header.PhysDim,...
+                          'samplerate',obj.header.SampleRate,...
+                          'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
+    end;
         
     function obj = purge(obj)
       % function obj = purge(obj)
@@ -123,7 +133,7 @@ classdef EDF < crlEEG.fileio.baseobj
       currentDIR = pwd;
       cd(obj.fpath);
       [obj.data, obj.header] = sload(obj.fname);
-      obj.detectEpochs;
+      %obj.detectEpochs;
       cd(currentDIR);
     end
     
@@ -135,6 +145,7 @@ classdef EDF < crlEEG.fileio.baseobj
     end
     
     function varargout = plot(obj)
+      %% Open a 
       p = uitools.plots.dataexplorer(obj.data,obj.header.Label);
       p.units = 'normalized';
       if nargout>0, varargout{1} = p; end;
@@ -203,7 +214,8 @@ classdef EDF < crlEEG.fileio.baseobj
       % Returns a cell array with the data for each detected epoch in a
       % separate cell.  Epochs are detected using obj.detectEpochs, and
       % then extracted from obj.data while discarding
-      if isempty(obj.nEpochs), obj.detectEpochs; end;
+      %if isempty(obj.nEpochs), obj.detectEpochs; end;
+      if isempty(obj.nEpochs), out = []; return; end;
       out = cell(1,obj.nEpochs);
       for idx = 1:obj.nEpochs
         out{idx} = obj.data(obj.epochs_start(idx):obj.epochs_end(idx),:);

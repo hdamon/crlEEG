@@ -4,7 +4,7 @@ switch s(1).type
     if length(s) == 1
       % Implement obj.PropertyName      
       switch s(1).subs
-        case {'plot3D','plot2D','center','basis'}
+        case {'plot3D','plot2D','center','basis','projPos'}
           % This is really a bit of a hack, and something should be done to
           % improve this behavior.
           %obj.(s(1).subs);
@@ -40,7 +40,7 @@ switch s(1).type
     elseif length(s) == 2 && strcmp(s(2).type,'()')
       % Implement obj.PropertyName(indices)
       switch s(1).subs
-        case {'plot2D', 'plot3D', 'getNumericIndex'}
+        case {'plot2D', 'plot3D', 'getNumericIndex','projPos'}
           % This if for calling these with additional arguments
           %obj.(s(1).subs)(s(2).subs{:});
           varargout = {obj.(s(1).subs)(s(2).subs{:})};

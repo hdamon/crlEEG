@@ -1,5 +1,5 @@
 function instanceOf(type,obj)
-% Assert object type and throw as caller is failed.
+% Assert object type and throw as caller if failed.
 %
 %
 

@@ -1,6 +1,8 @@
 function varargout = topo(timeseries,timepoint,varargin)
 % Topographic plots of timeseries data
 %
+% function varargout = TOPO(timeseries,timepoint,varargin)
+%
 % Inputs
 % ------
 %   timeseries : Input timeseries object
@@ -41,22 +43,28 @@ ax = p.Results.ax;
 if isempty(ax), figure; ax = axes; end;
 axes(ax);
 
+% Get X-Y Positions for plot
 if ~isempty(headNet)
   % Plot using a headmap object    
   elecPlot = headNet.plot('axis',ax,'plotlabels',timeseries.labels);
-        
-  topoPlot = plotTopo(timeseries.data(timepoint,:),...
-    elecPlot.scatter.XData,...
-    elecPlot.scatter.YData,...
-    p.Unmatched);    
-  uistack(elecPlot.scatter,'top');
-else
-  % Plot using X-Y values
+  X = elecPlot.scatter.XData;
+  Y = elecPlot.scatter.YData;
+else  
   assert(~isempty(p.Results.x)&&~isempty(p.Results.y),...
             'Both X and Y values must be provided');
-  elecPlot = [];
-  topoPlot = plotTopo(data,x,y,p.Unmatched);       
+  X = p.Results.x;
+  Y = p.Results.y;
+  elecPlot.scatter = scatter(X,Y,[],[0 0 0],'filled');
 end
+
+tmpUnits = ax.Units;
+ax.Units = 'pixels';
+minSize = min(ax.Position(3:4));
+ax.Units = tmpUnits;
+
+elecPlot.scatter.SizeData = 0.05*minSize;
+topoPlot = plotTopo(timeseries.data(timepoint,:),X,Y,p.Unmatched);       
+uistack(elecPlot.scatter,'top');
 
 topoOut.figure = gcf;
 topoOut.axis = gca;
@@ -71,13 +79,40 @@ end;
 end
 
 function varargout = plotTopo(data,x,y,varargin)
+  % Actual function for drawing a topographic plot
+  %
+  % function topoOut = PLOTTOPO(data,x,y,varargin)
+  %
+  % Inputs
+  % ------
+  %    data : data to plot
+  %     x,y : X-Y locations of data
+  %   
+  % Param-Value Inputs
+  % ------------------
+  %  'diam'   : Size of plot square
+  %               ( Default : 4 )
+  %  'scale'  : Scaling of input data
+  %               ( Default : 1 )
+  %  'thresh' : Size of circle to plot value inside
+  %               ( Default : 1.6 )
+  %  'cmap' : Colormap to use 
+  %             ( Class : crlEEG.gui.widget.alphacolor )
+  %
+  % Outputs
+  % -------
+  %   topoOut : Structure containing plotted image and alphacolor map.
+  %
+  % Part of the crlEEG Projects
+  % 2009-2017
+  %
 
   % Input Parsing
   p = inputParser;
   p.addParamValue('diam',4);
   p.addParamValue('scale',1);
   p.addParamValue('thresh',1.6);
-  p.addParamValue('cmap',[]);
+  p.addParamValue('cmap',[],@(x) isa(x,'crlEEG.gui.widget.alphacolor'));
   p.parse(varargin{:});
  
   if isempty(p.Results.cmap)

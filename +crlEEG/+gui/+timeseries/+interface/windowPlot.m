@@ -33,12 +33,15 @@ classdef windowPlot < crlEEG.gui.uipanel
     windowStart % Value stored in storedVals.windowStart
     windowEnd   % Value stored in storedVals.windowEnd
     windowSize  % Computed from windowStart and windowEnd
-    
-    windowData
+        
     windowRange
-    windowIdx
-    windowXVals
+    windowIdx    
     windowSeries
+  end
+  
+  properties (Dependent = true, Hidden = true)
+    windowData   % Deprecated. Replacement is obj.windowSeries
+    windowXVals  % Deprecated. Replacement is obj.windowSeries.xvals
   end
   
   properties (Hidden=true,SetAccess=protected)
@@ -85,6 +88,7 @@ classdef windowPlot < crlEEG.gui.uipanel
         @(h,evt) obj.adjustZoom(+1));
       obj.listenTo{end+1} = addlistener(obj.zoomButtons,'rightPushed',...
         @(h,evt) obj.adjustZoom(-1));
+      obj.zoomButtons.BorderType = 'none';
       
       %% Initialize Shift Buttons
       obj.shiftButtons = crlEEG.gui.widget.dualbutton(...
@@ -94,6 +98,7 @@ classdef windowPlot < crlEEG.gui.uipanel
         @(h,evt) obj.shiftWindow(-1));
       obj.listenTo{end+1} = addlistener(obj.shiftButtons,'rightPushed',...
         @(h,evt) obj.shiftWindow(+1));
+      obj.shiftButtons.BorderType = 'none';
       
       %% Initialize Select Buttons
       obj.selButtons = crlEEG.gui.widget.dualbutton(...
@@ -105,6 +110,7 @@ classdef windowPlot < crlEEG.gui.uipanel
         @(h,evt) obj.setStart(h,evt));
       obj.listenTo{end+1} = addlistener(obj.selButtons,'rightPushed',...
         @(h,evt) obj.setEnd(h,evt));
+      obj.selButtons.BorderType = 'none';
       
       obj.resizeInternals;
       
@@ -121,7 +127,8 @@ classdef windowPlot < crlEEG.gui.uipanel
       
       setUnmatched(obj,p.Unmatched);
       
-      obj.updateImage;
+      % Extraneous?
+      %obj.updateImage;
       
     end
     
@@ -189,6 +196,26 @@ classdef windowPlot < crlEEG.gui.uipanel
     
     %% Button Callback Functions
     function shiftWindow(obj,val)
+      % Shift windowPlot selection left or right.
+      %
+      % shiftWindow(obj,val)      
+      %
+      % Inputs
+      % ------
+      %    obj : crlEEG.gui.timeseries.interface.windowPlot object
+      %    val : Amount to shift the window.
+      %             
+      % The distance the window is shifted by is computed as:
+      %      shift = val*obj.shiftScale*obj.windowSize
+      % 
+      %   obj.windowSize is the size of the current window
+      %   obj.shiftScale defaults to 0.1
+      %
+      % For val > 0 : Window is shifted to the right.
+      %     val < 0 : Window is shifted to the left.
+      %  
+      %             
+      
       shift = val*obj.shiftScale*obj.windowSize;
       
       % Always shift by at least one sample
@@ -199,16 +226,25 @@ classdef windowPlot < crlEEG.gui.uipanel
       
       currSize = obj.windowSize;
       if boundLeft
-        obj.windowStart = 1;
-        obj.windowEnd   = obj.windowStart + currSize - 1;
+        newWindowStart = 1;
+        newWindowEnd   = obj.windowStart + currSize - 1;
       elseif boundRght
-        obj.windowStart = size(obj.timeseries,1) - currSize + 1;
-        obj.windowEnd = size(obj.timeseries,1);
+        newWindowStart = size(obj.timeseries,1) - currSize + 1;
+        newWindowEnd = size(obj.timeseries,1);
       else
-        obj.windowStart = obj.windowStart + shift;
-        obj.windowEnd = obj.windowEnd + shift;
+        newWindowStart = obj.windowStart + shift;
+        newWindowEnd = obj.windowEnd + shift;
       end;
-            
+         
+      % Prevents wacky things for large shift values
+      if shift>0
+        obj.windowEnd = newWindowEnd;
+        obj.windowStart = newWindowStart;
+      else
+        obj.windowStart = newWindowStart;
+        obj.windowEnd   = newWindowEnd;
+      end;
+      
     end
     
     function adjustZoom(obj,val)
@@ -249,6 +285,47 @@ classdef windowPlot < crlEEG.gui.uipanel
     
     
     %% Methods for Window Size Setting
+    function setWindow(obj,windowStart,windowEnd)
+      % Set the currently selected range for a windowPlot
+      %
+      % setWindow(obj,windowStart,windowEnd)
+      %
+      % Inputs
+      % ------
+      %   obj : crlEEG.gui.timeseries.interface.windowPlot object
+      %   windowStart : Index to start selection at 
+      %   windowEnd   : Index to end selection at
+      %
+      % windowEnd must be greater than windowStart.
+      %  
+      
+      if ~exist('windowStart','var')||isempty(windowStart)
+        windowStart = obj.storedVals.windowStart;
+      end
+      windowStart = round(min(size(obj.timeseries,1),max(1,windowStart)));
+            
+      if ~exist('windowEnd','var')||isempty(obj.windowEnd) 
+        windowEnd = obj.storedVals.windowEnd; 
+      end;
+      windowEnd = round(min(size(obj.timeseries,1),max(1,windowEnd)));
+      
+      updated = false;
+      if ( obj.storedVals.windowEnd~=windowEnd )
+        obj.storedVals.windowEnd = windowEnd;
+        obj.updateLine(2,obj.storedVals.windowEnd);
+        updated = true;
+      end
+      
+      if ( obj.storedVals.windowStart~=windowStart )
+        obj.storedVals.windowStart = windowStart;
+        obj.updateLine(1,obj.storedVals.windowStart);
+        updated = true;
+      end;
+      
+      if updated, notify(obj,'updatedOut'); end;
+      
+    end
+    
     function set.windowStart(obj,val)
       
       % Window Always Starts at 1 if data is empty
@@ -291,7 +368,9 @@ classdef windowPlot < crlEEG.gui.uipanel
     end;
     
     function set.windowSize(obj,val)
-      
+      % Set selection window size
+      %
+           
       % Do nothing if it's a negative value
       if (val<=0), return; end;
       
@@ -302,7 +381,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       delta = round(delta);
       
       obj.windowStart = obj.windowStart - delta/2;
-      obj.windowEnd = obj.windowEnd + delta/2;
+      obj.windowEnd   = obj.windowEnd + delta/2;
             
     end
     
@@ -316,6 +395,7 @@ classdef windowPlot < crlEEG.gui.uipanel
     end;
     
     function out = get.windowData(obj)
+      % Get method for deprecated property
       warning(['crlEEG.gui.timeseries.interface.windowPlot.windowData '...
                'is deprecated. Use '...
                'crlEEG.gui.timeseries.interface.windowPlot.windowSeries ' ...
@@ -324,6 +404,7 @@ classdef windowPlot < crlEEG.gui.uipanel
     end
     
     function out = get.windowXVals(obj)
+      % Get method for deprecated property
       warning('This functionality is deprecated. use obj.windowSeries.xvals instead');
       out = obj.timeseries.xvals(obj.windowStart:obj.windowEnd);
     end
@@ -336,16 +417,19 @@ classdef windowPlot < crlEEG.gui.uipanel
       if isempty(obj.timeseries), return; end;      
       axes(obj.axes);
             
-      if (size(obj.timeseries,1) < 10000)
-        crlEEG.gui.timeseries.render.butterfly(obj.timeseries,'ax',obj.axes);
-      else
-        % For data sets with greater than 10k data points, only plot a
-        % subsample of the data 
-        useIdx = round(linspace(1,size(obj.timeseries,1),10000));
-        useIdx = unique(useIdx);
-        crlEEG.gui.timeseries.render.butterfly(obj.timeseries(useIdx,:),'ax',obj.axes);
-      end      
+      % For long time series, only render a subset of timepoints
+%       tmpSeries = obj.timeseries;
+%       if ( size(tmpSeries,1) > 10000 )
+%         useIdx = round(linspace(1,size(tmpSeries,1),10000));
+%         useIdx = unique(useIdx);
+%         tmpSeries = tmpSeries(useIdx,:);
+%       end;
       
+      % Actually render it.
+      obj.timeseries.plot('type','butterfly','ax',obj.axes);
+            
+      %crlEEG.gui.timeseries.render.butterfly(obj.timeseries,'ax',obj.axes);
+              
       % Catch zero-length X axes definitions.
       XLim(1) = obj.timeseries.xvals(1); XLim(2) = obj.timeseries.xvals(end);
       if (XLim(1)==XLim(2)),

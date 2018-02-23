@@ -1,6 +1,8 @@
 classdef headNet 
   % A collection of electrodes and fiducials is a headNet
   %
+  % 
+  %
   % Properties
   % ----------
   %    type
@@ -25,33 +27,37 @@ classdef headNet
   end  
   
   properties (Constant,Hidden=true)
-    validTypes = {'10-10','10-20','hd128','hd256'};
+    validTypes = {'10-05', '10-10','10-20','hd128','hd256'};
   end
   
   methods
     function obj = headNet(varargin)
       
-      % Return an empty object
+      %% Return an empty object
       if nargin==0, return; end;
       
-      % 
+      %% Return the input
       if (isa(varargin{1},'headNet'))
         obj = varargin{1};
         return;
       end
       
-      % Legacy Support
+      %% Legacy Support
       if isa(varargin{1},'cnlElectrodes')
         crlEEG.disp('Converting from old cnlElectrodes object');
         
         opts.electrodes = crlEEG.head.model.EEG.electrode(varargin{1});
+        if ~isempty(varargin{1}.FIDLabels)||...
+             ~isempty(varargin{1}.FIDPositions)
         opts.fiducials = crlEEG.head.model.EEG.electrode(...
                                 'label',varargin{1}.FIDLabels,...
                                 'position',varargin{1}.FIDPositions);
+        end;
         obj = headNet(opts);
         return;        
       end
       
+      %% Input Parsing
       p = inputParser;
       p.addParamValue('type',[]);
       p.addParamValue('electrodes',[],...
@@ -70,11 +76,11 @@ classdef headNet
       p.parse(varargin{:});
       
       
-      
+      %% Set the Electrode Configuration
       if ~isempty(p.Results.electrodes)
         obj.electrodes = p.Results.electrodes;
       else
-        obj.electrodes = crlEEG.head.model.EEG.electrodes(...
+        obj.electrodes = crlEEG.head.model.EEG.electrode(...
                             'label',p.Results.elecLabel,...
                             'position',p.Results.elecPosition,...
                             'voxels',p.Results.elecVoxels,...
@@ -84,6 +90,9 @@ classdef headNet
                             'model',p.Results.elecModel);
       end
       
+      %% Set the headnet type
+      %
+      % If not provided, try to discover it.
       if ~isempty(p.Results.type)
         obj.type = p.Results.type;
       else
@@ -95,9 +104,13 @@ classdef headNet
       if ~isempty(p.Results.fiducials)
         obj.fiducials = p.Results.fiducials;
       else
-        obj.fiducials = crlEEG.head.model.EEG.electrodes(...
+        if ~isempty(p.Results.fidLabel)
+          obj.fiducials = crlEEG.head.model.EEG.electrode(...
                             'label',p.Results.fidLabel,...
                             'position',p.Results.fidPosition);
+        else
+          obj.fiducials = crlEEG.head.model.EEG.electrode;
+        end
       end;
             
     end
@@ -112,8 +125,11 @@ classdef headNet
           type = 'hd128';
         case 256
           type = 'hd256';
+        case 329
+          type = '10-05';
         otherwise
-          error('Unable to identify head net type');
+          type = 'unknown';
+          %error('Unable to identify head net type');
       end      
     end
     
@@ -180,9 +196,19 @@ classdef headNet
       val = [vecX(:) vecY(:) vecZ(:)];      
                   
     end
+    
+    function [x,y] = projPos(net)
+      % Get the X-Y positions of each electrode projected onto a 2D circle.
+      [x,y] = net.electrodes.projPos(net.center,net.basis);
+    end
+    
 
-    function out = plot(obj,varargin)
+    function out = plot2D(obj,varargin)
       out = obj.electrodes.plot2D('origin',obj.center,'basis',obj.basis,varargin{:});
+    end
+    
+    function out = plot3D(obj,varargin)
+      out = obj.electrodes.plot3D(varargin{:});
     end
     
   end

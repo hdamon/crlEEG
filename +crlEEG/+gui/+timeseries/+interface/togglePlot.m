@@ -4,7 +4,26 @@ classdef togglePlot < crlEEG.gui.uipanel
   % classdef toggle < uitools.cnlUIObj
   %
   % Provides a UI interface for toggling between a split and a butterfly
-  % plot.
+  % plot. Allows interactive selection of a subset of channels for display.
+  %
+  % Properties:
+  %    yrange : Initially set to 
+  %
+  % Settable Properties
+  % ---------
+  %    timeseries : crlEEG.type.data.timeseries object to display
+  %    
+  %    
+  % By default, togglePlot displays all channels in the input timeseries.
+  % It can be configured to display only a subset of channels using the
+  % following properties:
+  %    displayRange : 1x2 array with First/Last channels to display
+  %    nDisplay     : Dependent property. When set, adjusts the values
+  %                     in displayRange to display the requested number
+  %                     of channels.
+  % A toggleplot can only display a contiguous block of channels. This is
+  % to permit well defined shifting of the display channels through the two
+  % buttons on the right hand side.
   %
   % Written By: Damon Hyde
   % Last Edited: June 1, 2016
@@ -31,6 +50,7 @@ classdef togglePlot < crlEEG.gui.uipanel
   end
   
   properties (Hidden=true,Dependent)
+    displayChannels
     displayRange
     nDisplay
   end
@@ -38,6 +58,7 @@ classdef togglePlot < crlEEG.gui.uipanel
   properties (Access=private)
     internalYRange
     internalChan    
+    numChan
   end
   
   methods
@@ -50,7 +71,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));      
       p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));      
       p.addParamValue('yrange',[],@(x) isvector(x)&&(numel(x)==2));
-      p.addParamValue('scale',0.5,@(x) isnumeric(x)&&numel(x)==1);
+      p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
            
       parse(p,timeseries,varargin{:});
                   
@@ -67,7 +88,7 @@ classdef togglePlot < crlEEG.gui.uipanel
         'String','Split/Butterfly');%,...
         %'Units','pixels',...
         %'Position',[5 5 100 20]);
-      set(obj.toggleBtn,'Callback',@(h,evt)obj.toggleSplit);
+      set(obj.toggleBtn,'Callback',@(h,evt) obj.toggleSplit);
       %set(obj.toggleBtn,'Units','normalized');
      
                        
@@ -98,9 +119,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       obj.scale  = p.Results.scale;      
             
       % Select Channels to Display. Up to 30 is the default.
-      nDisp = 30;
-      if size(obj.timeseries.data,2)<nDisp, nDisp = size(obj.timeseries.data,2); end;
-      obj.displayRange = [1 nDisp];
+
       
       % Set Desired UIPanel properties
       obj.setUnmatched(p.Unmatched);
@@ -119,6 +138,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       end;
     end
     
+    %% Get/Set yrange
     function val = get.yrange(obj)
       if ~isempty(obj.internalYRange)
         val = obj.internalYRange;
@@ -127,25 +147,33 @@ classdef togglePlot < crlEEG.gui.uipanel
       end;
     end
     
-    function set.yrange(obj,val)
-      %disp('setting y range');
+    function set.yrange(obj,val)      
       if ~isequal(obj.internalYRange,val)
-        obj.internalYRange = val;
-        %disp('Updating from y range')
+        obj.internalYRange = val;        
         obj.updateImage;
       end;       
     end
     
+    %% Set method for internal timeseries
     function set.timeseries(obj,val)
       assert(isa(val,'crlEEG.type.data.timeseries'),...
               'Must be a crlEEG.type.data.timeseries object');            
       if ~isequal(obj.timeseries,val)
         % Only update if there's a change.
         obj.timeseries = val;  
+        obj.checkChan;
         obj.updateImage;
       end;
     end
     
+    function checkChan(obj)
+      if size(obj.timeseries,2)~=obj.numChan
+        obj.internalChan = [];
+        obj.numChan = size(obj.timeseries,2);
+      end;        
+    end
+    
+    %% 
     function resizeToggleplot(obj)
       % Callback to adjust internal sizings of toggleplot uipanel when
       % parent panel is resized.
@@ -178,7 +206,8 @@ classdef togglePlot < crlEEG.gui.uipanel
       set(obj.axes,'Position',axesPos);
       
       % Shift Buttons
-      btnHeight = (ySize-axesPos(2)-5)/2;
+      btnHeight = (ySize-axesPos(2)-5)/2;      
+      if btnHeight <= 0, btnHeight = 1; end;
       set(obj.shiftBtn(1),'Units','pixels');
       set(obj.shiftBtn(1),'Position',[xSize-btnWidth axesPos(2) btnWidth btnHeight]);
       
@@ -191,19 +220,21 @@ classdef togglePlot < crlEEG.gui.uipanel
     
     %% Get/Set for obj.nDisplay
     function out = get.nDisplay(obj)
+      % Get method for togglePlot.nDisplay
       tmp = obj.displayRange;
       out = tmp(2) - tmp(1) + 1;
     end;
     
     function set.nDisplay(obj,val)
+      % Set method for togglePlot.nDisplay
       val = round(val);
       if val==obj.nDisplay
         return;        
       else
-        % Reduce Number of Channels
+        % Change Number of Channels
         currRange = obj.displayRange;
         
-        newRange = [currRange(1) currRange(1)+val];        
+        newRange = [currRange(1) currRange(1)+val-1];        
         
         % If we go off the end, add it to the beginning instead
         if newRange(2)>size(obj.timeseries,2)
@@ -212,16 +243,21 @@ classdef togglePlot < crlEEG.gui.uipanel
           newRange(1) = newRange(1) - extraLen;
         end
         
-        % Can go before the first index
+        % Can't go before the first index
         if newRange(1)<1, newRange(1) = 1; end;
         
+        % Consistency check
+        if newRange(2)<newRange(1), newRange(2) = newRange(1); end;
+        
         obj.displayRange = newRange;
+        %obj.updateImage;
       end;      
     end
     
-    %% Get/Set for obj.displayChannels
+    %% Get/Set for obj.displayRange
     function set.displayRange(obj,val)
       % Set the range of channels to display in the split toggleplot.
+      %
       assert(isnumeric(val)&&(numel(val)==2),...
         'Input must be a numeric vector with two elements');
       
@@ -239,16 +275,37 @@ classdef togglePlot < crlEEG.gui.uipanel
       end;
     end
     
-    function val = get.displayRange(obj)      
-      if obj.internalChan(2)>size(obj.timeseries,2)
-        obj.internalChan(2) = size(obj.timeseries,2);
+    function val = get.displayRange(obj)
+      if ~isempty(obj.internalChan)
+        if obj.internalChan(2)>size(obj.timeseries,2)
+          % This might be unnecessary?
+          obj.internalChan(2) = size(obj.timeseries,2);
+        end;
+        val = obj.internalChan;
+      else
+        % Default if it hasn't been set yet.
+        nDisp = 30;
+        if size(obj.timeseries.data,2)<nDisp, nDisp = size(obj.timeseries.data,2); end;
+        val = [1 nDisp];
       end;
-      val = obj.internalChan;
     end
     
-    function shiftDisplayed(obj,shiftDir)    
+    function shiftDisplayed(obj,shiftDir,shiftDist)    
       % Shift the window on which channels are displayed
-      shift = shiftDir*round(0.25*obj.nDisplay);
+      %
+      % SHIFTDISPLAYED(obj,shiftDir,shiftDist)
+      %
+      % Inputs
+      % ------
+      %   shiftDir : Direction (Typically +1/-1) to shift display
+      %   shiftDist : (Optional) Distance to shift the display as a
+      %                 fraction of the number of currently displayed
+      %                 channels.  DEFAULT: 0.25
+
+      
+      if ~exist('shiftDist','var'), shiftDist = 0.25; end;
+      
+      shift = shiftDir*round(shiftDist*obj.nDisplay);
       if shift==0, shift = 1; end;
       
       newRange = obj.displayRange +shift;
@@ -261,31 +318,48 @@ classdef togglePlot < crlEEG.gui.uipanel
         newRange = newRange - (newRange(2)-size(obj.timeseries,2));
       end;
       
+      if newRange(2)<newRange(1)
+        keyboard;
+      end;
+      
       obj.displayRange = newRange;            
     end
     
     %%
     function toggleSplit(obj)
       % Callback for toggle between a split and butterfly plot
+      %
       obj.doSplit = ~obj.doSplit;
       obj.updateImage;
     end
       
     %%
     function updateImage(obj)      
+      % Update the image displayed in the toggleplot
+      %      
       try
         % Clear axis, and make sure the next plot doesn't modify callbacks
         cla(obj.axes);
         set(obj.axes,'NextPlot','add');
         
+%         tmpSeries = obj.timeseries;
+%         if ( size(tmpSeries,1) > 10000 )
+%           useIdx = round(linspace(1,size(tmpSeries,1),10000));
+%           useIdx = unique(useIdx);
+%           tmpSeries = tmpSeries(useIdx,:);
+%         end;
+        
         % Plot
         if obj.doSplit % Do a split plot
-          dispChan = obj.displayRange(1):obj.displayRange(2);
+          dispChan = obj.displayRange(1):obj.displayRange(2);          
+          
           obj.plot = crlEEG.gui.timeseries.render.split(obj.timeseries(:,dispChan),obj.axes,...
             'yrange',obj.yrange,'scale',obj.scale);
         else % Just do a butterfly plot
-          obj.plot = crlEEG.gui.timeseries.render.butterfly(obj.timeseries,obj.axes,...
-            'yrange',obj.yrange);
+          obj.plot = crlEEG.gui.timeseries.render.butterfly(...
+                                                obj.timeseries,obj.axes,...
+                                                'yrange',obj.yrange,...
+                                                'scale',obj.scale);
         end;
         
         notify(obj,'updatedOut');

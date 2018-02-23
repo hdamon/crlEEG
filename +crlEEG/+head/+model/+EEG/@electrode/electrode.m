@@ -322,6 +322,46 @@ classdef electrode
       val = [vecX(:) vecY(:) vecZ(:)];
     end
     
+    function [x,y] = projPos(elec,varargin)
+      % Get electrode positions projected into a 2D plane using spherical
+      % coordinates.
+      
+      p = inputParser;
+      p.addOptional('origin',[],@(x) isempty(x)||isequal(size(x),[1 3]));
+      p.addOptional('basis',[],@(x) isempty(x)||isequal(size(x),[3 3]));
+      p.addParamValue('scale',0.95,@(x) isscalar(x));
+      p.parse(varargin{:});
+      
+      origin = p.Results.origin;
+      basis = p.Results.basis;
+      
+      % Try and compute these if they weren't provided
+      if ~exist('origin','var')||isempty(origin)
+        origin = elec.center;
+      end;
+      
+      if ~exist('basis','var')||isempty(basis)        
+        basis = elec.basis;
+      end
+      
+      % Get positions relative to center
+      relPos = subsref(elec,substruct('.','position')) - repmat(origin,numel(elec),1);
+      newPos = (basis'*relPos')';
+      X = newPos(:,1); Y = newPos(:,2); Z = newPos(:,3);
+      
+      % Compute Polar Coordinates
+      r = sqrt(X.^2 + Y.^2 + Z.^2);
+      theta = acos(Z./r);
+      phi = atan(Y./X);
+      phi(X<0) = phi(X<0) + pi;
+      
+      %theta = (p.Results.scale/max(theta))*theta;
+      theta = 2*theta/pi;
+      %drawHeadCartoon(gca);
+      x = -theta.*sin(phi);
+      y = theta.*cos(phi);
+    end
+    
   end
   
   %%

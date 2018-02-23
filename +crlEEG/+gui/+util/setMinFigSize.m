@@ -10,7 +10,7 @@ function setMinFigSize(figureH,uiObj,border)
 % Part of the cnlEEG Project
 %
 
-if ~exist('border','var'), border = [10 10 10 10]; end;
+if ~exist('border','var'), border = [2 2 2 2]; end;
 
 objUnits = get(uiObj,'Units');
 figUnits = get(figureH,'Units');
