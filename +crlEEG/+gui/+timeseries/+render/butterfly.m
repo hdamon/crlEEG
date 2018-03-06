@@ -1,10 +1,10 @@
-function plotOut = butterfly(timeseries,varargin)
-% Butterfly timeseries plot
+function plotOut = butterfly(tseries,varargin)
+% Butterfly tseries plot
 %
-% plotOut = BUTTERFLY(timeseries,varargin)
+% plotOut = BUTTERFLY(tseries,varargin)
 %
 % Required Inputs:
-%   timeseries :  Nsamples x Nchannels Data Matrix
+%   tseries :  Nsamples x Nchannels Data Matrix
 % 
 % Optional Inputs:
 %   'ax'     : Handle to a matlab axis to display in
@@ -23,15 +23,18 @@ function plotOut = butterfly(timeseries,varargin)
 
 %% Input Parsing
 p = inputParser;
-p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
-p.addParamValue('yrange',timeseries.yrange,@(x) isvector(x)&&(numel(x)==2));
+p.addParamValue('xrange',tseries.xrange,@(x) isvector(x)&&(numel(x)==2));
+p.addParamValue('yrange',tseries.yrange,@(x) isvector(x)&&(numel(x)==2));
 p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
 p.addParamValue('plotAll',false,@(x) islogical(x));
-p.parse(timeseries,varargin{:});
+p.parse(tseries,varargin{:});
 
 ax = p.Results.ax;
-xvals = timeseries.xvals;
+
+xvals = tseries.xvals;
+xrange = p.Results.xrange;
 yrange = p.Results.yrange;
 
 %% Shift to appropriate axes, or open a new one.
@@ -39,32 +42,45 @@ if isempty(ax), figure; ax = axes; end;
 axes(ax);
 
 % If plotting a single timepoint, use X's.
-if numel(xvals)==1, plotOpts = 'kx';
-else                plotOpts = 'k';  end;
+if numel(xvals)==1, plotOpts = 'x';
+else                plotOpts = '';  end;
 
 %% For long time series, only render a subset of timepoints      
-if ( size(timeseries,1) > 10000 )&&~p.Results.plotAll
-  useIdx = round(linspace(1,size(timeseries,1),10000));
+if ( size(tseries,1) > 10000 )&&~p.Results.plotAll
+  useIdx = round(linspace(1,size(tseries,1),10000));
   useIdx = unique(useIdx);
 else
   useIdx = ':';
 end;
 
 %% Plot!
-%plotOut = plot(xvals,timeseries.data,plotOpts);
-plotOut = plot(xvals(useIdx),timeseries.data(useIdx,:),plotOpts,'ButtonDownFcn',get(ax,'ButtonDownFcn'));
-%set(ax,'ButtonDownFcn',get(plotOut(1),'ButtonDownFcn'));
+%plotOut = plot(xvals,tseries.data,plotOpts);
+tmpData = tseries.getPlotData;
+tmpData = tmpData(useIdx,:);
 
-% Modify X Limits is plotting a single timepoint.
-XLim = [xvals(1) xvals(end)];
+boolChans = tseries.isBoolChannel;
+
+ax.NextPlot = 'add';
+plotOut = plot(xvals(useIdx),tmpData(:,~boolChans),['k' plotOpts],'ButtonDownFcn',get(ax,'ButtonDownFcn'));
+
+if any(boolChans)
+  ax.NextPlot = 'add';
+  tmp = plot(xvals(useIdx),tmpData(:,boolChans),[plotOpts], ...
+            'linewidth',2,'ButtonDownFcn',get(ax,'ButtonDownFcn'));
+  plotOut = [plotOut ; tmp];
+end;
+
+% Modify X Limits if plotting a single timepoint.
+XLim = p.Results.xrange;
 if XLim(1)==XLim(2), XLim = XLim + [-0.1 0.1]; end;
+ax.XLim = XLim;
 
 % Make the y limits symmetric.
 YLim = max(abs(yrange));
 if YLim(1)==0, YLim = 0.1; end;
 YLim = YLim./p.Results.scale;
+ax.YLim = [-YLim YLim];
 
-axis([XLim(1) XLim(2) -YLim YLim]);
 
 % Set Yticks.
 ticks = linspace(0,YLim,6);

@@ -42,6 +42,7 @@ classdef togglePlot < crlEEG.gui.uipanel
   end
   
   properties (Dependent)
+    xrange
     yrange
   end
   properties (Hidden=true)
@@ -56,6 +57,7 @@ classdef togglePlot < crlEEG.gui.uipanel
   end
   
   properties (Access=private)
+    internalXRange
     internalYRange
     internalChan    
     numChan
@@ -114,9 +116,10 @@ classdef togglePlot < crlEEG.gui.uipanel
       obj.Position = [10 10 600 600];
       
       %% Set Property Values
+       obj.yrange = p.Results.yrange;
+      obj.scale  = p.Results.scale;
       obj.timeseries   = p.Results.timeseries;      
-      obj.yrange = p.Results.yrange;
-      obj.scale  = p.Results.scale;      
+           
             
       % Select Channels to Display. Up to 30 is the default.
 
@@ -124,7 +127,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       % Set Desired UIPanel properties
       obj.setUnmatched(p.Unmatched);
       
-      crlEEG.gui.util.setMinFigSize(gcf,obj);
+      %crlEEG.gui.util.setMinFigSize(gcf,obj);
       
       %% Do Initial Display of Plot
       obj.updateImage;
@@ -154,16 +157,34 @@ classdef togglePlot < crlEEG.gui.uipanel
       end;       
     end
     
+    function val = get.xrange(obj)
+      if ~isempty(obj.internalXRange)
+        val = obj.internalXRange;
+      else
+        val = obj.timeseries.xrange;
+      end;
+    end
+    
+    function set.xrange(obj,val)      
+      if ~isequal(obj.internalXRange,val)
+        obj.internalXRange = val;        
+        if ishghandle(obj.plot)
+          keyboard;
+        end;
+      end;       
+    end
+    
+    
     %% Set method for internal timeseries
     function set.timeseries(obj,val)
       assert(isa(val,'crlEEG.type.data.timeseries'),...
               'Must be a crlEEG.type.data.timeseries object');            
-      if ~isequal(obj.timeseries,val)
+     % if ~isequal(obj.timeseries,val)
         % Only update if there's a change.
         obj.timeseries = val;  
         obj.checkChan;
         obj.updateImage;
-      end;
+      %end;
     end
     
     function checkChan(obj)
@@ -339,9 +360,8 @@ classdef togglePlot < crlEEG.gui.uipanel
       %      
       try
         % Clear axis, and make sure the next plot doesn't modify callbacks
-        cla(obj.axes);
-        set(obj.axes,'NextPlot','add');
-        
+        cla(obj.axes,'reset');
+                
 %         tmpSeries = obj.timeseries;
 %         if ( size(tmpSeries,1) > 10000 )
 %           useIdx = round(linspace(1,size(tmpSeries,1),10000));
@@ -354,16 +374,19 @@ classdef togglePlot < crlEEG.gui.uipanel
           dispChan = obj.displayRange(1):obj.displayRange(2);          
           
           obj.plot = crlEEG.gui.timeseries.render.split(obj.timeseries(:,dispChan),obj.axes,...
-            'yrange',obj.yrange,'scale',obj.scale);
+            'xrange',obj.xrange,'yrange',obj.yrange,'scale',obj.scale);
         else % Just do a butterfly plot
           obj.plot = crlEEG.gui.timeseries.render.butterfly(...
                                                 obj.timeseries,obj.axes,...
+                                                'xrange',obj.xrange,...
                                                 'yrange',obj.yrange,...
                                                 'scale',obj.scale);
         end;
         
         notify(obj,'updatedOut');
       catch
+        % This is a bit of a stupid thing, because I'm using it to avoid
+        % explicitly checking to see whether I can plot or not.
       end;
     end
     

@@ -215,7 +215,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       %     val < 0 : Window is shifted to the left.
       %  
       %             
-      
+      disp('Shifting Window');
       shift = val*obj.shiftScale*obj.windowSize;
       
       % Always shift by at least one sample
@@ -236,15 +236,17 @@ classdef windowPlot < crlEEG.gui.uipanel
         newWindowEnd = obj.windowEnd + shift;
       end;
          
-      % Prevents wacky things for large shift values
-      if shift>0
-        obj.windowEnd = newWindowEnd;
-        obj.windowStart = newWindowStart;
-      else
-        obj.windowStart = newWindowStart;
-        obj.windowEnd   = newWindowEnd;
-      end;
+      obj.setWindow(newWindowStart,newWindowEnd);
       
+      % Prevents wacky things for large shift values
+%       if shift>0
+%         obj.windowEnd = newWindowEnd;
+%         obj.windowStart = newWindowStart;
+%       else
+%         obj.windowStart = newWindowStart;
+%         obj.windowEnd   = newWindowEnd;
+%       end;
+      toc
     end
     
     function adjustZoom(obj,val)

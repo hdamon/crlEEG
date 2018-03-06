@@ -31,6 +31,21 @@ classdef EEG < crlEEG.type.data.timeseries
             
     end    
     
+    function decompose(obj,varargin)
+      % Run one of a range of decompositions
+      p = inputParser;
+      p.KeepUnmatched = true;
+      p.addParameter('type','timefrequency');
+      p.addParameter('method','eeglab');
+      p.parse(varargin{:});                  
+    end    
+    
+    function n = numArgumentsFromSubscript(obj,s,indexingContext)
+      
+      n = numArgumentsFromSubscript@crlEEG.type.data.timeseries(...
+                  obj,s,indexingContext);
+    end
+    
   end
   
 end

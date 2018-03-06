@@ -24,6 +24,7 @@ classdef selectChannelsFromTimeseries < handle
   properties (Access=private)
     gui
     inputInternal
+    outputInternal
     origChannels
   end
   

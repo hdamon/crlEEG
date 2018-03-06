@@ -1,4 +1,4 @@
-function plotOut = split(timeseries,varargin)
+function plotOut = split(tseries,varargin)
 % Split Data Plot With Labels
 %
 % THIS HELP IS OUT OF DATE AND NEEDS TO BE REWRITTEN
@@ -20,50 +20,57 @@ function plotOut = split(timeseries,varargin)
 
 %% Input Parsing
 p = inputParser;
-p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
-p.addParamValue('yrange',timeseries.yrange,@(x) isvector(x)&&(numel(x)==2));
+p.addParamValue('xrange',tseries.xrange,@(x) isvector(x)&&(numel(x)==2));
+p.addParamValue('yrange',tseries.yrange,@(x) isvector(x)&&(numel(x)==2));
 p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
 p.addParamValue('plotAll',false,@(x) islogical(x));
-p.parse(timeseries,varargin{:});
+p.parse(tseries,varargin{:});
 
 ax = p.Results.ax;
+xrange = p.Results.xrange;
 yrange = p.Results.yrange;
 scale = p.Results.scale;
-xvals = timeseries.xvals;
-labels = timeseries.labels;
+xvals = tseries.xvals;
+labels = tseries.labels;
 
 %% If no axis provided, open a new figure with Axes
 if isempty(ax), figure; ax = axes; end;
 axes(ax);
 
 %% For long time series, only render a subset of timepoints      
-if ( size(timeseries,1) > 10000 )&&~p.Results.plotAll
-  useIdx = round(linspace(1,size(timeseries,1),10000));
+if ( size(tseries,1) > 10000 )&&~p.Results.plotAll
+  useIdx = round(linspace(1,size(tseries,1),10000));
   useIdx = unique(useIdx);
 else
   useIdx = ':';
 end;
 
 % Get data range and scale
-delta = yrange(2)-yrange(1);
-
+%delta = yrange(2)-yrange(1);
 delta = max(abs(yrange));
 
-% Scale Data
-data = timeseries.data(useIdx,:)./delta;
-data = data*scale;
+boolChan = tseries.isBoolChannel;
+data = tseries.getPlotData;
+data = scale * ( data(useIdx,:)./delta );
 
 % Plot things.
 hold on;
 for i = 1:size(data,2)
   offset = size(data,2) - (i -1);
-  plotOut(i) = plot(xvals(useIdx),data(:,i)+offset,'k',...
+  ax.NextPlot = 'add';
+  if boolChan(i)
+    color = 'b';
+  else
+    color = 'k';
+  end;
+  plotOut(i) = plot(xvals(useIdx),data(:,i)+offset,color,...
                       'ButtonDownFcn',get(ax,'ButtonDownFcn'));
  % set(ax,'ButtonDownFcn',get(plotOut(i),'ButtonDownFcn'));
 end;
-
-axis([xvals(1) xvals(end) 0 size(data,2) + 1]);
+ax.XLim = xrange;
+ax.YLim = [0 size(data,2)+1];
 
 ticks = 1:size(data,2);
 if isempty(labels), labels = 1:size(data,2); end

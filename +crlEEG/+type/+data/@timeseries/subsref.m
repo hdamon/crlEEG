@@ -9,16 +9,23 @@ function varargout = subsref(obj,s)
 switch s(1).type
   case '.'
     %%
-    if (length(s)==2)&isequal(s(2).type,'()')
-      if (numel(obj)==1)&(isequal(s(1).subs,'data'))
-        % Enables use of non-numeric referencing:
+    if (length(s)==2)&isequal(s(2).type,'()')     
+            
+      if (numel(obj)==1)&(isequal(s(1).subs,'data'))        
+        % Enables use of non-numeric referencing for obj.data(a,b) type
+        % referencing.
+        %
         % IE:
         %  obj.data('Cz')
         %  obj.data(1:10,{'Cz' 'Pz'});
         tmp = obj.subsref(s(2));
         varargout = {tmp.data};
       else
-        varargout = {builtin('subsref',obj,s)};
+        if nargout==0
+          builtin('subsref',obj,s);
+        else
+          varargout = {builtin('subsref',obj,s)};
+        end;
       end;
     else
       varargout = {builtin('subsref',obj,s)};
@@ -45,6 +52,10 @@ switch s(1).type
           colIdx = getElectrodeIndex(s.subs{2},true);
         else
           error('Invalid indexing expression');
+        end;
+        
+        if islogical(rowIdx)&& (numel(rowIdx)==size(obj,1))
+          rowIdx = find(rowIdx);
         end;
         
         % Time must be indexed numerically

@@ -1,33 +1,66 @@
-classdef data < handle
+classdef data < handle 
   % Container Class for Input MRI Data in crlEEG
   %
   % The container class for a full set of data files from which a cnlModel
   % can be constructed.
   %
+  % Object Construction
+  % -------------------
+  % A crlEEG.head.data object can be constructed in one of four ways:
+  %
+  % 1) Empty Object
+  %   obj = crlEEG.head.data();  
+  %
+  % 2) Search for Default Files in a Directory
+  %   obj = crlEEG.head.data('searchDir',<DIR>)
+  %       Searches <DIR> for files named according to the default scheme
+  %       provided in this file. Future versions will store this data in a
+  %       JSON file somewhere.
+  %
+  % 3) Load from JSON
+  %   obj = crlEEG.head.data('JSONLoad',fName);
+  %       Attempts to load options and filenames from a JSON file located
+  %       at fName
+  %
+  % 4) Load from Struct (NOT RECOMMENDED)
+  %   obj = crlEEG.head.data('structDef',S);
+  %       Constructs the object from a data structure with fields:
+  %           S.images  : Images to read in
+  %           S.options : Model options  
+  %
+  % Optional Construction Inputs
+  % ----------------------------
+  % Any of the default options listed below can be overridden in the
+  % constructor either using:
+  %
+  %    obj = crlEEG.head.data(<method>,<param>,<FIELDNAME>,<FIELDVAL>)
+  % OR:
+  %    obj = crlEEG.head.data(<method>,<param>,<FIELDSTRUCT>)
+  %       Where the fields of FIELDSTRUCT are taken to be field names, and
+  %       the values are stored in them.
+  %
+  % RECOMMENDED USE:
+  % ----------------
+  %   The first time a model is constructed for a particular subject,
+  %   construction method #2 should be used, and a JSON file saved out.
+  %   Once that file has been written, subsequent runs should use
+  %   construction method #3 to directly load the model structure.
+  %
+  %
   % Additionally, uses the individual images to construct a full head
   % segmentation and associated anisotropic conductivity image.
   %
-  % Options and Defaults:
-  % nrrdT1       : crlEEG.fileio.NRRD Object to T1 Image
-  % nrrdT2       : crlEEG.fileio.NRRD Object to T2 Image
-  % nrrdDTI      : crlEEG.fileio.NRRD Object to Single Tensor Image
-  % nrrdSkin     : NRRD file for skin segmentation
-  % nrrdSkull    : NRRD file for skull segmentation
-  % nrrdICC      : NRRD file for ICC segmentation
-  % nrrdBrain    : Structure of NRRD files containing brain segmentation(s)
-  % nrrdParcel   : Structure of NRRD Files containing brain parcellations
-  % nrrdCSFFractions
-  % nrrdSurfNorm : Structure of NRRD Files Containing Cortical Orientation
-  %                   Information
-  % nrrdPVSeg
-  % isFrozen = false;
   %
-  % The cnlEEG.headData object can be configured to look for a set of
-  % default files, all located in a single directory
+  %
+  % Default Options
+  % ---------------
+  %
+  %
+  %
   %  
   % Written By: Damon Hyde
-  % Last Edited: Nov 23, 2015
   % Part of the cnlEEG Project
+  % 2009-2018
   %
   
   properties    
@@ -51,12 +84,12 @@ classdef data < handle
   
   properties (Constant=true,Hidden=true)
     OBJECT_VERSION = '1.0';
-     
+             
     % Definition for root options structure
     DEFAULT_OPTIONS = struct(...
       'segmentation', crlEEG.head.data.DEFAULT_SEGMENTATION_OPTIONS,...
       'conductivity', crlEEG.head.data.DEFAULT_CONDUCTIVITY_OPTIONS,...
-      'subdir',       crlEEG.head.data.DEFAULT_SUBDIRECTORIES );
+      'subdir',       crlEEG.head.data.DEFAULT_SUBDIRECTORIES);
 
     % Default Directory Definitions
     DEFAULT_SUBDIRECTORIES = struct(...
@@ -141,7 +174,7 @@ classdef data < handle
       'parcel.IBSR',   'parcel', 'IBSR', { 'parcel_ibsr_crl'     }; ...
       'parcel.NMM',    'parcel',  'NMM', { 'parcel_nmm_crl'      }; ...      
       'parcel.NVM',    'parcel',  'NVM', { 'parcel_nvm_crl'      }; ...
-      'tensors.CRL',     'nrrd',     [], { 'tensors_cusp90_crl' 'tensors_dwi_crl' }; ...
+      'tensors.CRL',     'nrrd',     [], { 'tensors_cusp90_crl' 'tensors_cusp65_crl' 'tensors_dwi_crl' }; ...
       'surfNorm.CRL',    'nrrd',     [], { 'vec_CortOrient_crl'  };...
       'surfNorm.IBSR',   'nrrd',     [], { 'vec_CortOrient_ibsr' };...
       'surfNorm.NMM',    'nrrd',     [], { 'vec_CortOrient_nmm'  };...
@@ -163,7 +196,7 @@ classdef data < handle
       if nargin>0        
         
         %% Return a copy of the input crlEEG.headData object
-        if isa(varargin{1},'headData')
+        if isa(varargin{1},'crlEEG.head.data')
           crlEEG.disp('Just copying values over');
           obj.options = p.Results.headData.options;
           obj.images  = p.Results.headData.images;
@@ -198,6 +231,25 @@ classdef data < handle
       crlEEG.disp('END CONSTRUCTOR');
     end;
     
+    function set.rootdirectory(obj,fpath)
+      if isequal(fpath,'./')
+         fpath = pwd;
+      elseif exist(['./' fpath],'dir') 
+        % If path is relative, pad with current working directory.
+        fpath = [pwd '/' fpath];
+      elseif exist(fpath,'dir') 
+        % If path is absolute, just use it.
+        fpath = fpath;
+      else
+        warning off backtrace
+        warning(['Can''t locate directory: ' fpath ]);
+        warning on backtrace
+        fpath = './';
+      end;
+      
+      obj.rootdirectory = fpath;      
+    end
+    
     %% Public Methods for Load/Save
     function loadFromStruct(obj,structDef)
       % Load a crlEEG.headData object from a structure definition
@@ -227,12 +279,29 @@ classdef data < handle
     end
     
     function varargout = saveToJSON(obj,fpath)      
-      % Save the headDa
-      if ~exist('fpath','var'), fpath ='', end;
+      % Save the crlEEG.head.data structure out to JSON format
+      %
+      % function varargout = saveToJSON(obj,fpath)      
+      %
+      if ~exist('fpath','var'), 
+        fpath =fullfile(obj.rootdirectory,obj.options.subdir.models,[obj.modelName '.JSON']); 
+      end;
       json = savejson('headData',struct(obj),fpath);      
       varargout{1} = json;
     end;
     
+    
+    function setOption(obj,ref,val)
+      % Set an option value.
+      S = substruct('.','options');
+      fields = strsplit(ref,'.');
+      for i = 1:numel(fields)
+        S(end+1) = substruct('.',fields{i});
+      end;
+      
+      obj = subsasgn(obj,S,ref);      
+      
+    end
     
     %% getImage()/setImage()
     %
@@ -256,18 +325,24 @@ classdef data < handle
       if ref(1)=='.', ref = ref(2:end); end
       
       fields = strsplit(ref,'.');
-      
-      ref = @() getfield(obj,'images');
+      S = substruct('.','images');
       for i = 1:numel(fields)
-        ref = @() getfield(ref(),fields{i});
+        S(end+1) = substruct('.',fields{i});
       end;
+      out = subsref(obj,S);
       
-      try
-        out = ref();
-      catch
-        %warning('Unable to locate requested image: Returning Empty Array');
-        out = [];
-      end                        
+%       
+%       ref = @() getfield(obj,'images');
+%       for i = 1:numel(fields)
+%         ref = @() getfield(ref(),fields{i});
+%       end;
+%       
+%       try
+%         out = ref();
+%       catch
+%         %warning('Unable to locate requested image: Returning Empty Array');
+%         out = [];
+%       end                        
     end
     
     function setImage(obj,ref,img)            
@@ -279,17 +354,24 @@ classdef data < handle
       % Strip leading period, if present
       if ref(1)=='.', ref = ref(2:end); end
       
+      S = substruct('.','images');
       fields = strsplit(ref,'.');
-      switch numel(fields)
-        case 1          
-          obj.images.(fields{1}) = img;
-        case 2
-          obj.images.(fields{1}).(fields{2}) = img;
-        case 3
-          obj.images.(fields{1}).(fields{2}).(fields{3}) = img;
-        otherwise
-          error('crlEEG.headData.setImage only supports field indexing to a depth of 3');
-      end
+      for i = 1:numel(fields)
+        S(end+1) = substruct('.',fields{i});
+      end;
+      
+      obj = subsasgn(obj,S,img);
+      
+%       switch numel(fields)
+%         case 1          
+%           obj.images.(fields{1}) = img;
+%         case 2
+%           obj.images.(fields{1}).(fields{2}) = img;
+%         case 3
+%           obj.images.(fields{1}).(fields{2}).(fields{3}) = img;
+%         otherwise
+%           error('crlEEG.headData.setImage only supports field indexing to a depth of 3');
+%       end
         
     end
     

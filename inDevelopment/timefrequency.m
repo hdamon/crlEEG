@@ -89,7 +89,7 @@ p.parse(tseries,varargin{:});
 winSize = 2^nextpow2(p.Results.windowSize);
 if p.Results.nOutput<=1
   % As a fraction of input length
-  nOutput = size(tseries,1)/p.Results.nOutput;
+  nOutput = p.Results.nOutput*size(tseries,1);
 else
   % As an explicit number of samples
   nOutput = p.Results.nOutput;
@@ -103,7 +103,7 @@ winCenters = ceil(winCenters);
 % Eliminate Repeats
 winCenters = unique(winCenters);
 
-times = winCenters/tseries.sampleRate;
+times = tseries.xrange(1) + (winCenters-1)/tseries.sampleRate;
 
 % Get indices for each window
 indices = repmat([-winSize/2+1:winSize/2]',[1 length(winCenters)]);
@@ -116,10 +116,16 @@ tseriesData = tseriesData(indices);
 % Compute multi-taper
 [pxx,fx] = pmtm(tseriesData,p.Results.nw,p.Results.FFTlength,tseries.sampleRate);
 
-out.type = 'multitaper';
-out.tfX = pxx;
-out.fx = fx;
-out.tx = times;
+out = timeFrequencyDecomposition('multitaper',pxx,times,fx);
+out.params.windowSize = winSize;
+out.params.nOutput = nOutput;
+out.params.FFTlength = p.Results.FFTlength;
+out.params.nw = p.Results.nw;
+
+%out.type = 'multitaper';
+%out.tfX = pxx;
+%out.fx = fx;
+%out.tx = times;
 
 end
 
@@ -136,6 +142,7 @@ p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
 p.addParameter('nOutput', 1000, @isScalarNumeric);
 p.addParameter('windowSize',1024, @isScalarNumeric);
 p.addParameter('tlimits',[],@(x) isNumericVector(x,2) );
+p.addParameter('timesout',[]);
 p.addParameter('detrend','off',@ischar);
 p.addParameter('type','phasecoher',@ischar);
 p.addParameter('cycles',0, @(x) isScalarNumeric(x)||isNumericVector(x,2));
@@ -152,11 +159,12 @@ p.parse(tseries,varargin{:});
 g.winsize = 2^nextpow2(p.Results.windowSize);
 if p.Results.nOutput<=1
   % As a fraction of input length
-  nOutput = size(tseries,1)/p.Results.nOutput;
+  nOutput = p.Results.nOutput*size(tseries,1);
 else
   % As an explicit number of samples
   nOutput = p.Results.nOutput;
 end;
+nOutput = floor(nOutput);
 
 tmioutopt = { 'ntimesout' nOutput };
 g.srate = tseries.sampleRate;
@@ -167,8 +175,10 @@ else
   g.tlimits = p.Results.tlimits;
 end;
 
-g.detrend  =  p.Results.detrend;
+g.detrend   =  p.Results.detrend;
 g.type      = p.Results.type;
+g.tlimits   = 1000*tseries.xrange; % EEGLab wants things in milliseconds
+g.timesout  = p.Results.timesout;
 g.cycles    = p.Results.cycles;
 g.verbose   = p.Results.verbose;
 g.padratio  = p.Results.padratio;
@@ -179,15 +189,17 @@ g.timeStretchMarks = p.Results.timeStretchMarks;
 g.timeStretchRefs  = p.Results.timeStretchRefs;
 timefreqopts = cell(0);
 
-[alltfX freqs timesout R] = timefreq(tseries.data', g.srate, tmioutopt{:}, ...
-  'winsize', g.winsize, 'tlimits', g.tlimits, 'detrend', g.detrend, ...
+[alltfX freqs timesout R] = timefreq(tseries.data(:,1)', g.srate, tmioutopt{:}, ...
+  'winsize', g.winsize, 'tlimits', g.tlimits, 'timesout', g.timesout, 'detrend', g.detrend, ...
   'itctype', g.type, 'wavelet', g.cycles, 'verbose', g.verbose, ...
   'padratio', g.padratio, 'freqs', g.freqs, 'freqscale', g.freqscale, ...
   'nfreqs', g.nfreqs, 'timestretch', {g.timeStretchMarks', g.timeStretchRefs}, timefreqopts{:});
 
-out.type = 'eeglab';
-out.tfX = alltfX;
-out.fx = freqs;
-out.tx = timesout/tseries.sampleRate;
+out = timeFrequencyDecomposition('eeglab',alltfX,timesout/tseries.sampleRate,freqs);
+
+%out.type = 'eeglab';
+%out.tfX = alltfX;
+%out.fx = freqs;
+%out.tx = timesout/tseries.sampleRate;
 
 end

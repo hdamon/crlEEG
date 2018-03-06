@@ -48,6 +48,7 @@ classdef dualPlot < crlEEG.gui.uipanel
         'units','pixels',...
         'position',[2 2 600 807],...
         'parent',Parent);
+      uitools.setMinFigSize(gcf,obj.Position(1:2),obj.Position(3:4),5);
       obj.ResizeFcn = @(h,evt) obj.resizeInternals;
      
       % Set up the channel selection object
@@ -258,7 +259,7 @@ classdef dualPlot < crlEEG.gui.uipanel
           axes(obj.toggleplot.axes); hold on;
           tmp = get(obj.toggleplot.axes,'ButtonDownFcn');
           obj.vLine = plot([xVal xVal],yRange,'r','linewidth',2,...
-            'ButtonDownFcn',tmp);
+            'linestyle','--','ButtonDownFcn',tmp);
           set(obj.toggleplot.axes,'ButtonDownFcn',tmp);
           hold off;
             
@@ -274,7 +275,7 @@ classdef dualPlot < crlEEG.gui.uipanel
     function updateToggle(obj)      
       % Callback to update toggle plot when miniplot is changed
       obj.toggleplot.timeseries = obj.miniplot.windowSeries;
-      %obj.toggleplot.yrange = obj.chanselect.output.yrange;
+      obj.toggleplot.yrange = obj.chanselect.output.yrange;
     end;
     
     function updateImage(obj)
@@ -311,15 +312,19 @@ classdef dualPlot < crlEEG.gui.uipanel
         case 'leftarrow'
           switch str
             case 'shift'
+              tic
               obj.miniplot.shiftWindow(-10);
             otherwise          
+              tic
               obj.miniplot.shiftWindow(-1);
           end;
         case 'rightarrow'
           switch str
             case 'shift'
+              tic
               obj.miniplot.shiftWindow(+10);
             otherwise
+              tic
               obj.miniplot.shiftWindow(+1);
           end;
         case 'pageup'
