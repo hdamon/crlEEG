@@ -27,7 +27,7 @@ classdef headNet
   end  
   
   properties (Constant,Hidden=true)
-    validTypes = {'10-05', '10-10','10-20','hd128','hd256'};
+    validTypes = {'10-05', '10-10','10-20','hd128','hd256','unknown'};
   end
   
   methods
@@ -177,7 +177,7 @@ classdef headNet
       
       % Get the forward direction
       try
-        frontPos = obj.fiducials('Nz').position;
+        frontPos = obj.fiducials('Nas').position;
       catch
         try
           frontPos = obj.fiducials('FidNz').position;
