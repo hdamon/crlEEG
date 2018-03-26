@@ -15,8 +15,12 @@ function varargout = plot2D(elec,varargin)
 %
 % Optional Param-Value Inputs
 % ---------------
-%   label : Logical value turning display of labels on/off (Default: OFF)
-%    axis : Handle to axis to display plot in
+%       label : Logical value turning display of labels on/off 
+%                 (Default: OFF)
+% labelColors : Colors for the electrode marks
+%  markerSize : Marker size for the electrode scatter plot.
+%        axis : Handle to axis to display plot in. 
+%                 (Default: New Figure)
 %
 % Needed Updates
 % --------------
@@ -28,6 +32,9 @@ p = inputParser;
 p.addOptional('origin',[],@(x) isequal(size(x),[1 3]));
 p.addOptional('basis',[],@(x) isequal(size(x),[3 3]));
 p.addParamValue('label',false,@(x) islogical(x));
+p.addParameter('labelColors',[]);
+p.addParameter('labelColorMap','jet');
+p.addParameter('markerSize',[],@(x) isnumeric(x)&&isscalar(x));
 p.addParamValue('scale',0.95,@(x) isscalar(x));
 p.addParamValue('figure',[],@(x) isa(x,'matlab.ui.Figure'));
 p.addParamValue('axis',[],@(x) isa(x,'matlab.graphics.axis.Axes'));
@@ -64,7 +71,17 @@ end;
 
 currHold = ishold(gca);
 hold on;
-outObj.scatter = scatter(x,y,[],[0 0 0],'filled');
+colors = zeros(numel(x),3);
+if ~isempty(p.Results.labelColors)
+  assert(size(p.Results.labelColors,1)==numel(x),'Must provide a color for each electrode');
+  if size(p.Results.labelColors,2)==3
+   colors = p.Results.labelColors;
+  else
+    assert(size(p.Results.labelColors,1)==1,'Provide either);
+    
+  end
+end
+outObj.scatter = scatter(x,y,p.Results.markerSize,colors,'filled');
 
 if labelOn
   for i = 1:numel(elec)

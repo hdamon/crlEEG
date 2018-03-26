@@ -246,7 +246,7 @@ classdef windowPlot < crlEEG.gui.uipanel
 %         obj.windowStart = newWindowStart;
 %         obj.windowEnd   = newWindowEnd;
 %       end;
-      toc
+
     end
     
     function adjustZoom(obj,val)

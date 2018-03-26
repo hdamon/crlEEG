@@ -112,7 +112,9 @@ end
   end
 
   function outIdx = getIdxFromStringCell(cellIn)
-    %%
+    %% Return the numeric index of string labelled channels
+    %
+    cellIn = strtrim(cellIn); %Remove leading/trailing whitespace
     outIdx = zeros(1,numel(cellIn));
     for idx = 1:numel(outIdx)
       tmp = find(strcmp(cellIn{idx},obj.labels));

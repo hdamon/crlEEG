@@ -46,6 +46,9 @@ classdef EEG < crlEEG.type.data.timeseries
                   obj,s,indexingContext);
     end
     
+    %% Methods with their own m-files
+    EEG = setReference(EEG,method);
+    
   end
   
 end

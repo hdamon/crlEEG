@@ -35,22 +35,27 @@ classdef EV2 < crlEEG.fileio.baseobj
     dataByType
   end
   
+  properties (Constant, Hidden=true)
+    validExts = {'.ev2'};
+  end
+  
   methods
     
     function obj = file_EV2(fname,fpath)
-      
-      obj = obj@file;
-      obj.validExts = {'.ev2'};
-      if nargin>0
-        if ~exist('fpath','var'),fpath = ''; end;
-        obj.fpath = fpath;
-        obj.fname = fname;
-        
+            
+      % Input Parser Object
+      p = inputParser;
+      p.KeepUnmatched = true;
+      p.addOptional('fname',[],@(x) crlEEG.fileio.baseobj.fnameFcn(x,'crlEEG.fileio.EV2'));
+      p.addOptional('fpath',[],@(x) crlEEG.fileio.baseobj.fpathFcn(x));      
+      p.parse(varargin{:});
+            
+      %% Call Parent Constructor
+      obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...
+                                      p.Unmatched);         
         if obj.existsOnDisk
           obj.read;
-        end
-               
-      end
+        end                     
     end
     
     function read(obj)

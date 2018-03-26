@@ -155,7 +155,19 @@ classdef (Abstract) baseobj < handle
       
       % Get full path 
       fpath = fullfile([fpath filesep]);     
-    end;                    
+    end;      
+    
+    function out = fnameFcn(in,objtype)
+      out = isempty(in) || isa(in,objtype) || ...
+                (ischar(in) && ~ismember(lower(in),{'readonly'}));
+    end
+    
+    function out = fpathFcn(in)
+      out = isempty(in) ||  ...
+                (ischar(in) && ~ismember(lower(in),{'readonly'}));
+    end
+      
+    
   end % Static Methods
   
   %% Abstract Methods

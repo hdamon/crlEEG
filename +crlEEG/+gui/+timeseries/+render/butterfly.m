@@ -58,14 +58,14 @@ end;
 tmpData = tseries.getPlotData;
 tmpData = tmpData(useIdx,:);
 
-boolChans = tseries.isBoolChannel;
+dataChans = tseries.isChannelType('data');
 
 ax.NextPlot = 'add';
-plotOut = plot(xvals(useIdx),tmpData(:,~boolChans),['k' plotOpts],'ButtonDownFcn',get(ax,'ButtonDownFcn'));
+plotOut = plot(xvals(useIdx),tmpData(:,dataChans),['k' plotOpts],'ButtonDownFcn',get(ax,'ButtonDownFcn'));
 
-if any(boolChans)
+if any(~dataChans)
   ax.NextPlot = 'add';
-  tmp = plot(xvals(useIdx),tmpData(:,boolChans),[plotOpts], ...
+  tmp = plot(xvals(useIdx),tmpData(:,~dataChans),[plotOpts], ...
             'linewidth',2,'ButtonDownFcn',get(ax,'ButtonDownFcn'));
   plotOut = [plotOut ; tmp];
 end;

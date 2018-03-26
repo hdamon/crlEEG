@@ -51,21 +51,21 @@ end;
 %delta = yrange(2)-yrange(1);
 delta = max(abs(yrange));
 
-boolChan = tseries.isBoolChannel;
+dataChan = tseries.isChannelType('data');
 data = tseries.getPlotData;
-data = scale * ( data(useIdx,:)./delta );
+data(useIdx,dataChan) = scale * ( data(useIdx,dataChan)./delta );
+data(useIdx,~dataChan) = data(useIdx,~dataChan)./delta;
 
 % Plot things.
 hold on;
 for i = 1:size(data,2)
   offset = size(data,2) - (i -1);
   ax.NextPlot = 'add';
-  if boolChan(i)
-    color = 'b';
-  else
-    color = 'k';
+  color = 'k'; % Default to black
+  if ~dataChan(i)
+    color = 'b';  
   end;
-  plotOut(i) = plot(xvals(useIdx),data(:,i)+offset,color,...
+  plotOut(i) = plot(xvals(useIdx),data(useIdx,i)+offset,color,...
                       'ButtonDownFcn',get(ax,'ButtonDownFcn'));
  % set(ax,'ButtonDownFcn',get(plotOut(i),'ButtonDownFcn'));
 end;
