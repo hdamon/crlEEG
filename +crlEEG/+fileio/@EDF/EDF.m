@@ -86,6 +86,8 @@ classdef EDF < crlEEG.fileio.baseobj
                           'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
     end;
         
+    function out = 
+    
     function obj = purge(obj)
       % function obj = purge(obj)
       %
