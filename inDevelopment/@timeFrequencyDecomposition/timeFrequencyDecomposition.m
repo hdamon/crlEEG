@@ -153,9 +153,8 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
     end
     
     function out = subtract_baseline(obj,baseline)
-      % Subtract a baseline frequency spectrum from all tfX columns.
-      baseline = baseline(:);
-      assert(numel(baseline)==size(obj.tfX,1),...
+      % Subtract a baseline frequency spectrum from all tfX columns.      
+      assert(size(baseline,1)==size(obj.tfX,1),...
                 'Incorrect Baseline Size');
       
       out = obj;
@@ -221,6 +220,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       p.addParameter('showChan',1);
       p.addParameter('logImg',false);
       p.addParameter('showBand',[]); 
+      p.addParameter('showTimes',[]);
       p.addParameter('parent',[],@(x) ishghandle(x));
       p.parse(varargin{:});
       
@@ -238,20 +238,45 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
         idxF = ':';
       end
       
+      if ~isempty(p.Results.showTimes)
+        if numel(p.Results.showTimes)==2
+          % Treat it as a range
+          [~,idxLow] = min(abs(obj.tx-p.Results.showTimes(1)));
+          [~,idxHi ] = min(abs(obj.tx-p.Results.showTimes(2)));
+          idxT = idxLow:idxHi;
+        else
+          idxT = p.Results.showTimes;
+        end;
+      else
+        idxT = ':';
+      end;
+      
+      s(1).type = '.';
+      s(1).subs = 'tfX';
+      s(2).type = '()';
+      s(2).subs = {idxF idxT p.Results.showChan};
+      
+      showImg = obj.subsref(s);
+      
       if isempty(p.Results.range)
         imgRange(1) = 0;
-        imgRange(2) = prctile(abs(obj.tfX(:)),99);
+        imgRange(2) = prctile(abs(showImg(:)),99);
       else
         imgRange = p.Results.range;
       end
-      
+            
       if p.Results.logImg
-        imagesc(obj.tx,obj.fx(idxF),log10(abs(obj.tfX(idxF,:,p.Results.showChan))),log10(imgRange));
+        img = imagesc(obj.tx(idxT),obj.fx(idxF),log10(abs(showImg)),log10(imgRange));
       else      
-         imagesc(obj.tx,obj.fx(idxF),abs(obj.tfX(idxF,:,p.Results.showChan)),imgRange);
+        img =  imagesc(obj.tx(idxT),obj.fx(idxF),abs(showImg),imgRange);
       end;
       ylabel('Frequency');
       xlabel('Time');
+      
+      if nargout>0
+       % varargout{1} = img;
+      end;
+      
     end
     
   end

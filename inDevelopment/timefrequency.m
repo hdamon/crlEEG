@@ -1,9 +1,9 @@
 function out =  timefrequency(tseries,varargin)
-%% Compute time-frequency decompositions of crlEEG.type.data.timeseries objects
+%% Compute time-frequency decompositions of crlEEG.type.timeseries objects
 %
 % Inputs
 % ------
-%   tseries : A crlEEG.type.data.timeseries object to decompose
+%   tseries : A crlEEG.type.timeseries object to decompose
 %   method  : Type of decomposition to compute
 %               Valid values:
 %                 'multitaper'  : Use pmtm for multitaper decomposition
@@ -48,7 +48,7 @@ function out =  timefrequency(tseries,varargin)
 validTypes = {'multitaper' 'eeglab' 'spectrogram'};
 p = inputParser;
 p.KeepUnmatched = true;
-p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addOptional('method','multitaper',@(x) ismember(x,validTypes));
 p.parse(tseries,varargin{:});
 
@@ -75,7 +75,7 @@ function out = runspectrogram(tseries,varargin)
 %
 % Inputs
 % ------
-%   tseries : crlEEG.type.data.timeseries object
+%   tseries : crlEEG.type.timeseries object
 %
 % Param-Value Pairs
 % --------
@@ -105,7 +105,7 @@ for i = 1:size(data,2)
 end;
 
 %% Output Parsing
-out = timeFrequencyDecomposition('spectrogram',s,t,f,tseries.labels(dataChans));
+out = timeFrequencyDecomposition('spectrogram',s,t+tseries.xrange(1),f,tseries.labels(dataChans));
 out.params = varargin;
 
 end
@@ -118,7 +118,7 @@ function out = multitaper(tseries,varargin)
 %
 % Inputs
 % ------
-%   tseries : A crlEEG.type.data.timeseries object
+%   tseries : A crlEEG.type.timeseries object
 %
 % Param-Value Inputs
 % ------------------
@@ -141,7 +141,7 @@ import crlEEG.util.validation.isScalarNumeric;
 %% Input Parsing
 p = inputParser;
 p.KeepUnmatched = true;
-p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addParameter('windowSize',1024,@isScalarNumeric);
 p.addParameter(        'nw',   3,@isScalarNumeric);
 p.addParameter( 'FFTlength',1024,@isScalarNumeric);
@@ -221,7 +221,7 @@ error('NOT COMPLETE');
 import crlEEG.util.validation.*;
 taperTypes = {'hanning' 'hamming' 'blackmanharris' 'none'};
 p = inputParser;
-p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addParameter('windowSize',[],@isScalarNumeric);
 p.addParameter('ffttaper','hanning',@(x) ismember(x,taperTypes));
 p.addParameter('fftlength',1024,@isScalarNumeric);
@@ -249,7 +249,7 @@ function out = eeglab(tseries,varargin)
 
 import crlEEG.util.validation.*;
 p = inputParser;
-p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addParameter('nOutput', 1000, @isScalarNumeric);
 p.addParameter('windowSize',1024, @isScalarNumeric);
 p.addParameter('tlimits',[],@(x) isNumericVector(x,2) );
