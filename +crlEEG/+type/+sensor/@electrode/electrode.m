@@ -1,7 +1,7 @@
 classdef electrode
   % Class for EEG electrode objects in crlEEG
   %
-  % 
+  % classdef electrode
   %
   % Properties:
   % -----------
@@ -12,8 +12,7 @@ classdef electrode
   %  nodes          : Nodes in the Head Space for the contact surface
   %  impedance      : Electrode Impedance (DEFAULT: 1000 Ohm)
   %  model          : Type of electrode model to use (Point or Complete)
-  %
-  %
+  %  
   % Written By: Damon Hyde
   % Part of the cnlEEG Project
   % 2009-2017
@@ -73,12 +72,12 @@ classdef electrode
       
       % Input Parsing
       p = inputParser;
-      p.addParamValue('label'         ,[] , validateLabels);
+      p.addParamValue('label'         ,[]      , validateLabels);
       p.addParamValue('position'      ,[0 0 0] , validatePositions);
-      p.addParamValue('voxels'        ,[] , validateAllNumVec);
-      p.addParamValue('conductivities',0 , validateAllNumVec);
-      p.addParamValue('nodes'         ,[] , validateAllNumVec);
-      p.addParamValue('impedance'     ,1000 , isNumVec);
+      p.addParamValue('voxels'        ,[]      , validateAllNumVec);
+      p.addParamValue('conductivities',0       , validateAllNumVec);
+      p.addParamValue('nodes'         ,[]      , validateAllNumVec);
+      p.addParamValue('impedance'     ,1000    , isNumVec);
       p.addParamValue('model'         ,'pointModel',validateModel);
       p.parse(varargin{:});
       
@@ -373,28 +372,13 @@ classdef electrode
     mapToNodes(obj,nrrdIn,mapType,pushToSurf);
     
     %%
-    function outIdx = getNumericIndex(obj,cellIn)
+    function outIdx = getNumericIndex(obj,refIn)
       % Get the numeric indices associated with specific electrode names.
       %
       % Returns NaN's if an electrode requested by name is not present in
       % the array.
       %
-      
-      % Just spit it back if it's already numeric.
-      if isnumeric(cellIn)
-        outIdx = cellIn;
-        return;
-      end;
-      
-      assert(iscellstr(cellIn)||ischar(cellIn),'FOOERR');
-      if ischar(cellIn), cellIn = {cellIn}; end;
-      outIdx = zeros(1,numel(cellIn));
-      for idx = 1:numel(outIdx)
-        tmp = find(strcmp(cellIn{idx},{obj.label}));
-        if isempty(tmp), tmp = nan; end;
-        assert(numel(tmp)==1,'Multiple Electrodes Match Requested Label');
-        outIdx(idx) = tmp;
-      end
+      outIdx = crlEEG.util.getIndexIntoCellStr({obj.label},refIn);      
     end
     
     %%

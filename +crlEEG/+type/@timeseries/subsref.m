@@ -9,9 +9,9 @@ function varargout = subsref(obj,s)
 switch s(1).type
   case '.'
     %%
-    if (length(s)==2)&isequal(s(2).type,'()')     
-            
-      if (numel(obj)==1)&(isequal(s(1).subs,'data'))        
+    if (length(s)==2)&isequal(s(2).type,'()')
+      
+      if (numel(obj)==1)&(isequal(s(1).subs,'data'))
         % Enables use of non-numeric referencing for obj.data(a,b) type
         % referencing.
         %
@@ -21,9 +21,9 @@ switch s(1).type
         tmp = obj.subsref(s(2));
         varargout = {tmp.data};
       else
-         if nargout==0
-           builtin('subsref',obj,s);
-         else
+        if nargout==0
+          builtin('subsref',obj,s);
+        else
           %foo(1:nargout) = {builtin('subsref',obj,s)};
           varargout{1:nargout} = builtin('subsref',obj,s);
         end;
@@ -38,8 +38,8 @@ switch s(1).type
       if numel(obj)==1
         % Internal object indices can only be accessed individually
         if numel(s.subs)==1
-          %% To avoid ambiguity, single indexing into timeseries must be 
-          %  with a character string. 
+          %% To avoid ambiguity, single indexing into timeseries must be
+          %  with a character string.
           
           if isequal(s.subs{1},1)
             varargout = {obj};
@@ -47,10 +47,10 @@ switch s(1).type
           end;
           
           rowIdx = ':';
-          colIdx = getElectrodeIndex(s.subs{1},false);
+          colIdx = crlEEG.util.getIndexIntoCellStr(obj.labels,s.subs{1},false);
         elseif numel(s.subs)==2
           rowIdx = s.subs{1};
-          colIdx = getElectrodeIndex(s.subs{2},true);
+          colIdx = crlEEG.util.getIndexIntoCellStr(obj.labels,s.subs{2},true);
         else
           error('Invalid indexing expression');
         end;
@@ -79,7 +79,7 @@ switch s(1).type
         varargout = {builtin('subsref',obj,s)};
       end;
     elseif ( length(s) == 3 && strcmp(s(2).type,'.') ...
-                                && strcmp(s(3).type,'()') )
+        && strcmp(s(3).type,'()') )
       % Implement obj(indices).PropertyName(indices)
       varargout = {builtin('subsref',obj,s)};
     else
@@ -93,36 +93,6 @@ switch s(1).type
   otherwise
     error('Not a valid indexing expression')
 end
-
-  function outIdx = getElectrodeIndex(valIn,isNumericValid)
-    if isequal(valIn,':')
-      outIdx = ':';
-    elseif iscellstr(valIn) % Cell array of strings
-      outIdx = getIdxFromStringCell(valIn);
-    elseif ischar(valIn) % Single character string
-      outIdx = getIdxFromStringCell({valIn});
-    else
-      % Poorly defined: Can't concreately determine if its supposed
-      % to index into time or channels
-      if isNumericValid
-        outIdx = valIn;
-      else
-        error('Invalid Numeric Indexing');
-      end;
-    end;
-  end
-
-  function outIdx = getIdxFromStringCell(cellIn)
-    %% Return the numeric index of string labelled channels
-    %
-    cellIn = strtrim(cellIn); %Remove leading/trailing whitespace
-    outIdx = zeros(1,numel(cellIn));
-    for idx = 1:numel(outIdx)
-      tmp = find(strcmp(cellIn{idx},obj.labels));
-      assert(numel(tmp)==1,'Invalid Index Labels');
-      outIdx(idx) = tmp;
-    end
-  end
 
 end
 

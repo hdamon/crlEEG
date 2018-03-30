@@ -31,7 +31,7 @@ crlEEG.disp(['Completed solution for Electrode in ' num2str(etime(clock,tStart))
 if Flag==0
   crlEEG.disp(['MINRES Converged in ' num2str(Iters) ' iterations to within ' num2str(tol)]);
 elseif Flag==1
-  crlEEG.disp(['MINRES Completed AFter ' num2str(Iters) ' iterations to residual ' num2str(Residual)]);
+  crlEEG.disp(['MINRES Completed After ' num2str(Iters) ' iterations to residual ' num2str(Residual)]);
 else
   crlEEG.disp('ERROR While Running MINRES');
 end;

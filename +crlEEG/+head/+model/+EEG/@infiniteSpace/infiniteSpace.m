@@ -41,7 +41,7 @@ classdef infiniteSpace
   methods
     
     function obj = infiniteSpace(varargin)
-      
+      error('FUNCTION NOT COMPLETED');
       p = inputParser;
       p.addOptional('nrrdCond',[],@(x) isa(x,'crlEEG.fileio.NRRD'));
       p.addParamValue('electrodes',[],@(x) isa(x,'crlEEG.headModel.EEG.electrode');
