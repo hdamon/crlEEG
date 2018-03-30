@@ -1,13 +1,22 @@
 classdef selectChannelsFromTimeseries < handle
-  % Select a subset of channels from a crlEEG.type.data.timeseries object
+  % Select a subset of channels from a crlEEG.type.timeseries object
   %
   % obj = crlEEG.gui.util.selectChannelsFromTimeseries(timeseries)
   %
   % Input
   % -----
-  %   timeseries : crlEEG.type.data.timeseries object
+  %   timeseries : crlEEG.type.timeseries object
   %
+  % Properties
+  % ----------
+  %    currChannels : List of currently selected channels
+  %    output : crlEEG.type.timeseries object containing only the 
+  %               selected channels.
   %
+  % Part of the crlEEG Project
+  % 2009-2018
+  %
+  
   properties    
     currChannels
   end
@@ -17,13 +26,14 @@ classdef selectChannelsFromTimeseries < handle
     output
   end
   
-  properties (Hidden =true)
-    setPos = [ 2000 100 110 550]; % In pixels
+  properties (Hidden =true, Dependent = true)
+    setPos
   end
   
   properties (Access=private)
     gui
-    inputInternal
+    input_
+    setPos_ = [2000 100 110 550]; % In Pixels
     outputInternal
     origChannels
   end
@@ -38,13 +48,6 @@ classdef selectChannelsFromTimeseries < handle
       if nargin>0       
        obj.input = timeseries;
        obj.currChannels = obj.input.labels;
-      end
-    end
-           
-    function set.setPos(obj,val)
-      obj.setPos = val;
-      if ~isempty(obj.gui)&&ishghandle(obj.gui)
-        set(ancestor(obj.gui,'figure'),'Position',obj.setPos);
       end
     end
     
@@ -62,29 +65,7 @@ classdef selectChannelsFromTimeseries < handle
         obj.syncGUI;
       end
     end
-    
-    function set.input(obj,timeseries)
-      assert(isa(timeseries,'crlEEG.type.data.timeseries'),...
-              'Input must be a crlEEG.type.data.timeseries object');
-      if ~isequal(obj.inputInternal,timeseries)
-        obj.inputInternal = timeseries;
         
-        if ~isequal(obj.inputInternal.labels,obj.origChannels)
-          % Only update the selected channels if the overall list has
-          % changed.
-          obj.origChannels = obj.inputInternal.labels;
-          obj.currChannels = obj.origChannels;
-        else          
-          notify(obj,'updatedOut');
-        end;        
-      end      
-    end
-
-    
-    function out = get.input(obj)
-      out = obj.inputInternal;
-    end
-    
     function set.currChannels(obj,val)
       % Set method for
       % crlEEG.gui.util.selectChannelsFromTimeseries.selectedStrings
@@ -99,14 +80,60 @@ classdef selectChannelsFromTimeseries < handle
         obj.syncGUI;        
         notify(obj,'updatedOut');
       end
+    end    
+    
+  %% GET/SET METHODS FOR DEPENDENT PROPERTIES
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% Get/Set Methods for obj.input
+    function out = get.input(obj)
+      out = obj.input_;
     end
+    
+    function set.input(obj,timeseries)
+      assert(isa(timeseries,'crlEEG.type.timeseries'),...
+              'Input must be a crlEEG.type.timeseries object');
+      if ~isequal(obj.input_,timeseries)
+        obj.input_ = timeseries;
+        
+        if ~isequal(obj.input_.labels,obj.origChannels)
+          % Only update the selected channels if the overall list has
+          % changed.
+          obj.origChannels = obj.input_.labels;
+          obj.currChannels = obj.origChannels;
+        else          
+          notify(obj,'updatedOut');
+        end;        
+      end      
+    end
+    
+    %% Set/Get methods for obj.output
+    function set.output(~,~)
+      error('Output of crlEEG.gui.util.selectChannelsFromTimeseries is a dependent property');
+    end;
     
     function out = get.output(obj)
       out = obj.input(:,obj.currChannels);   
-    end
+    end    
     
+    %% Get/Set methods for obj.setPos
+    function out = get.setPos(obj)
+      out = obj.setPos_;
+    end;
+    
+    function set.setPos(obj,val)
+      % If there's a GUI open, adjust its position.
+      obj.setPos_ = val;
+      if ~isempty(obj.gui)&&ishghandle(obj.gui)
+        set(ancestor(obj.gui,'figure'),'Position',obj.setPos);
+      end
+    end    
+               
   end
   
+  %% PRIVATE METHODS
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods (Access=private)
     
     function syncGUI(obj)

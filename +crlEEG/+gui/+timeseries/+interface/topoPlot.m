@@ -19,7 +19,7 @@ classdef topoPlot < crlEEG.gui.uipanel
        %% Input Parsing
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));      
+      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.timeseries'));      
       p.addRequired('timepoints',@(x) isnumeric(x)&&isvector(x));      
       p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));      
       p.addParamValue('headNet',[]);
@@ -70,7 +70,7 @@ classdef topoPlot < crlEEG.gui.uipanel
       
       % Plot TopoPlots
       for i = 1:nPlot
-        obj.topo(i) = crlEEG.gui.timeseries.render.topo(...
+        obj.topo(i) = crlEEG.type.timeseries.render.topo(...
                                          obj.timeseries,...
                                          obj.timepoints(i),...
                                          'x',obj.X,...

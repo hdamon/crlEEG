@@ -33,7 +33,7 @@ classdef dualPlot < crlEEG.gui.uipanel
     function obj = dualPlot(timeseries,varargin)      
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.timeseries'));
       p.addParamValue('title','TITLE', @(x) ischar(x));
       parse(p,timeseries,varargin{:});           
            
@@ -53,7 +53,7 @@ classdef dualPlot < crlEEG.gui.uipanel
      
       % Set up the channel selection object
       obj.chanselect = crlEEG.gui.util.selectChannelsFromTimeseries;
-      obj.chanselect.input = p.Results.timeseries;
+      %obj.chanselect.input = p.Results.timeseries;
       
       obj.chanselectbutton = uicontrol('Parent',obj.panel,...
         'Style','pushbutton',...
@@ -124,9 +124,10 @@ classdef dualPlot < crlEEG.gui.uipanel
       
       %crlEEG.gui.util.setMinFigSize(gcf,obj);      
       set(obj,'Units','normalized');
-      %obj.resizeInternals;
-      %obj.updateToggle;
-        
+      
+      obj.chanselect.input = p.Results.timeseries;
+      obj.miniplot.windowEnd = size(p.Results.timeseries,1);
+      
     end
     
     function resizeInternals(obj)      
@@ -295,8 +296,7 @@ classdef dualPlot < crlEEG.gui.uipanel
       %
       % Callback for handling key controls in the main plot figure;
       %
-      
-      
+            
       % Get modifier string
       if isempty(evt.Modifier)
        str = '';
@@ -366,9 +366,13 @@ classdef dualPlot < crlEEG.gui.uipanel
     
   end
   
+  %%  PROTECTED METHODS
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods (Access=protected)
   end
   
+  %%  STATIC PROTECTED METHODS
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods (Static=true,Access=protected)
     function p = parseInputs(varargin)
 

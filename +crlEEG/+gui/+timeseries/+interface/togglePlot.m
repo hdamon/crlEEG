@@ -1,5 +1,5 @@
 classdef togglePlot < crlEEG.gui.uipanel
-  % An interface for crlEEG.type.data.timeseries data 
+  % An interface for crlEEG.type.timeseries data 
   %
   % classdef toggle < uitools.cnlUIObj
   %
@@ -11,7 +11,7 @@ classdef togglePlot < crlEEG.gui.uipanel
   %
   % Settable Properties
   % ---------
-  %    timeseries : crlEEG.type.data.timeseries object to display
+  %    timeseries : crlEEG.type.timeseries object to display
   %    
   %    
   % By default, togglePlot displays all channels in the input timeseries.
@@ -70,7 +70,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       %% Input Parsing
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));      
+      p.addRequired('timeseries',@(x) isempty(x)||isa(x,'crlEEG.type.timeseries'));      
       p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));      
       p.addParamValue('yrange',[],@(x) isvector(x)&&(numel(x)==2));
       p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
@@ -177,8 +177,8 @@ classdef togglePlot < crlEEG.gui.uipanel
     
     %% Set method for internal timeseries
     function set.timeseries(obj,val)
-      assert(isa(val,'crlEEG.type.data.timeseries'),...
-              'Must be a crlEEG.type.data.timeseries object');            
+      assert(isa(val,'crlEEG.type.timeseries'),...
+              'Must be a crlEEG.type.timeseries object');            
      % if ~isequal(obj.timeseries,val)
         % Only update if there's a change.
         obj.timeseries = val;  
@@ -373,16 +373,16 @@ classdef togglePlot < crlEEG.gui.uipanel
         if obj.doSplit % Do a split plot
           dispChan = obj.displayRange(1):obj.displayRange(2);          
           
-          obj.plot = crlEEG.gui.timeseries.render.split(obj.timeseries(:,dispChan),obj.axes,...
+          obj.plot = split(obj.timeseries(:,dispChan),obj.axes,...
             'xrange',obj.xrange,'yrange',obj.yrange,'scale',obj.scale);
         else % Just do a butterfly plot
-          obj.plot = crlEEG.gui.timeseries.render.butterfly(...
+          obj.plot = butterfly(...
                                                 obj.timeseries,obj.axes,...
                                                 'xrange',obj.xrange,...
                                                 'yrange',obj.yrange,...
                                                 'scale',obj.scale);
         end;
-        
+        drawnow;
         notify(obj,'updatedOut');
       catch
         % This is a bit of a stupid thing, because I'm using it to avoid

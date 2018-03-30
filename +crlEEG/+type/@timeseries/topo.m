@@ -6,7 +6,7 @@ function varargout = topo(timeseries,timepoint,varargin)
 % Inputs
 % ------
 %   timeseries : Input timeseries object
-%                 ( Class : crlEEG.type.data.timeseries )
+%                 ( Class : crlEEG.type.timeseries )
 %   timepoint  : Index into timeseries to plot topographic map of.
 %   
 % Optional Inputs
@@ -28,7 +28,7 @@ function varargout = topo(timeseries,timepoint,varargin)
 %% Input Parsing
 p = inputParser;
 p.KeepUnmatched = true;
-p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addRequired('timepoint',@(x) isnumeric(x)&&isscalar(x));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
 p.addParamValue('headNet',[],@(x) isa(x,'headNet'));

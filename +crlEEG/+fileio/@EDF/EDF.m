@@ -49,6 +49,7 @@ classdef EDF < crlEEG.fileio.baseobj
   end
   
   methods
+    
     function obj = EDF(varargin)
       
       %% Input Parsing
@@ -71,22 +72,45 @@ classdef EDF < crlEEG.fileio.baseobj
     end
     
     %% Typecasting
-    function out = crlEEG.type.data.timeseries(obj)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    function out = crlEEG.type.timeseries(obj)
       % Convert EDF file to a GUI data object
-      out = crlEEG.type.data.timeseries(obj.data,obj.labels,...
+      out = crlEEG.type.timeseries(obj.data,obj.labels,...
                           'yunits',obj.header.PhysDim,...
                           'samplerate',obj.header.SampleRate,...
                           'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
     end    
     
-    function out = crlEEG.type.data.EEG(obj)
-      out = crlEEG.type.data.EEG(obj.data,obj.labels,...
-                          'yunits',obj.header.PhysDim,...
+    function out = crlEEG.type.EEG(obj)
+      out = crlEEG.type.EEG(obj.data,obj.labels,...
+                          'yunits',obj.header.PhysDim(1:size(obj.data,2)),...
                           'samplerate',obj.header.SampleRate,...
-                          'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)]);
+                          'xvals',(1./obj.sampleRate)*[1:size(obj.data,1)],...
+                          'EVENTS',crlEEG.type.EEG_event(obj));
     end;
         
-    function out = 
+    function out = crlEEG.type.EEG_event(obj)
+      %% Extract EEG_event objects from the EDF Header
+      %
+      if isempty(obj.header.EVENT)
+        out = [];
+      end;
+      
+      latency = obj.header.EVENT.POS;
+      type = obj.header.EVENT.TYP;
+            
+      if isfield(obj.header.EVENT,'CodeDesc')
+        desc(1:numel(latency)) = {'EDFEVENT'};      
+        realType = type~=32766;
+        desc(realType) = obj.header.EVENT.CodeDesc(type(realType));
+      else
+        desc = [];
+      end;
+      
+      out = crlEEG.type.EEG_event(latency,type,desc);
+    end
     
     function obj = purge(obj)
       % function obj = purge(obj)
@@ -123,6 +147,8 @@ classdef EDF < crlEEG.fileio.baseobj
     end
     
     %% Read and write functions to complete the file abstract object type
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     function read(obj)
       % function read(obj)
@@ -152,11 +178,11 @@ classdef EDF < crlEEG.fileio.baseobj
       p.units = 'normalized';
       if nargout>0, varargout{1} = p; end;
     end;
-    
-    
-    
+            
     %% Get methods for the EDF Data and Header, to enable automated file
     %% reading in the event that the data hasn't been read from the file yet.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     function out = get.data(obj)
       % function out = get.data(obj)
@@ -186,6 +212,8 @@ classdef EDF < crlEEG.fileio.baseobj
     end
     
     %% Get methods for dependent properties
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     function out = get.labels(obj)
       % function out = get.labels(obj)
@@ -223,9 +251,10 @@ classdef EDF < crlEEG.fileio.baseobj
         out{idx} = obj.data(obj.epochs_start(idx):obj.epochs_end(idx),:);
       end
     end
-    
-    
+        
     %% Methods with their own m-files
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     detectEpochs(obj);
     out = extract_EpochsUsingEV2(obj,EV2,width);
   end

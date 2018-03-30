@@ -26,7 +26,7 @@ classdef finiteDifference
   %
   % Adding Electrodes 
   % -----------------
-  %   Electrodes are added to the model as crlEEG.head.model.EEG.electrode
+  %   Electrodes are added to the model as crlEEG.type.sensor.electrode
   %   objects.
   %
   %   This can be done during the initial constructor call:
@@ -111,7 +111,7 @@ classdef finiteDifference
   properties (GetAccess=public,SetAccess=protected)   
     nrrdCondModified
     matFDM        % The finite difference system matrix
-    electrodes    % An array of crlEEG.head.model.EEG.electrode objects
+    electrodes    % An array of crlEEG.type.sensor.electrode objects
   end
   
   properties

@@ -45,7 +45,7 @@ classdef electrode
       if nargin==0, return; end;
       
       % If passed an electrode, return an electrode.
-      if (nargin>0)&&(isa(varargin{1},'crlEEG.head.model.EEG.electrode'))
+      if (nargin>0)&&(isa(varargin{1},'crlEEG.type.sensor.electrode'))
         obj = varargin{1};
         return;
       end;
@@ -60,7 +60,7 @@ classdef electrode
         opts.impedance = varargin{1}.Impedance;       
         opts.nodes = varargin{1}.Nodes;        
                   
-        obj = crlEEG.head.model.EEG.electrode(opts);
+        obj = crlEEG.type.sensor.electrode(opts);
         return;
       end
       
@@ -172,7 +172,7 @@ classdef electrode
       end;
       
       % Finally, construct the actual objects.
-      obj(nElec) = crlEEG.head.model.EEG.electrode;
+      obj(nElec) = crlEEG.type.sensor.electrode;
       
       for i = 1:nElec
         obj(i).label = label{i};
@@ -241,9 +241,9 @@ classdef electrode
     
     %% Overloaded Methods
     function isEq = eq(a,b)
-      % Overloaded eq(a,b) method for crlEEG.head.model.EEG.electrode objects
-      if ~isa(a,'crlEEG.head.model.EEG.electrode'), isEq = false; return; end;
-      if ~isa(b,'crlEEG.head.model.EEG.electrode'), isEq = false; return; end;
+      % Overloaded eq(a,b) method for crlEEG.type.sensor.electrode objects
+      if ~isa(a,'crlEEG.type.sensor.electrode'), isEq = false; return; end;
+      if ~isa(b,'crlEEG.type.sensor.electrode'), isEq = false; return; end;
       
       assert((numel(a)==1)||(numel(b)==1)||isequal(size(a),size(b)),...
         'Matrix dimensions must agree');

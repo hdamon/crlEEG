@@ -3,11 +3,11 @@ classdef timeseries < handle & matlab.mixin.Copyable
   %
   % Data is stored as: time X channels
   %
-  % While this duplicates some of the functionality of other type.datas,
+  % While this duplicates some of the functionality of other types,
   % this is used exclusively in the crlEEG.gui rendering package to provide
   % a common interface.
   %
-  % obj = crlEEG.type.data.timeseries(data,labels,varargin)
+  % obj = crlEEG.type.timeseries(data,labels,varargin)
   %
   % Inputs
   % ------
@@ -24,7 +24,11 @@ classdef timeseries < handle & matlab.mixin.Copyable
   % Referencing into timeseries objects
   % -----------------------------------
   % One of the primary motivators behind creating this library was to
-  % simplify the way in which EEG object can be accessed, sliced, and 
+  % simplify the way in which EEG object can be accessed, sliced, and
+  % referenced.
+  %
+  % Toward that end, crlEEG.type.timeseries objects are referenced slightly
+  % differently whether they are 
   % 
   %
   % Written By: Damon Hyde
@@ -52,14 +56,14 @@ classdef timeseries < handle & matlab.mixin.Copyable
   end;
     
   properties (Access=protected)
-    data_internal;
-    sampleRate_internal;
-    xvals_internal;
-    labels_internal;
-    yunits_internal;
-    chanType_internal;
+    data_;
+    sampleRate_;
+    xvals_;
+    labels_;
+    yunits_;
+    chanType_;
   end;
-    
+        
   methods
     
     function obj = timeseries(varargin)
@@ -68,7 +72,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
       if nargin>0
         p = inputParser;
         p.addRequired('data',@(x) (isnumeric(x)&&ismatrix(x))||...
-                                    isa(x,'crlEEG.type.data.timeseries'));
+                                    isa(x,'crlEEG.type.timeseries'));
         p.addOptional('labels',[],@(x) isempty(x)||iscellstr(x));
         p.addParameter('xvals',[],@(x) isempty(x)||isvector(x));
         p.addParameter('sampleRate',1,@(x) isnumeric(x)&&isscalar(x));
@@ -78,7 +82,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
                         
         p.parse(varargin{:});
         
-        if isa(p.Results.data,'crlEEG.type.data.timeseries')
+        if isa(p.Results.data,'crlEEG.type.timeseries')
           obj = obj.copyValuesFrom(p.Results.data);
           return;
         end
@@ -117,12 +121,12 @@ classdef timeseries < handle & matlab.mixin.Copyable
       % Need to use copy here, because derived classes need to be
       % maintained
       out = obj.copy;      
-      out.labels_internal = out.labels(idxCol);
-      out.xvals_internal  = out.xvals(idxRow);        
-      out.yunits_internal = out.yUnits(idxCol);  
-      out.chanType_internal = out.chanType(idxCol);
+      out.labels_ = out.labels(idxCol);
+      out.xvals_  = out.xvals(idxRow);        
+      out.yunits_ = out.yUnits(idxCol);  
+      out.chanType_ = out.chanType(idxCol);
       tmp = out.data(idxRow,idxCol);
-      out.data_internal = tmp;
+      out.data_ = tmp;
     end
         
     %% Overloaded 
@@ -138,13 +142,13 @@ classdef timeseries < handle & matlab.mixin.Copyable
       end
     end           
     
-    %% Main crlEEG.type.data.timeseries plotting function
+    %% Main crlEEG.type.timeseries plotting function
     function out = plot(obj,varargin)
-      % Overloaded plot function for crlEEG.type.data.timeseries objects
+      % Overloaded plot function for crlEEG.type.timeseries objects
       %
       % Inputs
       % ------
-      %   obj : crlEEG.type.data.timeseries object
+      %   obj : crlEEG.type.timeseries object
       % 
       % Param-Value Pairs
       % -----------------
@@ -170,9 +174,9 @@ classdef timeseries < handle & matlab.mixin.Copyable
         case 'dualplot'
           out = crlEEG.gui.timeseries.interface.dualPlot(obj,p.Unmatched);
         case 'butterfly'
-          out = crlEEG.gui.timeseries.render.butterfly(obj,p.Unmatched);
+          out = butterfly(obj,p.Unmatched);
         case 'split'
-          out = crlEEG.gui.timeseries.render.split(obj,p.Unmatched);
+          out = split(obj,p.Unmatched);
         otherwise
           error('Unknown plot type');
       end                     
@@ -193,12 +197,15 @@ classdef timeseries < handle & matlab.mixin.Copyable
       %
       out = obj.data;
       
+      % Boolean Data Channels
       boolChan = obj.getChannelsByType('bool');
-      out(:,boolChan) = 0.5*obj.yrange(2)*out(:,boolChan); 
+      out(:,boolChan) = 0.75*obj.yrange(2)*out(:,boolChan); 
+      
+      % Auxilliary Channels
       auxChan = obj.getChannelsByType('aux');      
       for i = 1:numel(auxChan)        
           m = max(abs(out(:,auxChan(i))));
-          out(:,auxChan(i)) = 0.5*(obj.yrange(2)/m)*out(:,auxChan(i));        
+          out(:,auxChan(i)) = 0.75*(obj.yrange(2)/m)*out(:,auxChan(i));        
       end
         
     end    
@@ -257,7 +264,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
       if ~exist('replace','var'), replace = false; end;
       
       % Add a single label
-      if ismember(label,obj.labels_internal)
+      if ismember(label,obj.labels_)
         if replace
           warning('Channel replacement unimplemented');
           return;
@@ -265,10 +272,10 @@ classdef timeseries < handle & matlab.mixin.Copyable
           error('Channel already exists');
         end;
       else
-         obj.labels_internal{end+1} = label;
-         obj.yunits_internal{end+1} = units;
-         obj.chanType_internal{end+1} = type;
-         obj.data_internal = [obj.data data(:)];        
+         obj.labels_{end+1} = label;
+         obj.yunits_{end+1} = units;
+         obj.chanType_{end+1} = type;
+         obj.data_ = [obj.data data(:)];        
       end
     end;
         
@@ -278,7 +285,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
       % function removeChannel(obj,label)
       %
       % Inputs
-      %    obj : crlEEG.type.data.timeseries object
+      %    obj : crlEEG.type.timeseries object
       %  label : List of channel labels to remove. Can be either a string,
       %           or a cell array of strings.
       %
@@ -290,9 +297,9 @@ classdef timeseries < handle & matlab.mixin.Copyable
       idx = ~ismember(obj.labels,label);
            
       % Truncate the internal channels
-      obj.labels_internal = obj.labels_internal(idx);
-      obj.yunits_internal = obj.yunits_internal(idx);
-      obj.data_internal = obj.data_internal(:,idx);
+      obj.labels_ = obj.labels_(idx);
+      obj.yunits_ = obj.yunits_(idx);
+      obj.data_ = obj.data_(:,idx);
     end
            
     %% Retrieve Channels By Type
@@ -324,14 +331,14 @@ classdef timeseries < handle & matlab.mixin.Copyable
     
     %% Get/Set Methods for obj.chanType
     function out = get.chanType(obj)
-      if ~isempty(obj.chanType_internal)
-        out = obj.chanType_internal;
+      if ~isempty(obj.chanType_)
+        out = obj.chanType_;
       else
         [out{1:size(obj,2)}] = deal('data');
       end;
     end; % END get.chanType    
     function set.chanType(obj,val)
-      if isempty(val), obj.chanType_internal = []; return; end;
+      if isempty(val), obj.chanType_ = []; return; end;
       assert(ischar(val)||iscellstr(val),...
               'chanType must be a character string or cell array of strings');
       if ~iscellstr(val)
@@ -342,19 +349,19 @@ classdef timeseries < handle & matlab.mixin.Copyable
       
       assert(numel(cellVal)==size(obj,2),...
               'chanType must have a number of elements equal to the number of channels');
-      obj.chanType_internal = cellVal;                        
+      obj.chanType_ = cellVal;                        
     end % END set.chanType
                 
     %% Get/Set Methods for obj.yUnits
     function out = get.yUnits(obj)
-      if ~isempty(obj.yunits_internal)
-        out = obj.yunits_internal;
+      if ~isempty(obj.yunits_)
+        out = obj.yunits_;
       else
         out{1:size(obj,2)} = deal('uV');
       end;
     end;    
     function set.yUnits(obj,val)
-      if isempty(val), obj.yunits_internal = []; return; end;
+      if isempty(val), obj.yunits_ = []; return; end;
       assert(ischar(val)||iscellstr(val),...
               'yunits must be a character string or cell array of strings');
       if ~iscellstr(val)
@@ -365,28 +372,28 @@ classdef timeseries < handle & matlab.mixin.Copyable
       
       assert(numel(cellVal)==size(obj,2),...
               'yunits must have a number of elements equal to the number of channels');
-      obj.yunits_internal = cellVal;                        
+      obj.yunits_ = cellVal;                        
     end    
     
     %% Get/Set Methods for Data
     function out = get.data(obj)
-      out = obj.data_internal;
+      out = obj.data_;
     end    
     function set.data(obj,val)
-      if ~isempty(obj.labels_internal)
-        assert(size(val,2)==numel(obj.labels_internal),...
+      if ~isempty(obj.labels_)
+        assert(size(val,2)==numel(obj.labels_),...
                 'Number of channels in data must match number of labels');              
       end
-      if ~isempty(obj.xvals_internal)
-        assert(size(val,1)==numel(obj.xvals_internal),...
+      if ~isempty(obj.xvals_)
+        assert(size(val,1)==numel(obj.xvals_),...
                 'Number of timepoints must match numel(obj.xvals)');
       end
-      obj.data_internal = val;
+      obj.data_ = val;
     end
            
     %% Set/Get Methods for obj.labels
     function out = get.labels(obj)
-      if isempty(obj.labels_internal)              
+      if isempty(obj.labels_)              
         % Default channel labels        
         out = cell(1,size(obj.data,2));
         for i = 1:size(obj.data,2),
@@ -394,21 +401,21 @@ classdef timeseries < handle & matlab.mixin.Copyable
         end
         return;
       end;      
-      out = obj.labels_internal;      
+      out = obj.labels_;      
     end % END get.labels
     function set.labels(obj,val)
       % Redirect to internal property
-      if isempty(val), obj.labels_internal = []; return; end;        
+      if isempty(val), obj.labels_ = []; return; end;        
       assert(iscellstr(val),'Labels must be provided as a cell array of strings');
       assert(isempty(obj.data)||(numel(val)==size(obj,2)),...
         'Number of labels must match number of channels');
-      obj.labels_internal = strtrim(val);
+      obj.labels_ = strtrim(val);
     end % END set.labels
             
     %% Get/Set Methods for obj.sampleRate
     function out = get.sampleRate(obj)
-      if ~isempty(obj.sampleRate_internal)
-       out = obj.sampleRate_internal;
+      if ~isempty(obj.sampleRate_)
+       out = obj.sampleRate_;
       else
        out = 1;
       end;
@@ -417,31 +424,34 @@ classdef timeseries < handle & matlab.mixin.Copyable
       if isempty(val), obj.sampleRate = []; return; end;
       assert(isnumeric(val)&&isscalar(val),...
          'Sample rate must be a scalar numeric value');
-       obj.sampleRate_internal = val;
+       obj.sampleRate_ = val;
     end
             
     %% Get/Set Methods for obj.xvals    
     function out = get.xvals(obj)
-      if ~isempty(obj.xvals_internal)
-        out = obj.xvals_internal;
+      if ~isempty(obj.xvals_)
+        out = obj.xvals_;
       else    
         % Default timing values
         out = (1./obj.sampleRate)*(0:size(obj.data,1)-1);
       end;
     end    
     function set.xvals(obj,val)
-      if isempty(val), obj.xvals_internal = []; return; end;
+      if isempty(val), obj.xvals_ = []; return; end;
       assert( isvector(val) && numel(val)==size(obj.data,1),...
             'xVals vector length must match size(obj.data,1)');
       assert( issorted(val), 'xVals should be a sorted list of time values');
-      obj.xvals_internal = val;
+      obj.xvals_ = val;
     end;    
     
     %% Get/Set Methods for obj.yrange
     function rangeOut = get.yrange(obj)
-      dataChans = obj.getChannelsByType('data');            
+      dataChans = obj.getChannelsByType('data');   
+      if ~any(dataChans)
+        rangeOut = [0 1]; return;
+      end;
       rangeOut = [min(min(obj.data(:,dataChans))) ...
-                  max(max(obj.data(:,dataChans)))];
+                  max(max(obj.data(:,dataChans)))];                
     end;                  
     function set.yrange(obj,~)
       error('obj.yrange is derived from obj.data');
@@ -454,6 +464,11 @@ classdef timeseries < handle & matlab.mixin.Copyable
     function set.xrange(obj,~)
       error('obj.xrange is derived from obj.xvals');
     end;     
+    
+    %% Methods with their own m-files
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    plotOut = butterfly(tseries,varargin)
+    
     
     %% Deprecated functionality.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -483,4 +498,8 @@ classdef timeseries < handle & matlab.mixin.Copyable
     end    
     
   end;
+  
+  methods (Static=true)
+  end
+  
 end

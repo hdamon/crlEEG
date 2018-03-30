@@ -75,7 +75,7 @@ switch s(1).type
     end
     
   case '{}'
-    error('Brace indexing not supported by crlEEG.head.model.EEG.electrode');
+    error('Brace indexing not supported by crlEEG.type.sensor.electrode');
     if length(s) == 1
       % Implement obj{indices}
       varargout = {builtin('subsref',obj,s)};

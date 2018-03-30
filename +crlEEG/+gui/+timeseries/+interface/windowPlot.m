@@ -30,12 +30,12 @@ classdef windowPlot < crlEEG.gui.uipanel
   
   properties (Dependent = true)
     % Tracking of Window Size/Location
-    windowStart % Value stored in storedVals.windowStart
-    windowEnd   % Value stored in storedVals.windowEnd
+    windowStart % Value stored in windowStart_
+    windowEnd   % Value stored in windowEnd_
     windowSize  % Computed from windowStart and windowEnd
-        
+    
     windowRange
-    windowIdx    
+    windowIdx
     windowSeries
   end
   
@@ -45,6 +45,10 @@ classdef windowPlot < crlEEG.gui.uipanel
   end
   
   properties (Hidden=true,SetAccess=protected)
+    timeseries_
+    windowStart_
+    windowEnd_
+    
     storedVals
     
     zoomButtons
@@ -66,7 +70,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       %% Input Parsing
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+      p.addRequired('timeseries',@(x) isempty(x)||isa(x,'crlEEG.type.timeseries'));
       parse(p,timeseries,varargin{:});
       
       %% Initialize Base Object
@@ -118,8 +122,8 @@ classdef windowPlot < crlEEG.gui.uipanel
       %uitools.setMinFigSize(gcf,obj.origin,obj.size,5);
       
       %% Initialize stored values
-      obj.storedVals.windowStart = 1;
-      obj.storedVals.windowEnd   = 1;
+      obj.windowStart_ = 1;
+      obj.windowEnd_   = 1;
       
       %% Set Data, xvals, and initial windowPlot size, then draw
       obj.timeseries = p.Results.timeseries;
@@ -127,47 +131,10 @@ classdef windowPlot < crlEEG.gui.uipanel
       
       setUnmatched(obj,p.Unmatched);
       
-      % Extraneous?
-      %obj.updateImage;
-      
     end
-    
-    function val = get.timeseries(obj)
-      if isfield(obj.storedVals,'timeseries')
-        val = obj.storedVals.timeseries;
-      else
-        % Return an empty timeseries?
-        val = []; %crlEEG.type.data.timeseries;
-      end;
-    end;
-    
-    function set.timeseries(obj,val)
-      % Set Method for crlEEG.gui.timeseries.interface.windowPlot
-      %
-      %
-      
-      % Input Checking
-      if isempty(val), obj.storedVals.timeseries = []; return; end;
-      crlEEG.util.assert.instanceOf('crlEEG.type.data.timeseries',val);
-      
-      if isfield(obj.storedVals,'timeseries')
-        if ~isequal(obj.storedVals.timeseries,val)
-          obj.storedVals.timeseries = val;
-          obj.windowStart = 1;
-          obj.windowEnd = size(obj.storedVals.timeseries,1);
-          obj.updateImage;          
-        end;
-      else
-        obj.storedVals.timeseries = val;
-        obj.windowStart = 1;
-        obj.windowEnd = size(obj.storedVals.timeseries,1);
-        obj.updateImage;        
-      end;
-      
-    end;    
-      
-    
+                
     function resizeInternals(obj)
+      % Callback to resize GUI elements when the main size is changed.
       currUnits = obj.Units;
       obj.Units = 'pixels';
       pixPos = obj.Position;
@@ -179,16 +146,15 @@ classdef windowPlot < crlEEG.gui.uipanel
       obj.shiftButtons.Position = [110 5 100 35];
       
       obj.selButtons.Units = 'pixels';
-      obj.selButtons.Position = [215 5 100 35];      
-                  
+      obj.selButtons.Position = [215 5 100 35];
+      
       axesPos = [5 41 pixPos(3)-10 pixPos(4)-41];
       if axesPos(3)<1, axesPos(3) = 1; end;
       if axesPos(4)<1, axesPos(4) = 1; end;
       
       set(obj.axes,'Units','Pixels');
       set(obj.axes,'Position',axesPos);
-                  
-      
+            
       % Set units back to where they were
       obj.Units = currUnits;
     end
@@ -198,24 +164,25 @@ classdef windowPlot < crlEEG.gui.uipanel
     function shiftWindow(obj,val)
       % Shift windowPlot selection left or right.
       %
-      % shiftWindow(obj,val)      
+      % shiftWindow(obj,val)
       %
       % Inputs
       % ------
-      %    obj : crlEEG.gui.timeseries.interface.windowPlot object
+      %    obj : crlEEG.type.timeseries.interface.windowPlot object
       %    val : Amount to shift the window.
-      %             
+      %
       % The distance the window is shifted by is computed as:
       %      shift = val*obj.shiftScale*obj.windowSize
-      % 
+      %
       %   obj.windowSize is the size of the current window
       %   obj.shiftScale defaults to 0.1
       %
       % For val > 0 : Window is shifted to the right.
       %     val < 0 : Window is shifted to the left.
-      %  
-      %             
-      disp('Shifting Window');
+      %
+      %
+      
+      %disp('Shifting Window');
       shift = val*obj.shiftScale*obj.windowSize;
       
       % Always shift by at least one sample
@@ -235,22 +202,22 @@ classdef windowPlot < crlEEG.gui.uipanel
         newWindowStart = obj.windowStart + shift;
         newWindowEnd = obj.windowEnd + shift;
       end;
-         
+      
       obj.setWindow(newWindowStart,newWindowEnd);
       
       % Prevents wacky things for large shift values
-%       if shift>0
-%         obj.windowEnd = newWindowEnd;
-%         obj.windowStart = newWindowStart;
-%       else
-%         obj.windowStart = newWindowStart;
-%         obj.windowEnd   = newWindowEnd;
-%       end;
-
+      %       if shift>0
+      %         obj.windowEnd = newWindowEnd;
+      %         obj.windowStart = newWindowStart;
+      %       else
+      %         obj.windowStart = newWindowStart;
+      %         obj.windowEnd   = newWindowEnd;
+      %       end;
+      
     end
     
     function adjustZoom(obj,val)
-      obj.windowSize = (1+val*obj.zoomScale)*obj.windowSize;      
+      obj.windowSize = (1+val*obj.zoomScale)*obj.windowSize;
     end
     
     function nearest = sampleNum(obj,val)
@@ -270,7 +237,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       end
       newPos = get(obj.axes,'CurrentPoint');
       
-      obj.windowEnd = obj.sampleNum(newPos(1,1));      
+      obj.windowEnd = obj.sampleNum(newPos(1,1));
     end
     
     function setStart(obj,h,evt)
@@ -281,7 +248,7 @@ classdef windowPlot < crlEEG.gui.uipanel
       end
       newPos = get(obj.axes,'CurrentPoint');
       
-      obj.windowStart = obj.sampleNum(newPos(1,1));      
+      obj.windowStart = obj.sampleNum(newPos(1,1));
     end;
     
     
@@ -294,38 +261,164 @@ classdef windowPlot < crlEEG.gui.uipanel
       %
       % Inputs
       % ------
-      %   obj : crlEEG.gui.timeseries.interface.windowPlot object
-      %   windowStart : Index to start selection at 
+      %   obj : crlEEG.type.timeseries.interface.windowPlot object
+      %   windowStart : Index to start selection at
       %   windowEnd   : Index to end selection at
       %
       % windowEnd must be greater than windowStart.
-      %  
+      %
       
       if ~exist('windowStart','var')||isempty(windowStart)
-        windowStart = obj.storedVals.windowStart;
+        windowStart = obj.windowStart_;
       end
       windowStart = round(min(size(obj.timeseries,1),max(1,windowStart)));
-            
-      if ~exist('windowEnd','var')||isempty(obj.windowEnd) 
-        windowEnd = obj.storedVals.windowEnd; 
+      
+      if ~exist('windowEnd','var')||isempty(obj.windowEnd)
+        windowEnd = obj.windowEnd_;
       end;
       windowEnd = round(min(size(obj.timeseries,1),max(1,windowEnd)));
       
       updated = false;
-      if ( obj.storedVals.windowEnd~=windowEnd )
-        obj.storedVals.windowEnd = windowEnd;
-        obj.updateLine(2,obj.storedVals.windowEnd);
+      if ( obj.windowEnd_~=windowEnd )
+        obj.windowEnd_ = windowEnd;
+        obj.updateLine(2,obj.windowEnd_);
         updated = true;
       end
       
-      if ( obj.storedVals.windowStart~=windowStart )
-        obj.storedVals.windowStart = windowStart;
-        obj.updateLine(1,obj.storedVals.windowStart);
+      if ( obj.windowStart_~=windowStart )
+        obj.windowStart_ = windowStart;
+        obj.updateLine(1,obj.windowStart_);
         updated = true;
       end;
       
       if updated, notify(obj,'updatedOut'); end;
       
+    end
+                    
+    %% Methods for Getting the Windowed Data
+    function out = get.windowSeries(obj)
+      out = obj.timeseries(obj.windowStart:obj.windowEnd,:);
+    end;
+    
+    function out = get.windowData(obj)
+      % Get method for deprecated property
+      warning(['crlEEG.type.timeseries.interface.windowPlot.windowData '...
+        'is deprecated. Use '...
+        'crlEEG.type.timeseries.interface.windowPlot.windowSeries ' ...
+        'instead.']);
+      out = obj.windowSeries;
+    end
+    
+    function out = get.windowXVals(obj)
+      % Get method for deprecated property
+      warning('This functionality is deprecated. use obj.windowSeries.xvals instead');
+      out = obj.timeseries.xvals(obj.windowStart:obj.windowEnd);
+    end
+    
+    %% Methods for Updating the Data Plot
+    function updateImage(obj)
+      % Complete redraw of windowPlot
+      %
+      
+      if isempty(obj.timeseries), return; end;
+      axes(obj.axes);
+      
+      % For long time series, only render a subset of timepoints
+      %       tmpSeries = obj.timeseries;
+      %       if ( size(tmpSeries,1) > 10000 )
+      %         useIdx = round(linspace(1,size(tmpSeries,1),10000));
+      %         useIdx = unique(useIdx);
+      %         tmpSeries = tmpSeries(useIdx,:);
+      %       end;
+      
+      % Actually render it.
+      obj.timeseries.plot('type','butterfly','ax',obj.axes);
+      
+      %crlEEG.type.timeseries.render.butterfly(obj.timeseries,'ax',obj.axes);
+      
+      % Catch zero-length X axes definitions.
+      XLim(1) = obj.timeseries.xvals(1); XLim(2) = obj.timeseries.xvals(end);
+      if (XLim(1)==XLim(2)),
+        XLim(1) = XLim(1) - 0.1;
+        XLim(2) = XLim(2) + 0.1;
+      end;
+      YLim = get(obj.axes,'YLim');
+      
+      %set(obj.axes,'XTick',[]);
+      set(obj.axes,'YTick',[]);
+      
+      XTick = get(obj.axes,'XTick');
+      Label = get(obj.axes,'XTickLabel');
+      
+      axis(obj.axes);
+      for i = 1:numel(XTick)
+        text(XTick(i), YLim(1) + 0.1*(YLim(2)-YLim(1)),Label{i});
+        obj.axes.XTickLabel{i} = '';
+      end;
+      %set(obj.axes,'XTickLabel',[]);
+      
+      axis([XLim(1) XLim(2) YLim(1) YLim(2)]);
+      
+      obj.drawLines;
+    end
+    
+    
+    function updateLine(obj,linenum,idx)
+      % Method to update individual vertical lines in a windowPlot
+      XVal = obj.timeseries.xvals(idx);
+      if numel(obj.vLine)==2
+        % Can only update if we've already plotted both.
+        set(obj.vLine{linenum},'XData',XVal*[1 1])
+      end;
+    end;
+    
+    
+    function drawLines(obj)
+      % Draw the vertical lines denoting the boundary of the selected
+      % region
+      %
+      
+      axes(obj.axes);
+      hold on;
+      XVal = obj.timeseries.xvals([obj.windowStart obj.windowEnd]);
+      YLim = get(obj.axes,'YLim');
+      
+      obj.vLine{1} = plot(XVal(1)*[1 1],YLim,'r');
+      set(obj.vLine{1},'linewidth',2);
+      obj.vLine{2} = plot(XVal(2)*[1 1],YLim,'r');
+      set(obj.vLine{2},'linewidth',2);
+      hold off;
+    end
+    
+    %%  Get/Set Methods for Dependent Properties
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% Get/Set Methods for obj.timeseries
+    function val = get.timeseries(obj)
+      val = obj.timeseries_;
+    end;
+    
+    function set.timeseries(obj,val)
+      % Set Method for crlEEG.type.timeseries.interface.windowPlot
+      %
+      %
+      
+      % Input Checking
+      if isempty(val), obj.timeseries_ = []; return; end;
+      crlEEG.util.assert.instanceOf('crlEEG.type.timeseries',val);
+      
+      
+      if ~isequal(obj.timeseries_,val)
+        obj.timeseries_ = val;                
+        obj.updateImage;
+        notify(obj,'updatedOut');
+      end;
+    end;
+    
+    %% Get/Set Methods for obj.windowStart
+    function out = get.windowStart(obj)
+      out = obj.windowStart_;
     end
     
     function set.windowStart(obj,val)
@@ -337,46 +430,48 @@ classdef windowPlot < crlEEG.gui.uipanel
       val = round(min(size(obj.timeseries,1),max(1,val)));
       
       % Update Stored Value
-      if val<=obj.storedVals.windowEnd&&...
-          obj.storedVals.windowEnd~=val
-        obj.storedVals.windowStart = val;
-        obj.updateLine(1,obj.storedVals.windowStart);
+      if val<=obj.windowEnd_&&...
+          obj.windowEnd_~=val
+        obj.windowStart_ = val;
+        obj.updateLine(1,obj.windowStart_);
         notify(obj,'updatedOut');
       end;
       
     end
     
-    function out = get.windowStart(obj)
-      out = obj.storedVals.windowStart;
-    end
+    %% Get/Set Methods for obj.windowEnd
+    function out = get.windowEnd(obj)
+      out = obj.windowEnd_;
+    end;
     
     function set.windowEnd(obj,val)
       % Window always ends at 1 if data is empty
-      if isempty(obj.timeseries), obj.storedVals.windowEnd = 1; return; end;
+      if isempty(obj.timeseries), obj.windowEnd_ = 1; return; end;
       
       % Make sure windowPlot end point is an integer within range.
       val = round(min(size(obj.timeseries,1),max(1,val)));
       
-      if val>=obj.storedVals.windowStart&&...
-          obj.storedVals.windowEnd ~= val
-        obj.storedVals.windowEnd = val;
-        obj.updateLine(2,obj.storedVals.windowEnd);
+      if val>=obj.windowStart_&&...
+          obj.windowEnd_ ~= val
+        obj.windowEnd_ = val;
+        obj.updateLine(2,obj.windowEnd_);
         notify(obj,'updatedOut');
       end
     end
     
-    function out = get.windowEnd(obj)
-      out = obj.storedVals.windowEnd;
-    end;
+    %% Get/Set Methods for obj.windowSize
+    function out = get.windowSize(obj)
+      out = obj.windowEnd_ - obj.windowStart_ + 1;
+    end
     
     function set.windowSize(obj,val)
       % Set selection window size
       %
-           
+      
       % Do nothing if it's a negative value
       if (val<=0), return; end;
       
-      currSize = obj.storedVals.windowEnd - obj.storedVals.windowStart + 1;
+      currSize = obj.windowEnd_ - obj.windowStart_ + 1;
       
       delta = val - currSize;
       if abs(delta)<2, delta = sign(delta); end;
@@ -384,107 +479,8 @@ classdef windowPlot < crlEEG.gui.uipanel
       
       obj.windowStart = obj.windowStart - delta/2;
       obj.windowEnd   = obj.windowEnd + delta/2;
-            
-    end
-    
-    function out = get.windowSize(obj)
-      out = obj.storedVals.windowEnd - obj.storedVals.windowStart + 1;
-    end
-    
-    %% Methods for Getting the Windowed Data
-    function out = get.windowSeries(obj)
-      out = obj.timeseries(obj.windowStart:obj.windowEnd,:);
-    end;
-    
-    function out = get.windowData(obj)
-      % Get method for deprecated property
-      warning(['crlEEG.gui.timeseries.interface.windowPlot.windowData '...
-               'is deprecated. Use '...
-               'crlEEG.gui.timeseries.interface.windowPlot.windowSeries ' ...
-               'instead.']);
-      out = obj.windowSeries;
-    end
-    
-    function out = get.windowXVals(obj)
-      % Get method for deprecated property
-      warning('This functionality is deprecated. use obj.windowSeries.xvals instead');
-      out = obj.timeseries.xvals(obj.windowStart:obj.windowEnd);
-    end
-        
-    %% Methods for Updating the Data Plot
-    function updateImage(obj)
-      % Complete redraw of windowPlot
-      %
       
-      if isempty(obj.timeseries), return; end;      
-      axes(obj.axes);
-            
-      % For long time series, only render a subset of timepoints
-%       tmpSeries = obj.timeseries;
-%       if ( size(tmpSeries,1) > 10000 )
-%         useIdx = round(linspace(1,size(tmpSeries,1),10000));
-%         useIdx = unique(useIdx);
-%         tmpSeries = tmpSeries(useIdx,:);
-%       end;
-      
-      % Actually render it.
-      obj.timeseries.plot('type','butterfly','ax',obj.axes);
-            
-      %crlEEG.gui.timeseries.render.butterfly(obj.timeseries,'ax',obj.axes);
-              
-      % Catch zero-length X axes definitions.
-      XLim(1) = obj.timeseries.xvals(1); XLim(2) = obj.timeseries.xvals(end);
-      if (XLim(1)==XLim(2)),
-        XLim(1) = XLim(1) - 0.1;
-        XLim(2) = XLim(2) + 0.1;
-      end;
-      YLim = get(obj.axes,'YLim'); 
-      
-      %set(obj.axes,'XTick',[]);
-      set(obj.axes,'YTick',[]);
-      
-      XTick = get(obj.axes,'XTick');
-      Label = get(obj.axes,'XTickLabel');
-               
-      axis(obj.axes);
-      for i = 1:numel(XTick)
-        text(XTick(i), YLim(1) + 0.1*(YLim(2)-YLim(1)),Label{i});
-        obj.axes.XTickLabel{i} = '';
-      end;
-      %set(obj.axes,'XTickLabel',[]);
-            
-      axis([XLim(1) XLim(2) YLim(1) YLim(2)]);
-      
-      obj.drawLines;            
     end
-    
-
-    function updateLine(obj,linenum,idx)
-      % Method to update individual vertical lines in a windowPlot
-      XVal = obj.timeseries.xvals(idx);      
-      if numel(obj.vLine)==2
-        % Can only update if we've already plotted both.
-        set(obj.vLine{linenum},'XData',XVal*[1 1])
-      end;
-    end;
-    
-              
-    function drawLines(obj)
-      % Draw the vertical lines denoting the boundary of the selected
-      % region
-      %
-     
-      axes(obj.axes);
-      hold on;      
-      XVal = obj.timeseries.xvals([obj.windowStart obj.windowEnd]);
-      YLim = get(obj.axes,'YLim'); 
-
-      obj.vLine{1} = plot(XVal(1)*[1 1],YLim,'r');       
-      set(obj.vLine{1},'linewidth',2);
-      obj.vLine{2} = plot(XVal(2)*[1 1],YLim,'r');
-      set(obj.vLine{2},'linewidth',2);      
-      hold off;            
-    end    
     
   end
   

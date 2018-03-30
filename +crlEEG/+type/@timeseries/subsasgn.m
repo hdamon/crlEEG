@@ -1,5 +1,5 @@
 function obj = subsasgn(obj,s,varargin)
-% Overloaded subsasgn for crlEEG.type.data.timeseries objects
+% Overloaded subsasgn for crlEEG.type.timeseries objects
 %
    switch s(1).type
       case '.'
@@ -12,7 +12,7 @@ function obj = subsasgn(obj,s,varargin)
               if numel(s(2).subs)==2
                 rowIdx = s(2).subs{1};
                 colIdx = getElectrodeIndex(s(2).subs{2},true);
-                obj.data_internal(rowIdx,colIdx) = varargin{:};
+                obj.data_(rowIdx,colIdx) = varargin{:};
               else
               keyboard;
               end;

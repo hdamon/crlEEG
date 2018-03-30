@@ -1,5 +1,5 @@
 function varargout = subsref(obj,s)
-% subsref method for crlEEG.type.data.timeseries
+% subsref method for crlEEG.type.timeseries
 %
 %
 % There have been significant modifications to the way the timeseries
@@ -21,10 +21,11 @@ switch s(1).type
         tmp = obj.subsref(s(2));
         varargout = {tmp.data};
       else
-        if nargout==0
-          builtin('subsref',obj,s);
-        else
-          varargout = {builtin('subsref',obj,s)};
+         if nargout==0
+           builtin('subsref',obj,s);
+         else
+          %foo(1:nargout) = {builtin('subsref',obj,s)};
+          varargout{1:nargout} = builtin('subsref',obj,s);
         end;
       end;
     else

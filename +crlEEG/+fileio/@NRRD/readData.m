@@ -58,7 +58,7 @@ switch (nrrdObj.encoding)
   fidTmp = fopen(tmpBase, 'r');
   
   %meta.encoding = 'raw';
-  %data = readData(fidTmp, meta, type.data);
+  %data = readData(fidTmp, meta, type);
   
   data = fread(fidTmp,inf,typecast);    
   fclose(fidTmp);
@@ -68,7 +68,7 @@ switch (nrrdObj.encoding)
  case {'txt', 'text', 'ascii'}
   
   data = fscanf(fid, '%f');
-  data = cast(data, type.data);
+  data = cast(data, type);
   
  otherwise
   assert(false, 'Unsupported encoding')

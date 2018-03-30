@@ -21,12 +21,17 @@ function plotOut = butterfly(tseries,varargin)
 % Part of the cnlEEG Project
 %
 
+import crlEEG.util.validation.isNumericVector
+
 %% Input Parsing
 p = inputParser;
-p.addRequired('tseries',@(x) isa(x,'crlEEG.type.data.timeseries'));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addOptional('ax',[],@(x) ishghandle(x)&&strcmpi(get(x,'type'),'axes'));
 p.addParamValue('xrange',tseries.xrange,@(x) isvector(x)&&(numel(x)==2));
 p.addParamValue('yrange',tseries.yrange,@(x) isvector(x)&&(numel(x)==2));
+p.addParamValue('chandisp',[],@(x) isNumericVector(x));
+p.addParamValue('timedisp',[],@(x) isNumericVector(x,2));
+p.addParamValue('sampdisp',[],@(x) isNumericVector(x,2));
 p.addParamValue('scale',1,@(x) isnumeric(x)&&numel(x)==1);
 p.addParamValue('plotAll',false,@(x) islogical(x));
 p.parse(tseries,varargin{:});
@@ -45,29 +50,50 @@ axes(ax);
 if numel(xvals)==1, plotOpts = 'x';
 else                plotOpts = '';  end;
 
-%% For long time series, only render a subset of timepoints      
-if ( size(tseries,1) > 10000 )&&~p.Results.plotAll
-  useIdx = round(linspace(1,size(tseries,1),10000));
-  useIdx = unique(useIdx);
-else
-  useIdx = ':';
+if ~isempty(p.Results.timedisp)
+  error('Not yet implemented');
 end;
+
+% Get the range of samples to display
+if ~isempty(p.Results.sampdisp)
+  sampRange = p.Results.sampdisp;
+else
+  % Default to displaying everything
+  sampRange = [1 size(tseries,1)];
+end;
+
+if ~isempty(p.Results.chandisp)
+  chanDisp = p.Results.chandisp;
+else
+  chanDisp = ':';
+end;
+
+%% For long time series, only render a subset of timepoints      
+useIdx = round(linspace(sampRange(1),sampRange(2),10000));
+useIdx = unique(useIdx);
 
 %% Plot!
 %plotOut = plot(xvals,tseries.data,plotOpts);
 tmpData = tseries.getPlotData;
-tmpData = tmpData(useIdx,:);
+tmpData = tmpData(useIdx,chanDisp);
 
 dataChans = tseries.isChannelType('data');
+dataChans = dataChans(chanDisp);
 
 ax.NextPlot = 'add';
-plotOut = plot(xvals(useIdx),tmpData(:,dataChans),['k' plotOpts],'ButtonDownFcn',get(ax,'ButtonDownFcn'));
+if any(dataChans)
+  plotOut = plot(xvals(useIdx),tmpData(:,dataChans),['k' plotOpts],'ButtonDownFcn',get(ax,'ButtonDownFcn'));
+end
 
 if any(~dataChans)
   ax.NextPlot = 'add';
   tmp = plot(xvals(useIdx),tmpData(:,~dataChans),[plotOpts], ...
             'linewidth',2,'ButtonDownFcn',get(ax,'ButtonDownFcn'));
-  plotOut = [plotOut ; tmp];
+  if exist('plotOut','var')
+    plotOut = [plotOut ; tmp];
+  else
+    plotOut = tmp;
+  end;
 end;
 
 % Modify X Limits if plotting a single timepoint.

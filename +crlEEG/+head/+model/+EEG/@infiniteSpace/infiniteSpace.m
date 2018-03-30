@@ -10,12 +10,22 @@ classdef infiniteSpace
 % finite difference models and reduce the need for a large number of
 % iterations to obtain good convergence.
 %
-% Properties:
+% Inputs
+% ------
+%   nrrdCond : (Optional) Optional NRRD to identify output points from
+%                 When provided, takes precedence over the 'outputpoints'
+%                 parameter.
+%
+% Param-Value Inputs
+% ------------------
 %   electrodes: crlEEG.headModel.EEG.electrodes objects defining the
 %                 measurement locations
+%                   DEFAULT: []
 %   outputpoints: A list of X-Y-Z locations the output voltage should be
 %                   computed at.
-%   conductivity: 
+%                   DEFAULT: []
+%   conductivity: Conductivity of the infinite volume
+%                   DEFAULT: 0.33 S/m
 %
 % Written By: Damon Hyde
 % Part of the crlEEG Project

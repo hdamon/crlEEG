@@ -16,7 +16,7 @@
 % Inputs:
 % -------
 %   obj : crlEEG.head.model.EEG.finiteDifference object
-%   electrodes : array of crlEEG.head.model.EEG.electrode objects
+%   electrodes : array of crlEEG.type.sensor.electrode objects
 %
 % Outputs:
 % --------
@@ -37,8 +37,8 @@ end
 function obj = addElectrode(obj,electrode)
   % Add a single electrode to the FDM object
   
-  assert(isa(electrode,'crlEEG.head.model.EEG.electrode'),...
-            'Input must be a crlEEG.head.model.EEG.electrode object');
+  assert(isa(electrode,'crlEEG.type.sensor.electrode'),...
+            'Input must be a crlEEG.type.sensor.electrode object');
   assert(numel(electrode)==1,['Input must be a single object '...
                               '(And why are we getting here?)']);
   

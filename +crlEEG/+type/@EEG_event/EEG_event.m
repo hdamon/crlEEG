@@ -1,4 +1,4 @@
-classdef event 
+classdef EEG_event 
   
   properties
     description
@@ -8,9 +8,9 @@ classdef event
     
   methods
         
-    function obj = event(latency,type,description)
+    function obj = EEG_event(latency,type,description)
       
-      if nargin>0
+      if nargin>0&&~isempty(latency)
       % Events are primarily described by their latencies
       assert(isnumeric(latency)&&isvector(latency),...
              'Latency must be a numeric vector');
@@ -44,7 +44,7 @@ classdef event
       if numel(latency)>1
         % Recurse for multiple objects
         for i = 1:numel(latency)
-         obj(i) = event(latency(i),type(i),description{i});
+         obj(i) = crlEEG.type.EEG_event(latency(i),type(i),description{i});
         end
         return
       end

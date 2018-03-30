@@ -27,9 +27,9 @@ classdef EEG < crlEEG.fileio.baseobj
       end;
     end
     
-    function out = crlEEG.type.data.EEG(obj)
-      % Typecast to crlEEG.type.data.EEG
-      out = crlEEG.type.data.EEG(obj.data,obj.header.Label,'sampleRate',obj.header.SampleRate);
+    function out = crlEEG.type.EEG(obj)
+      % Typecast to crlEEG.type.EEG
+      out = crlEEG.type.EEG(obj.data,obj.header.Label,'sampleRate',obj.header.SampleRate);
     end
     
     function read(obj)

@@ -9,7 +9,7 @@ function varargout = plot2D(elec,varargin)
 %
 % Inputs
 % ------
-%   elec   : array of crlEEG.head.model.EEG.electrode objects
+%   elec   : array of crlEEG.type.sensor.electrode objects
 %   origin : (x,y,z) origin of the coordinate system
 %   basis  : basis vectors for the coordinate system
 %
