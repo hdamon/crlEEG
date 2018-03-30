@@ -202,7 +202,6 @@ classdef headNet
       [x,y] = net.electrodes.projPos(net.center,net.basis);
     end
     
-
     function out = plot2D(obj,varargin)
       out = obj.electrodes.plot2D('origin',obj.center,'basis',obj.basis,varargin{:});
     end

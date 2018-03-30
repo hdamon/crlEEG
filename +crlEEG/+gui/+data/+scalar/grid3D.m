@@ -28,7 +28,7 @@ classdef grid3D < handle
       p.addOptional('data',[]);
       p.addParamValue('orientation','left-posterior-superior',@(x) ischar(x));
       p.addParamValue('name','VOL',@(x) ischar(x));
-      p.addParamValue('grid',[],@(x) isa(x,'crlEEG.basicobj.gridInSpace'));
+      p.addParamValue('grid',[],@(x) isa(x,'crlEEG.typegridInSpace'));
       p.parse(varargin{:});
       
       obj.data = p.Results.data;
@@ -42,7 +42,7 @@ classdef grid3D < handle
           obj.data = zeros(obj.grid.sizes);
         end;
       else
-        obj.grid = crlEEG.basicobj.gridInSpace(size(obj),p.Unmatched);      
+        obj.grid = crlEEG.typegridInSpace(size(obj),p.Unmatched);      
       end
     end
     

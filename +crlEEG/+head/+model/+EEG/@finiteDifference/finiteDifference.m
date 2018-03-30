@@ -413,9 +413,11 @@ classdef finiteDifference
         switch obj.electrodes(i).model
           case 'pointModel'
             continue;
-          case 'completeModel'
-            obj.nrrdCondModified.data(obj.electrodes(i).voxels) = ...
-              obj.electrodes(i).conductivities;
+          case 'completeModel'     
+            for j = 1:numel(obj.electrodes(i).voxels)
+             obj.nrrdCondModified.data([1 4 5],obj.electrodes(i).voxels(j)) = ...
+               obj.electrodes(i).conductivities(j);
+            end
           otherwise
             error('Unknown electrode type');
         end

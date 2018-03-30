@@ -25,5 +25,5 @@ if strcmpi(obj.centering,'cell')
   newOrigin = newOrigin + 0.5*(newDirections*ones(nDims,1))';
 end;
 
-out = crlEEG.basicobj.gridInSpace(newSizes,newOrigin,newDirections);
+out = crlEEG.typegridInSpace(newSizes,newOrigin,newDirections);
 end
