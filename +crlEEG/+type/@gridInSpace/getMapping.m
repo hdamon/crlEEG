@@ -1,5 +1,6 @@
 function mapOut = getMapping(gridIn,gridOut,mapType)
-
+% Compute the mapping matrix between two spatial grids
+%
 % function mapOut = getMapping(gridIn,gridOut)
 %
 % Get linear mapping from one cnlGridSpace to another. 
@@ -15,7 +16,7 @@ function mapOut = getMapping(gridIn,gridOut,mapType)
 
 
 % Check that both objects are crlEEG.typegridInSpace objects
-if ~(isa(gridIn,'crlEEG.typegridInSpace')&&isa(gridOut,'crlEEG.typegridInSpace'))
+if ~(isa(gridIn,'crlEEG.type.gridInSpace')&&isa(gridOut,'crlEEG.type.gridInSpace'))
   error('gridIn and gridOut must be of class cnlGridSpace');
 end
 

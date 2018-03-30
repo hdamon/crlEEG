@@ -37,6 +37,10 @@ if isequal(refIn,':')
     outIdx = refIn;
     return;
 
+elseif islogical(refIn)
+  assert(numel(refIn)==numel(cellIn),'FOOOO');
+  outIdx = find(refIn);
+    
 elseif isnumeric(refIn)
   %% Numeric Reference
   if isNumericValid

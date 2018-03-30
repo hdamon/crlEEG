@@ -2,7 +2,7 @@ classdef gridInSpace < crlEEG.typegrid
   % classdef gridInSpace < cnlGrid
   %
   % Class defining a cnlGrid embedded in three dimensional space.
-  % crlEEG.typegridInSpace is used to extend cnlGrid to 3D voxelized volumes embedded
+  % crlEEG.type.gridInSpace is used to extend cnlGrid to 3D voxelized volumes embedded
   % in real space.  If a 1D or 2D space is defined, it is by default embedded
   % in a fully 3D space, and values for the origin and directions properties
   % will be appropriately buffered with zeros if necessary

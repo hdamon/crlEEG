@@ -18,7 +18,9 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
     labels % Channel labels
     tfX
     tx
+    trange   
     fx    
+    frange    
   end
  
   properties
@@ -42,6 +44,14 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       obj.fx = fx;      
       obj.labels = labels;
     end
+    
+    function out = get.trange(obj)
+      out = [obj.tx(1) obj.tx(end)];
+    end
+    
+    function out = get.frange(obj)
+      out = [obj.fx(1) obj.fx(end)];
+    end;
     
     %% Set/Get Methods for obj.type
     function out = get.type(obj)
@@ -214,20 +224,33 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       %    parent : Matlab gui handle to parent to 
       %
       %
+      
+      import crlEEG.util.validation.*
+                  
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addOptional('range',[],@(x) isnumeric(x)&&(numel(x)==2));
+      p.addOptional('range',[],@(x) emptyOk(x,@(x) isNumericVector(x,2)));
       p.addParameter('showChan',1);
       p.addParameter('logImg',false);
-      p.addParameter('showBand',[]); 
-      p.addParameter('showTimes',[]);
+      p.addParameter('showBand',[],@(x) emptyOk(x,@(x) isNumericVector(x))); 
+      p.addParameter('showTimes',[],@(x) emptyOk(x,@(x) isNumericVector(x))); 
       p.addParameter('parent',[],@(x) ishghandle(x));
       p.parse(varargin{:});
+      
+      if isempty(p.Results.showChan)
+        idxChan = 1;
+      else
+        idxChan = p.Results.showChan;
+      end;
       
       if isempty(p.Results.parent)
         par = figure;
       else
-        figure(p.Results.parent);
+        if ishghandle(p.Results.parent,'figure')
+         figure(p.Results.parent);
+        elseif ishghandle(p.Results.parent,'axes')
+          axes(p.Results.parent);
+        end
       end;
       
       if ~isempty(p.Results.showBand)
@@ -254,7 +277,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       s(1).type = '.';
       s(1).subs = 'tfX';
       s(2).type = '()';
-      s(2).subs = {idxF idxT p.Results.showChan};
+      s(2).subs = {idxF idxT idxChan};
       
       showImg = obj.subsref(s);
       

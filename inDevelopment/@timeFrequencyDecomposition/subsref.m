@@ -49,13 +49,13 @@ switch s(1).type
           
           fIdx = ':';
           tIdx = ':';
-          chanIdx = getElectrodeIndex(s.subs{1},false);
+          chanIdx = crlEEG.util.getIndexIntoCellStr(obj.labels,s.subs{1},false);
         elseif numel(s.subs)==2
           error('Poorly defined indexing expression');          
         elseif numel(s.subs)==3
           fIdx = s.subs{1};
           tIdx = s.subs{2};
-          chanIdx = getElectrodeIndex(s.subs{3},true);          
+          chanIdx = crlEEG.util.getIndexIntoCellStr(obj.labels,s.subs{3},true);          
         end;
         
         if islogical(fIdx) && (numel(fIdx)==size(obj,1))
@@ -104,35 +104,6 @@ switch s(1).type
     error('Not a valid indexing expression')
 end
 
-  function outIdx = getElectrodeIndex(valIn,isNumericValid)
-    if isequal(valIn,':')
-      outIdx = ':';
-    elseif iscellstr(valIn) % Cell array of strings
-      outIdx = getIdxFromStringCell(valIn);
-    elseif ischar(valIn) % Single character string
-      outIdx = getIdxFromStringCell({valIn});
-    else
-      % Poorly defined: Can't concreately determine if its supposed
-      % to index into time or channels
-      if isNumericValid
-        outIdx = valIn;
-      else
-        error('Invalid Numeric Indexing');
-      end;
-    end;
-  end
-
-  function outIdx = getIdxFromStringCell(cellIn)
-    %% Return the numeric index of string labelled channels
-    %
-    cellIn = strtrim(cellIn); %Remove leading/trailing whitespace
-    outIdx = zeros(1,numel(cellIn));
-    for idx = 1:numel(outIdx)
-      tmp = find(strcmp(cellIn{idx},obj.labels));
-      assert(numel(tmp)==1,'Invalid Index Labels');
-      outIdx(idx) = tmp;
-    end
-  end
 
 end
 

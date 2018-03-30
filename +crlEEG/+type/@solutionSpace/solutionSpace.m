@@ -1,9 +1,11 @@
 classdef solutionSpace < crlEEG.type.gridInSpace
-
+% Object class for grid-type solution spaces
+%
 % classdef solutionSpace < crlEEG.type.gridInSpace
 %
-% solutionSpace is used to define a sublist of voxels on a crlEEG.type.gridInSpace
-% where a solution should be computed.
+% The crlEEG.type.solutionSpace object is used to combine a description of
+% a voxelized space as a crlEEG.type.gridInSpace object, with a list of
+% voxels indexed into that space at which at solution should be defined.
 %
 % Constructor Syntax:
 %   obj = solutionSpace(spaceDef,Voxels,desc);
@@ -37,7 +39,7 @@ classdef solutionSpace < crlEEG.type.gridInSpace
   end;
   
   properties (Hidden=true)
-    matStored
+    matGridToSolSpace_
   end
   
   methods
@@ -84,7 +86,7 @@ classdef solutionSpace < crlEEG.type.gridInSpace
           obj.description = desc;
         end;
         
-        obj.matStored = getMatGridToSolSpace(obj);
+        obj.matGridToSolSpace_ = getMatGridToSolSpace(obj);
         
       end;
     end;
@@ -93,10 +95,10 @@ classdef solutionSpace < crlEEG.type.gridInSpace
       % function inGrid = get.matGridToSolSpace(spaceIn)
       %
       %
-      if isempty(spaceIn.matStored)
+      if isempty(spaceIn.matGridToSolSpace_)
         inGrid = getMatGridToSolSpace(spaceIn);
       else
-        inGrid = spaceIn.matStored;
+        inGrid = spaceIn.matGridToSolSpace_;
       end
     end
     

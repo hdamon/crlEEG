@@ -1,10 +1,14 @@
 function varargout = checkCompatibility(spaceIn,spaceOut)
+% Check compatibility of two solutionSpaces
+%
 % function isCompatible = checkCompatibility(spaceIn,spaceOut)
 %
 % Checks to see if spaceIn can be transformed to spaceOut.  In practice,
 % this means that the voxels in spaceOut are a subset of those in spaceIn.
 %
-% D. Hyde, Dec 2013
+% Part of the crlEEG Project
+% 2009-2018
+%
 
 if isa(spaceIn,'cnlSolutionSpace')&&(isa(spaceOut,'cnlSolutionSpace'))
   boxIn = spaceIn.getBoundingBox;
