@@ -2,7 +2,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
 % A simple class for manipulating time frequency decompositions.
 %
 %
-% function obj = timeFrequencyDecomposition(type,tfX,tx,fx)
+% function obj = timeFrequencyDecomposition(type,tfX,tx,fx,labels)
 %
 % Properties
 % ----------
@@ -10,6 +10,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
 %   tfX  : nFrequency X nTime x nChannel array of decomposition parameters
 %   tx   : Time values for each column in tfX
 %   fx   : Frequency values for each row in tfX
+%  labels: Cell string array of channel labels
 %
 %
   
@@ -235,6 +236,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       p.addParameter('showBand',[],@(x) emptyOk(x,@(x) isNumericVector(x))); 
       p.addParameter('showTimes',[],@(x) emptyOk(x,@(x) isNumericVector(x))); 
       p.addParameter('parent',[],@(x) ishghandle(x));
+      p.addParameter('colormap',crlEEG.gui.widget.alphacolor,@(x) isa(x,'crlEEG.gui.widget.alphacolor'));
       p.parse(varargin{:});
       
       if isempty(p.Results.showChan)
@@ -279,7 +281,10 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       s(2).type = '()';
       s(2).subs = {idxF idxT idxChan};
       
-      showImg = obj.subsref(s);
+      showImg = abs(obj.subsref(s));
+      
+      
+        
       
       if isempty(p.Results.range)
         imgRange(1) = 0;
@@ -287,12 +292,29 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       else
         imgRange = p.Results.range;
       end
-            
+      
       if p.Results.logImg
-        img = imagesc(obj.tx(idxT),obj.fx(idxF),log10(abs(showImg)),log10(imgRange));
-      else      
-        img =  imagesc(obj.tx(idxT),obj.fx(idxF),abs(showImg),imgRange);
+        showImg = log10(showImg);
+        imgRange = log10(imgRange);
       end;
+      
+      cmap = p.Results.colormap;    
+      if isempty(cmap.range)||isequal(cmap.range,[0 1])
+        % Only override if it's the default
+        cmap.range = imgRange;
+      end;
+      [rgb,alpha] = cmap.img2rgb(abs(showImg));
+      tData = obj.tx(idxT);
+      fData = obj.fx(idxF);
+      
+      img = image(tData,fData,rgb,'AlphaData',alpha);
+      
+      
+%       if p.Results.logImg
+%         img = imagesc(obj.tx(idxT),obj.fx(idxF),log10(abs(showImg)),log10(imgRange));
+%       else      
+%         img =  imagesc(obj.tx(idxT),obj.fx(idxF),abs(showImg),imgRange);
+%       end;
       ylabel('Frequency');
       xlabel('Time');
       

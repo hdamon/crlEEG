@@ -51,6 +51,26 @@ classdef selectChannelsFromTimeseries < handle
       end
     end
     
+    function btnOut = editButton(obj,varargin)
+      
+      p = inputParser;
+      p.KeepUnmatched = true;
+      p.addParameter('Position',[1 1 120 20]);
+      p.parse(varargin{:});
+      
+      pos = p.Results.Position;
+      pos(3:4) = [50 20];
+      
+      btnOut = uicontrol('Style','pushbutton',...
+                         'String','Select Channels',...
+                         'Units','pixels',...
+                         'BusyAction','cancel',...
+                         'Position',pos,...
+                         'CallBack',@(h,evt) obj.editChannels,...
+                         p.Unmatched);
+                       
+    end
+    
     function editChannels(obj)
       % Raise or open a GUI to edit selected channels
       %

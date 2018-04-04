@@ -36,120 +36,110 @@ classdef dualPlot < crlEEG.gui.uipanel
       p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.timeseries'));
       p.addParamValue('title','TITLE', @(x) ischar(x));
       parse(p,timeseries,varargin{:});           
-           
-      if ~isfield(p.Unmatched,'Parent')
-        Parent = figure;
-      else
-        Parent = p.Unmatched.Parent;
-      end;
-      
+                
       %% Initialize Base Object
-      obj = obj@crlEEG.gui.uipanel(...
-        'units','pixels',...
-        'position',[2 2 600 807],...
-        'parent',Parent);
+      obj = obj@crlEEG.gui.uipanel(p.Unmatched); %...     
       uitools.setMinFigSize(gcf,obj.Position(1:2),obj.Position(3:4),5);
-      obj.ResizeFcn = @(h,evt) obj.resizeInternals;
-     
+                 
       % Set up the channel selection object
-      obj.chanselect = crlEEG.gui.util.selectChannelsFromTimeseries;
-      %obj.chanselect.input = p.Results.timeseries;
-      
-      obj.chanselectbutton = uicontrol('Parent',obj.panel,...
-        'Style','pushbutton',...
-        'String','Select Channels',...
-        'Units','pixels',...
-        'BusyAction','cancel',...
-        'Position', [105 105 50 20]);
-      set(obj.chanselectbutton,'Callback',@(h,evt)obj.chanselect.editChannels);      
-      
+      obj.chanselect       = crlEEG.gui.util.selectChannelsFromTimeseries;
+      obj.chanselectbutton = obj.chanselect.editButton;
+             
       %% Initialize Mini Plot
       obj.miniplot = crlEEG.gui.timeseries.interface.windowPlot(...
         obj.chanselect.output,...
-        'parent',obj.panel,...
-        'units','pixels',...
-        'position',[0 5 600 100],...        
-        'title',p.Results.title);
-      obj.miniplot.Title = [];
-      obj.miniplot.BorderType = 'none';
-                       
+        'parent',obj.panel,...       
+        'BorderType','none');
+                               
       %% Initialize Toggle Plot
       obj.toggleplot = crlEEG.gui.timeseries.interface.togglePlot(...
-        obj.chanselect.output,...
-        'parent',obj.panel,...
-        'units','pixels',...
-        'position',[0 105 600 700]);
-      obj.toggleplot.BorderType = 'none';
-      
+                                obj.chanselect.output,...
+                                'parent',obj.panel,...
+                                'BorderType','none');
+            
       %% Initialize Time Controls
       obj.playcontrols = crlEEG.gui.widget.timeplay(...
         'parent',obj.panel,...
         'units','pixels',...
-        'position',[325 10 400 30],...        
-        'units','pixels',...
-        'range',[1 size(obj.miniplot.timeseries,1)]);
+        'position',[325 5 400 30],...                
+        'range',[1 size(p.Results.timeseries,1)]);
       obj.playcontrols.BorderType = 'none';
                     
       %% Add listeners 
-      % Update the toggleplot whenever the miniplot updates
-      obj.listenTo{end+1} = ...
-        addlistener(obj.miniplot,'updatedOut',@(h,evt) obj.updateToggle);
-      % Update the miniplot whenever the selected channels are changed.
-      obj.listenTo{end+1} = ...
-        addlistener(obj.chanselect,'updatedOut',@(h,evt) obj.updateMini);
-      % Update the current index whenever the automated player updates
-      obj.listenTo{end+1} = ...
-        addlistener(obj.playcontrols,'updatedOut',@(h,evt)obj.updatedIdx);      
-      % Update the displayed line whenever the toggleplot updates
-      obj.listenTo{end+1} = ...
-        addlistener(obj.toggleplot,'updatedOut',@(h,evt) obj.updateLine);    
-      
-      set(obj.toggleplot.axes,'ButtonDownFcn', @obj.captureMouseClick);
-      
-      set(get(obj.panel,'Parent'),'KeyPressFcn',@obj.keyPress);
-      
-     % uitools.setMinFigSize(gcf,obj.origin,obj.size,5);
-      
-      obj.miniplot.Units = 'normalized';
-      obj.toggleplot.Units = 'normalized';      
-      obj.chanselectbutton.Units = 'pixels';
+      obj.setListeners;
+                 
       uistack(obj.chanselectbutton,'top');
-      
-      
+            
       %obj.size  = p.Results.size;
       %obj.Units = p.Results.units;
       %drawnow;     
-      pause(0.1);      
-      setUnmatched(obj,p.Unmatched);
+      %pause(0.1);      
+      %setUnmatched(obj,p.Unmatched);
       
       %crlEEG.gui.util.setMinFigSize(gcf,obj);      
-      set(obj,'Units','normalized');
+      %set(obj,'Units','normalized');
+      
+      obj.ResizeFcn = @(h,evt) obj.resizeInternals;
+      obj.resizeInternals;
       
       obj.chanselect.input = p.Results.timeseries;
       obj.miniplot.windowEnd = size(p.Results.timeseries,1);
       
     end
     
+    function setListeners(obj)
+      % Update the toggleplot whenever the miniplot updates
+      obj.listenTo{end+1} = ...
+        addlistener(obj.miniplot,'updatedOut',@(h,evt) obj.updateToggle);
+      
+      % Update the miniplot whenever the selected channels are changed.
+      obj.listenTo{end+1} = ...
+        addlistener(obj.chanselect,'updatedOut',@(h,evt) obj.updateMini);
+      
+      % Update the current index whenever the automated player updates
+      obj.listenTo{end+1} = ...
+        addlistener(obj.playcontrols,'updatedOut',@(h,evt)obj.updatedIdx);      
+      
+      % Update the displayed line whenever the toggleplot updates
+      obj.listenTo{end+1} = ...
+        addlistener(obj.toggleplot,'updatedOut',@(h,evt) obj.updateLine);    
+      
+      set(obj.toggleplot.axes,'ButtonDownFcn', @obj.captureMouseClick);
+      
+      set(get(obj.panel,'Parent'),'KeyPressFcn',@obj.keyPress);      
+      
+    end
+    
     function resizeInternals(obj)      
-      % Reposition the internal components of the dualPlot
+      % Position the internal components of the dualPlot
       %
-      % Does two things:
-      %  1) Update the location of the channel select gui
-      %  2) Set the correct location for the "Select Channels" button
-      %
+
       drawnow; % Clear drawing buffer.
+      
       % Get current location in pixels
       currUnits = obj.Units;
       obj.Units = 'pixels';
       pixPos = obj.Position;
             
+      % Miniplot Position
+      miniPlotHeight = max([75/pixPos(4) min([100/pixPos(4) 0.3])]);
+      obj.miniplot.Units = 'normalized';
+      obj.miniplot.Position = [0 0 1 miniPlotHeight];
+      
+      % Toggleplot
+      togglePlotHeight = max([0.001 1-miniPlotHeight]);
+      obj.toggleplot.Units = 'normalized';
+      obj.toggleplot.Position = [0 miniPlotHeight 1 togglePlotHeight];
+      
+      % PlayControls
+      
       % This updates the location at which the channelselect GUI will open.
       figPos = getpixelposition(ancestor(obj,'figure'));
       newPos = [figPos(1)-110 figPos(2) 110 figPos(4)];
       obj.chanselect.setPos = newPos;
       
       % Set the correct position for the "Select Channels Button"
-      tpPos = getpixelposition(obj.toggleplot.panel);
+      tpPos  = getpixelposition(obj.toggleplot.panel);
       btnPos = getpixelposition(obj.toggleplot.toggleBtn);      
       obj.chanselectbutton.Position = [btnPos(1)+tpPos(1)+105 btnPos(2)+tpPos(2)-1 120 20];
       
@@ -193,7 +183,7 @@ classdef dualPlot < crlEEG.gui.uipanel
       % display window to center that line when it moves out of the
       % currently displayed range.
       %
-      shiftLeft = obj.playcontrols.currIdx<obj.miniplot.windowStart;
+      shiftLeft  = obj.playcontrols.currIdx<obj.miniplot.windowStart;
       shiftRight = obj.playcontrols.currIdx>obj.miniplot.windowEnd;
       if ~(shiftLeft||shiftRight)
         obj.updateLine;

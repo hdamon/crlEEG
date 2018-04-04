@@ -85,6 +85,8 @@ function out = runspectrogram(tseries,varargin)
 %                 DEFAULT: 2038
 %  'freqs'   :  Vector defining the frequencies of the output
 %  
+% REQUIRES THE SIGNAL PROCESSING TOOLBOX
+% 
 
 %% Input Parsing
 p = inputParser;
@@ -197,11 +199,11 @@ for idxChan = 1:numel(doChans)
   
 end;
 
-out = timeFrequencyDecomposition('multitaper',pxxOut,times,fx,tseries.labels(doChans));
-out.params.windowSize = winSize;
-out.params.nOutput = nOutput;
-out.params.FFTlength = p.Results.FFTlength;
-out.params.nw = p.Results.nw;
+% out = timeFrequencyDecomposition('multitaper',pxxOut,times,fx,tseries.labels(doChans));
+% out.params.windowSize = winSize;
+% out.params.nOutput = nOutput;
+% out.params.FFTlength = p.Results.FFTlength;
+% out.params.nw = p.Results.nw;
 
 %out.type = 'multitaper';
 %out.tfX = pxx;

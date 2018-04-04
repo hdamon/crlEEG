@@ -94,6 +94,7 @@ classdef alphacolor < handle
     function set.range(obj,val)
       assert(isempty(val)||isnumeric(val)&&(numel(val)==2),...
         'Range must be a length 2 numeric vector');
+      if isempty(val), val = [0 1]; end;
       if ~isequal(obj.range,val)
         obj.range = val;
         obj.updateGUI;

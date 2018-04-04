@@ -1,10 +1,12 @@
 classdef showTF < crlEEG.gui.uipanel
+%classdef showTF < matlab.ui.container.Panel
 % Provides a GUI interface for crlEEG.type.timeFrequencyDecomposition objects
 %
 % 
   properties
     tfDecomp
     ax
+    cmap
   end;
   
   properties (Dependent =true)
@@ -24,6 +26,7 @@ classdef showTF < crlEEG.gui.uipanel
     showTimes_
     logImg_
     imgRange_ = [];
+    listeners_ 
   end
   
   
@@ -33,46 +36,58 @@ classdef showTF < crlEEG.gui.uipanel
     
     function obj = showTF(tfDecomp,varargin)
       
-        p = inputParser
+        %% Input Parsing
+        p = inputParser;
         p.KeepUnmatched = true;
         p.addRequired('tfDecomp',@(x) isa(x,'timeFrequencyDecomposition'));
         p.addParameter('title','TITLE',@(x) ischar(x));
         p.addParameter('showBand',[]);
         p.addParameter('showTimes',[]);
+        p.addParameter('showChan',[]);
         p.addParameter('logImg',false);
+        p.addParameter('range',[]);        
+        p.addParameter('colormap',crlEEG.gui.widget.alphacolor,@(x) isa(x,'crlEEG.gui.widget.alphacolor'));
         p.parse(tfDecomp,varargin{:});
+                      
+        % Superclass Constructor
+        obj = obj@crlEEG.gui.uipanel(p.Unmatched); 
+                
+        % Display Axes
+        obj.ax = axes('parent',obj.panel,'units','normalized');        
         
-        if ~isfield(p.Unmatched,'Parent')
-          Parent = figure;
-        else
-          Parent = p.Unmatched.Parent;
-        end
-        
-        obj = obj@crlEEG.gui.uipanel(...
-          'units','pixels',...
-          'position',[2 2 600 200],...
-          'parent',Parent);
-        obj.ResizeFcn = @(h,evt) obj.resizeInternals();
-        obj.ax = axes('parent',obj.panel,...
-                      'units','pixels',...
-                      'Position',[50 50 545 145]);
-        obj.ax.Units = 'normalized';
-        
+        % Interactive Colormap
+        obj.cmap = p.Results.colormap;
+        obj.cmap.range = p.Results.range;
+                
+        % Input Data Handle
         obj.tfDecomp = p.Results.tfDecomp;
         
+        % Channel Selection Object
         obj.chanSelect = uicontrol('Style','popup',...
                                    'String',obj.tfDecomp.labels,...
-                                   'Parent',obj.panel,...
-                                   'Units','pixels',...                 
-                                   'Position',[2 2 50 30],...
+                                   'Parent',obj.panel,...                                   
                                    'CallBack',@(h,evt) updateImage(obj));
         
-        obj.showBand_ = p.Results.showBand;
+        if ~isempty(p.Results.showChan)
+          idx = find(cellfun(@(x) isequal(x,p.Results.showChan),obj.tfDecomp.labels));
+          obj.chanSelect.Value = idx;
+        end
+                
+        % Set Internal Variables
+        obj.showBand_  = p.Results.showBand;
         obj.showTimes_ = p.Results.showTimes;
-        obj.logImg_ = p.Results.logImg;
-                                 
-        obj.updateImage;        
+        obj.logImg_    = p.Results.logImg;
+        
+        % Add Listeners
+        obj.listeners_ = addlistener(obj.cmap,'updatedOut',@(h,evt) obj.updateImage);
+        
+        % Set Resize CallBack. Then Call it.
+        obj.ResizeFcn = @(h,evt) obj.resizeInternals();
         obj.Units = 'normalized';
+        obj.resizeInternals;
+        
+        % Actually Plot
+        obj.updateImage;                
     end      
     
     function out = get.showBand(obj)
@@ -118,22 +133,23 @@ classdef showTF < crlEEG.gui.uipanel
         obj.updateImage;
       end;
     end
-      
-    
+          
     function resizeInternals(obj)
       currUnits = obj.Units;
       cleanup = onCleanup(@() set(obj,'Units',currUnits));
       
       obj.Units = 'pixels';
       pixPos = obj.Position;
-      
+    %  disp(['TF Panel is of Size: ' num2str(pixPos)]);
       obj.chanSelect.Units = 'pixels';
       obj.chanSelect.Position = [2 2 50 30];
             
       obj.ax.Units = 'pixels';
-      xSize = max([5 0.99*(pixPos(3)-50)]);
+      xSize = max([5 (pixPos(3)-100)]);
       ySize = max([5 0.99*(pixPos(4)-50)]);
-      obj.ax.Position = [50 50 xSize ySize];            
+      obj.ax.Position = [70 50 xSize ySize];            
+      
+      %disp(['Setting TF Axes Position: ' num2str([70 50 xSize ySize])]);
     end
     
     function out = get.showChan(obj)
@@ -147,7 +163,8 @@ classdef showTF < crlEEG.gui.uipanel
                            'showChan',obj.showChan,...
                            'showTimes',obj.showTimes,...
                            'logImg',obj.logImg,...
-                           'range',obj.imgRange)
+                           'range',obj.imgRange,...
+                           'colormap',obj.cmap)
                          
       set(obj.ax,'YDir','normal');      
       %obj.ax.Position = [0.025 0.05 0.965 0.9];

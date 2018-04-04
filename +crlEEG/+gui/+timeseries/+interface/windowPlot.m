@@ -321,7 +321,9 @@ classdef windowPlot < crlEEG.gui.uipanel
       %
       
       if isempty(obj.timeseries), return; end;
+      %tmpFcn = obj.axes.ButtonDownFcn;
       axes(obj.axes);
+      cla;
       
       % For long time series, only render a subset of timepoints
       %       tmpSeries = obj.timeseries;

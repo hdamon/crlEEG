@@ -131,7 +131,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
         
     %% Overloaded 
     function out = size(obj,dim)
-      if numel(obj==1)
+      if numel(obj)==1
        if ~exist('dim','var')
          out = size(obj.data);
        else

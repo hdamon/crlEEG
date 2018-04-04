@@ -210,6 +210,8 @@ classdef togglePlot < crlEEG.gui.uipanel
       obj.Units = 'pixels';
       pixPos = obj.Position;
       
+    %  disp(['EEG panel is of size: ' num2str(pixPos)]);
+      
       xSize = pixPos(3);     
       ySize = pixPos(4);
       
@@ -224,6 +226,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       axesPos(2) = toggleBtnSize(2)+axesYOffset;
       axesPos(3) = xSize - axesPos(1) - btnWidth; if axesPos(3)<=0, axesPos(3) = 1; end;
       axesPos(4) = ySize - axesPos(2); if axesPos(4)<=0, axesPos(4) = 1; end;
+     % disp(['Setting EEG Axes Position: ' num2str(axesPos)]);
       set(obj.axes,'Position',axesPos);
       
       % Shift Buttons
@@ -360,7 +363,9 @@ classdef togglePlot < crlEEG.gui.uipanel
       %      
       try
         % Clear axis, and make sure the next plot doesn't modify callbacks
+        tmpFcn = obj.axes.ButtonDownFcn;
         cla(obj.axes,'reset');
+        obj.axes.ButtonDownFcn = tmpFcn;
                 
 %         tmpSeries = obj.timeseries;
 %         if ( size(tmpSeries,1) > 10000 )
