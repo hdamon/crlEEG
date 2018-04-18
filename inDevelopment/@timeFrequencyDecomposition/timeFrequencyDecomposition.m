@@ -176,7 +176,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       % Select a portion of the 
       
       assert(issorted(timesOut),'Output times must be sorted');
-      inRange = ( timesOut(1) > tfIn.tx(1) ) & ( timesOut(end) < tfIn.tx(end));
+      inRange = ( timesOut(1) >= tfIn.tx(1) ) & ( timesOut(end) <= tfIn.tx(end));
       assert(inRange,'Requested times are out of range');
       
       [~,searchStart] = min(abs(tfIn.tx-timesOut(1)));
@@ -200,10 +200,12 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
         outIdx(idxOut) = idxSearch; % Update output                        
       end
        
-      tfOut = outIdx;
-      %tfOut = tfIn;
-      %tfOut.tfX = tfOut.tfX(:,outIdx);
-      %tfOut.tx = tfOut.tx(outIdx);
+      
+      s.type = '()';
+      s.subs = {':' outIdx ':'};
+      
+      tfOut = tfIn.subsref(s);
+      
       
     end
     
@@ -282,10 +284,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       s(2).subs = {idxF idxT idxChan};
       
       showImg = abs(obj.subsref(s));
-      
-      
-        
-      
+                          
       if isempty(p.Results.range)
         imgRange(1) = 0;
         imgRange(2) = prctile(abs(showImg(:)),99);
@@ -308,13 +307,13 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       fData = obj.fx(idxF);
       
       img = image(tData,fData,rgb,'AlphaData',alpha);
-      
-      
+            
 %       if p.Results.logImg
 %         img = imagesc(obj.tx(idxT),obj.fx(idxF),log10(abs(showImg)),log10(imgRange));
 %       else      
 %         img =  imagesc(obj.tx(idxT),obj.fx(idxF),abs(showImg),imgRange);
 %       end;
+      set(gca,'YDir','normal');
       ylabel('Frequency');
       xlabel('Time');
       

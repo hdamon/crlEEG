@@ -186,7 +186,8 @@ for idxChan = 1:numel(doChans)
   tseriesData = tseries.data(:,idxChan);
   tseriesData = tseriesData(indices);
   
-  % Select frequencies
+  % Select frequencies, either using the length of the FFT, or a specific
+  % list of desired frequencies.
   f = p.Results.FFTlength;
   if ~isempty(p.Results.freqs)
     f = p.Results.freqs;
@@ -199,11 +200,11 @@ for idxChan = 1:numel(doChans)
   
 end;
 
-% out = timeFrequencyDecomposition('multitaper',pxxOut,times,fx,tseries.labels(doChans));
-% out.params.windowSize = winSize;
-% out.params.nOutput = nOutput;
-% out.params.FFTlength = p.Results.FFTlength;
-% out.params.nw = p.Results.nw;
+out = timeFrequencyDecomposition('multitaper',pxxOut,times,fx,tseries.labels(doChans));
+out.params.windowSize = winSize;
+out.params.nOutput = nOutput;
+out.params.FFTlength = p.Results.FFTlength;
+out.params.nw = p.Results.nw;
 
 %out.type = 'multitaper';
 %out.tfX = pxx;

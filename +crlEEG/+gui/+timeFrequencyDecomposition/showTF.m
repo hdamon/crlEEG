@@ -142,11 +142,11 @@ classdef showTF < crlEEG.gui.uipanel
       pixPos = obj.Position;
     %  disp(['TF Panel is of Size: ' num2str(pixPos)]);
       obj.chanSelect.Units = 'pixels';
-      obj.chanSelect.Position = [2 2 50 30];
+      obj.chanSelect.Position = [2 2 100 30];
             
       obj.ax.Units = 'pixels';
       xSize = max([5 (pixPos(3)-100)]);
-      ySize = max([5 0.99*(pixPos(4)-50)]);
+      ySize = max([5 0.95*(pixPos(4)-50)]);
       obj.ax.Position = [70 50 xSize ySize];            
       
       %disp(['Setting TF Axes Position: ' num2str([70 50 xSize ySize])]);
@@ -154,6 +154,18 @@ classdef showTF < crlEEG.gui.uipanel
     
     function out = get.showChan(obj)
       out = obj.chanSelect.String{obj.chanSelect.Value};
+    end
+    
+    function set.showChan(obj,val)
+      newIdx = find(cellfun(@(x) isequal(x,val),obj.chanSelect.String));
+      if numel(newIdx)==0, error('String not found'); end;
+      if numel(newIdx)>1, error('Multiple match'); end;
+      
+      if ~(newIdx==obj.chanSelect.Value)
+        obj.chanSelect.Value = newIdx;
+        obj.updateImage;
+      end
+        
     end
         
     function updateImage(obj)
@@ -166,7 +178,7 @@ classdef showTF < crlEEG.gui.uipanel
                            'range',obj.imgRange,...
                            'colormap',obj.cmap)
                          
-      set(obj.ax,'YDir','normal');      
+            
       %obj.ax.Position = [0.025 0.05 0.965 0.9];
     end
     

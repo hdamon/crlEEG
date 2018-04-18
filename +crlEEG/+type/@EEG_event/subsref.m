@@ -23,8 +23,8 @@ function varargout = subsref(obj,s)
                   idx = find(cellfun(@(x) x==s.subs{2},{obj.type}));
                   [varargout{1:nargout}] = obj(idx);
                 case 'description'
-                  testString = validatestring(s.subs{2},unique({obj.description}));
-                  idx = find(cellfun(@(x) isequal(x,testString),{obj.description}));
+                  %testString = validatestring(s.subs{2},unique({obj.description}));
+                  idx = find(cellfun(@(x) isequal(x,s.subs{2}),{obj.description}));
                   [varargout{1:nargout}] = obj(idx);                  
               end
             else

@@ -34,11 +34,16 @@ classdef dualPlot < crlEEG.gui.uipanel
       p = inputParser;
       p.KeepUnmatched = true;
       p.addRequired('timeseries',@(x) isa(x,'crlEEG.type.timeseries'));
+      p.addParameter('Parent',[]);
       p.addParamValue('title','TITLE', @(x) ischar(x));
       parse(p,timeseries,varargin{:});           
                 
       %% Initialize Base Object
-      obj = obj@crlEEG.gui.uipanel(p.Unmatched); %...     
+      
+      parent = p.Results.Parent;
+      if isempty(parent), parent = figure; end;
+      
+      obj = obj@crlEEG.gui.uipanel('parent',parent,p.Unmatched); %...     
       uitools.setMinFigSize(gcf,obj.Position(1:2),obj.Position(3:4),5);
                  
       % Set up the channel selection object

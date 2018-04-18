@@ -45,6 +45,7 @@ classdef togglePlot < crlEEG.gui.uipanel
     xrange
     yrange
   end
+  
   properties (Hidden=true)
     toggleBtn        
     shiftBtn    
@@ -100,14 +101,14 @@ classdef togglePlot < crlEEG.gui.uipanel
       
       obj.shiftBtn(1) = uicontrol('Parent',obj.panel,...
         'Style','pushbutton',...
-        'String','<-',...
+        'String',char(8595),...
         ...%'Units','normalized',...
         ...%'Position',[0.96 axisYstart 0.02 axisYsize/2-0.02],...
         'Callback',@(h,evt) obj.shiftDisplayed(1));
       
       obj.shiftBtn(2) = uicontrol('Parent',obj.panel,...
         'Style','pushbutton',...
-        'String','->',...
+        'String',char(8593),...
         ...%'Units','normalized',...
         ...%'Position',[0.96 axisYstart+axisYsize/2 0.02 axisYsize/2-0.02],...
         'Callback',@(h,evt) obj.shiftDisplayed(-1));
@@ -200,7 +201,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       % parent panel is resized.
       
       % Size Definitions
-      btnWidth    = 30;
+      btnWidth    = 15;
       axesXOffset = 70;
       axesYOffset = 35;
       toggleBtnSize = [ 5 5 100 20];
@@ -224,7 +225,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       axesPos = get(obj.axes,'Position');
       axesPos(1) = axesXOffset;
       axesPos(2) = toggleBtnSize(2)+axesYOffset;
-      axesPos(3) = xSize - axesPos(1) - btnWidth; if axesPos(3)<=0, axesPos(3) = 1; end;
+      axesPos(3) = xSize - axesPos(1) - btnWidth - 5; if axesPos(3)<=0, axesPos(3) = 1; end;
       axesPos(4) = ySize - axesPos(2); if axesPos(4)<=0, axesPos(4) = 1; end;
      % disp(['Setting EEG Axes Position: ' num2str(axesPos)]);
       set(obj.axes,'Position',axesPos);

@@ -21,6 +21,7 @@ switch s(1).type
         tmp = obj.subsref(s(2));
         varargout = {tmp.data};
       else
+        % This is poorly coded.
         if nargout==0
           builtin('subsref',obj,s);
         else
@@ -55,7 +56,8 @@ switch s(1).type
           error('Invalid indexing expression');
         end;
         
-        if islogical(rowIdx)&& (numel(rowIdx)==size(obj,1))
+        if (numel(rowIdx)==size(obj,1))
+          rowIdx = logical(rowIdx);
           rowIdx = find(rowIdx);
         end;
         
@@ -81,7 +83,12 @@ switch s(1).type
     elseif ( length(s) == 3 && strcmp(s(2).type,'.') ...
         && strcmp(s(3).type,'()') )
       % Implement obj(indices).PropertyName(indices)
-      varargout = {builtin('subsref',obj,s)};
+      if (numel(obj)>1) && strcmp(s(1).type,'()')
+        tmp = obj.subsref(s(1));
+        varargout = {tmp.subsref(s(2:end))};
+      else        
+        varargout = {builtin('subsref',obj,s)};
+      end;
     else
       % Use built-in for any other expression
       varargout = {builtin('subsref',obj,s)};

@@ -19,5 +19,4 @@ meanSig = mean(data,2);
 meanSig = repmat(meanSig,1,size(data,2));
 EEG.data(:,idxData) = EEG.data(:,idxData)-meanSig;
 
-
 end

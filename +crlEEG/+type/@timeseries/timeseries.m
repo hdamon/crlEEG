@@ -300,6 +300,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
       obj.labels_ = obj.labels_(idx);
       obj.yunits_ = obj.yunits_(idx);
       obj.data_ = obj.data_(:,idx);
+      obj.chatype_ = obj.chantype_(:,idx);
     end
            
     %% Retrieve Channels By Type

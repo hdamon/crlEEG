@@ -254,9 +254,23 @@ classdef windowPlot < crlEEG.gui.uipanel
     
     
     %% Methods for Window Size Setting
+    function varargout = getWindow(obj)
+      % Return the current window
+      if nargout==1
+       varargout{1} = [obj.windowStart obj.windowEnd];
+      else
+        varargout{1} = obj.windowStart;
+        varargout{2} = obj.windowEnd;
+      end;
+    end
+    
     function setWindow(obj,windowStart,windowEnd)
       % Set the currently selected range for a windowPlot
       %
+      % Usage:
+      % ------      
+      % setWindow(obj,windowPlotObject)
+      % setWindow(obj,windowDefinition)
       % setWindow(obj,windowStart,windowEnd)
       %
       % Inputs
@@ -268,16 +282,31 @@ classdef windowPlot < crlEEG.gui.uipanel
       % windowEnd must be greater than windowStart.
       %
       
+      % Get start/end from another windowplot object
+      if isa(windowStart,'crlEEG.gui.timeseries.interface.windowPlot')
+        [windowStart, windowEnd] = windowStart.getWindow;
+      end
+      
+      % Pass in a vector instead of two values
+      if numel(windowStart)==2 && ~exist('windowEnd','var')
+        windowEnd = windowStart(2);
+        windowStart = windowStart(1);
+      end;
+      
+      % Handle Passing Only a Single Parameter
       if ~exist('windowStart','var')||isempty(windowStart)
         windowStart = obj.windowStart_;
       end
-      windowStart = round(min(size(obj.timeseries,1),max(1,windowStart)));
-      
+            
       if ~exist('windowEnd','var')||isempty(obj.windowEnd)
         windowEnd = obj.windowEnd_;
       end;
+      
+      % Make sure they're in range
+      windowStart = round(min(size(obj.timeseries,1),max(1,windowStart)));
       windowEnd = round(min(size(obj.timeseries,1),max(1,windowEnd)));
       
+      % Update Fields
       updated = false;
       if ( obj.windowEnd_~=windowEnd )
         obj.windowEnd_ = windowEnd;
