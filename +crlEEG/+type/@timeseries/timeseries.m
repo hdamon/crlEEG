@@ -300,7 +300,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
       obj.labels_ = obj.labels_(idx);
       obj.yunits_ = obj.yunits_(idx);
       obj.data_ = obj.data_(:,idx);
-      obj.chatype_ = obj.chantype_(:,idx);
+      obj.chanType_ = obj.chanType_(idx);
     end
            
     %% Retrieve Channels By Type
@@ -469,7 +469,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
     %% Methods with their own m-files
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     plotOut = butterfly(tseries,varargin)
-    
+    outEEG = filtfilt(EEG,dFilter)
     
     %% Deprecated functionality.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

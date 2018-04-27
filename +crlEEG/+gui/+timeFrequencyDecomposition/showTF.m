@@ -69,7 +69,12 @@ classdef showTF < crlEEG.gui.uipanel
                                    'CallBack',@(h,evt) updateImage(obj));
         
         if ~isempty(p.Results.showChan)
-          idx = find(cellfun(@(x) isequal(x,p.Results.showChan),obj.tfDecomp.labels));
+          if iscellstr(p.Results.showChan)||ischar(p.Results.showChan)
+            idx = find(cellfun(@(x) isequal(x,p.Results.showChan),obj.tfDecomp.labels));
+          else
+            idx = p.Results.showChan;
+          end;
+          assert(numel(idx)==1,'Only one channel can be displayed at a time');
           obj.chanSelect.Value = idx;
         end
                 

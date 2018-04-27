@@ -1,5 +1,10 @@
 classdef EEG < crlEEG.fileio.baseobj
   %% Object class for reading .eeg files
+  %
+  % This is primarily a lightweight front end for BioSig.
+  %
+  %
+  
   properties
     data
     header
@@ -15,7 +20,7 @@ classdef EEG < crlEEG.fileio.baseobj
       % Input Parser Object
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addOptional('fname',[],@(x) crlEEG.fileio.baseobj.fnameFcn(x,'crlEEG.fileio.EV2'));
+      p.addOptional('fname',[],@(x) crlEEG.fileio.baseobj.fnameFcn(x,'crlEEG.fileio.EEG'));
       p.addOptional('fpath',[],@(x) crlEEG.fileio.baseobj.fpathFcn(x));      
       p.parse(varargin{:});
             

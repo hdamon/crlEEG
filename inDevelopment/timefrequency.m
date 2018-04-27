@@ -45,11 +45,11 @@ function out =  timefrequency(tseries,varargin)
 %
 
 %% Input Parsing
-validTypes = {'multitaper' 'eeglab' 'spectrogram'};
+validTypes = {'multitaper' 'eeglab' 'spectrogram' 'wavelet'};
 p = inputParser;
 p.KeepUnmatched = true;
-p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.addOptional('method','multitaper',@(x) ismember(x,validTypes));
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
 p.parse(tseries,varargin{:});
 
 switch p.Results.method
@@ -61,6 +61,8 @@ switch p.Results.method
     out = multitaper(tseries,p.Unmatched);
   case 'eeglab'
     out = eeglab(tseries,p.Unmatched);
+  case 'wavelet'
+    out = contwave(tseries,p.Unmatched);
   otherwise
     error('Unknown decomposition type');
 end;
@@ -108,6 +110,76 @@ end;
 
 %% Output Parsing
 out = timeFrequencyDecomposition('spectrogram',s,t+tseries.xrange(1),f,tseries.labels(dataChans));
+out.params = varargin;
+
+end
+
+function out = contwave(tseries,varargin)
+% Compute a time-frequency decomposition using the continuous wavelet
+% transform
+%
+%
+% Inputs
+% ------
+%    tseries : A crlEEG.type.timeseries object
+%
+% Param-Value Pairs
+% -----------------
+%    'pad' :
+%     'dj' :
+%  '   s0' :
+%     'j1' :
+% 'mother' :
+%  'param' :
+%  'freqs' :
+%
+% This is computed using the function contwt, available from MatlabCentral
+% at:
+% https://www.mathworks.com/matlabcentral/fileexchange/20821
+
+
+p = inputParser;
+p.addRequired('tseries',@(x) isa(x,'crlEEG.type.timeseries'));
+p.addParameter('pad',1);
+p.addParameter('dj',0.1);
+p.addParameter('s0',-1); % Roughly 240Hz w/ a 6 Cycle Wavelet
+p.addParameter('j1',-1);
+p.addParameter('mother',-1);
+p.addParameter('param',-1);
+p.addParameter('freqs',[]);
+p.parse(tseries,varargin{:});
+
+PAD = p.Results.pad;
+DJ = p.Results.dj;
+S0 = p.Results.s0;
+J1 = p.Results.j1;
+MOTHER = p.Results.mother;
+PARAM = p.Results.param;
+
+DT = 1./tseries.sampleRate;
+
+dataChans = logical(tseries.isChannelType('data'));
+data = tseries.data(:,dataChans);
+
+for i = 1:size(data,2)  
+%[WAVE(:,:,i),PERIOD,SCALE,COI,DJ, PARAMOUT, K] = contwt(data(:,i),DT,PAD,DJ,S0,J1,MOTHER,PARAM);
+[WAVE(:,:,i),PERIOD,SCALE,COI] = wavelet(data(:,i),DT,PAD,DJ,S0,J1,MOTHER,PARAM);
+end
+
+WAVE = flip(WAVE,1);
+%F = flip(PARAMOUT./PERIOD);
+F = flip(1./PERIOD);
+
+if ~isempty(p.Results.freqs)
+  % Interpolate to desired frequencies.
+  Fout = p.Results.freqs;
+  newWAVE = interp1(F,WAVE,Fout);
+  
+  WAVE = newWAVE;
+  F = Fout;  
+end
+
+out = timeFrequencyDecomposition('wavelet',WAVE,tseries.xvals,F,tseries.labels(dataChans));
 out.params = varargin;
 
 end
@@ -177,6 +249,13 @@ times = tseries.xrange(1) + (winCenters-1)/tseries.sampleRate;
 indices = repmat([-winSize/2+1:winSize/2]',[1 length(winCenters)]);
 indices = indices + repmat(winCenters,[size(indices,1) 1]);
 
+% Select frequencies, either using the length of the FFT, or a specific
+% list of desired frequencies.
+f = p.Results.FFTlength;
+if ~isempty(p.Results.freqs)
+  f = p.Results.freqs;
+end;
+
 % Rearrange data matrix
 
 doChans = tseries.getChannelsByType('data');
@@ -185,14 +264,7 @@ for idxChan = 1:numel(doChans)
   disp(['Computing decomposition for channel #' num2str(idxChan)]);
   tseriesData = tseries.data(:,idxChan);
   tseriesData = tseriesData(indices);
-  
-  % Select frequencies, either using the length of the FFT, or a specific
-  % list of desired frequencies.
-  f = p.Results.FFTlength;
-  if ~isempty(p.Results.freqs)
-    f = p.Results.freqs;
-  end;
-  
+    
   % Compute multi-taper
   [pxx,fx] = pmtm(tseriesData,p.Results.nw,f,tseries.sampleRate);
   

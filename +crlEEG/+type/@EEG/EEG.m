@@ -9,7 +9,8 @@ classdef EEG < crlEEG.type.timeseries
     fname
     fpath        
     EVENTS
-    decomposition    
+    decomposition  
+    filters = cell(0);
   end
   
   methods
@@ -45,6 +46,23 @@ classdef EEG < crlEEG.type.timeseries
       p.parse(varargin{:});                  
     end    
     
+    function EEGout = applyStandardFilter(EEGIn,fType,varargin)
+      % Simplifies calls to filter an eeg using the standard methods.
+      EEGout = EEGIn.filtfilt(EEGIn.standardFilters(fType,EEGIn.sampleRate,varargin{:}));
+    end
+    
+    function EEGout = filtfilt(EEGIn,f)
+      % Filtfilt for crlEEG.type.EEG objects includes tracking of all
+      % applied filters in the obj.filters property.
+      %
+      
+      EEGout = EEGIn.filtfilt@crlEEG.type.timeseries(f);
+      
+      
+      EEGout.filters{end+1} = f;
+      
+    end
+    
     function n = numArgumentsFromSubscript(obj,s,indexingContext)
       % Not 100% sure this is necessary, but probably not a bad idea.
       n = numArgumentsFromSubscript@crlEEG.type.timeseries(...
@@ -54,6 +72,10 @@ classdef EEG < crlEEG.type.timeseries
     %% Methods with their own m-files
     EEG = setReference(EEG,method);
     
+  end
+  
+  methods (Static=true)
+    fOut = standardFilters(fType,sampleRate,varargin);
   end
   
 end

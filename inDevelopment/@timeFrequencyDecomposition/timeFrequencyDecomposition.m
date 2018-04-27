@@ -39,11 +39,13 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
   methods
     
     function obj = timeFrequencyDecomposition(type,tfX,tx,fx,labels)
+      if nargin>0
       obj.type_ = type;
       obj.tfX = tfX;
       obj.tx = tx;
       obj.fx = fx;      
       obj.labels = labels;
+      end;
     end
     
     function out = get.trange(obj)
