@@ -51,7 +51,13 @@ switch s(1).type
           tIdx = ':';
           chanIdx = crlEEG.util.getIndexIntoCellStr(obj.labels,s.subs{1},false);
         elseif numel(s.subs)==2
-          error('Poorly defined indexing expression');          
+          if numel(size(obj.tfX))>2
+            error('Poorly defined indexing expression');          
+          else
+            fIdx = s.subs{1};
+            tIdx = s.subs{2};
+            chanIdx = 1;
+          end;
         elseif numel(s.subs)==3
           fIdx = s.subs{1};
           tIdx = s.subs{2};

@@ -32,7 +32,12 @@ function obj = subsasgn(obj,s,varargin)
             obj = builtin('subsasgn',obj,s,varargin{:});
          elseif length(s) == 3 && strcmp(s(2).type,'.') && strcmp(s(3).type,'()')
             % Implement obj(indices).PropertyName(indices) = varargin{:};
-            obj = builtin('subsasgn',obj,s,varargin{:});
+            if numel(obj)>1
+              tmp = subsref(obj,s(1));
+              obj(s(1).subs{:}) = subsasgn(tmp,s(2:end),varargin{:});
+            else
+              obj = builtin('subsasgn',obj,s,varargin{:});
+            end;
          else
             % Use built-in for any other expression
             obj = builtin('subsasgn',obj,s,varargin{:});

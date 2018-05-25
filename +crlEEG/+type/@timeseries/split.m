@@ -80,12 +80,18 @@ labels = labels(chanDisp);
 %delta = yrange(2)-yrange(1);
 delta = max(abs(yrange));
 
-dataChan = tseries.isChannelType('data');
-dataChan = dataChan(chanDisp);
 data = tseries.getPlotData;
 data = data(useIdx,chanDisp);
+
+dataChan = tseries.isChannelType('data');
+dataChan = dataChan(chanDisp);
 data(:,dataChan) = scale * ( data(:,dataChan)./delta );
-data(:,~dataChan) = data(:,~dataChan)./delta;
+
+auxChan = tseries.isChannelType('aux');
+auxChan = auxChan(chanDisp);
+data(:,auxChan) = scale * ( data(:,auxChan)./delta );
+
+data(:,~dataChan&~auxChan) = data(:,~dataChan&~auxChan)./delta;
 
 % Plot things.
 hold on;

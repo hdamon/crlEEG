@@ -44,7 +44,7 @@ classdef dualPlot < crlEEG.gui.uipanel
       if isempty(parent), parent = figure; end;
       
       obj = obj@crlEEG.gui.uipanel('parent',parent,p.Unmatched); %...     
-      uitools.setMinFigSize(gcf,obj.Position(1:2),obj.Position(3:4),5);
+      crlEEG.gui.util.setMinFigSize(gcf,obj.Position(1:2),obj.Position(3:4),5);
                  
       % Set up the channel selection object
       obj.chanselect       = crlEEG.gui.util.selectChannelsFromTimeseries;
@@ -87,7 +87,12 @@ classdef dualPlot < crlEEG.gui.uipanel
       obj.ResizeFcn = @(h,evt) obj.resizeInternals;
       obj.resizeInternals;
       
-      obj.chanselect.input = p.Results.timeseries;
+      tmp = p.Results.timeseries.copy;
+      if isfield(tmp,'decomposition')
+        % To vastly speed things up.
+        tmp.decomposition = [];
+      end;
+      obj.chanselect.input = tmp;
       obj.miniplot.windowEnd = size(p.Results.timeseries,1);
       
     end

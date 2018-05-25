@@ -23,13 +23,17 @@ switch s(1).type
       else
         % This is poorly coded.
         if nargout==0
+          % This in particular is really bad!
           builtin('subsref',obj,s);
         else
           %foo(1:nargout) = {builtin('subsref',obj,s)};
           varargout{1:nargout} = builtin('subsref',obj,s);
         end;
       end;
-    else
+    elseif length(s)>1
+      tmpObj = subsref(obj,s(1));
+      varargout = {subsref(tmpObj,s(2:end))};
+    else      
       varargout = {builtin('subsref',obj,s)};
     end;
   case '()'

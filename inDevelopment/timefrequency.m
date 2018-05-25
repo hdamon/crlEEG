@@ -167,7 +167,6 @@ for i = 1:size(data,2)
 end
 
 WAVE = flip(WAVE,1);
-%F = flip(PARAMOUT./PERIOD);
 F = flip(1./PERIOD);
 
 if ~isempty(p.Results.freqs)

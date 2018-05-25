@@ -350,12 +350,18 @@ classdef togglePlot < crlEEG.gui.uipanel
       obj.displayRange = newRange;            
     end
     
+    function set.doSplit(obj,val)
+      if obj.doSplit ~= val
+         obj.doSplit = val;
+         obj.updateImage;
+      end;
+    end
+
     %%
     function toggleSplit(obj)
       % Callback for toggle between a split and butterfly plot
       %
-      obj.doSplit = ~obj.doSplit;
-      obj.updateImage;
+      obj.doSplit = ~obj.doSplit;      
     end
       
     %%

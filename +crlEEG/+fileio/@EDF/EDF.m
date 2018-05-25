@@ -94,12 +94,18 @@ classdef EDF < crlEEG.fileio.baseobj
     function out = crlEEG.type.EEG_event(obj)
       %% Extract EEG_event objects from the EDF Header
       %
-      if isempty(obj.header.EVENT)
-        out = [];
+      if isempty(obj.header.EVENT.POS)
+        % If not latencies defined, return an empty object.
+        out = crlEEG.type.EEG_event;
+        return;
       end;
       
-      latency = obj.header.EVENT.POS;
-      type = obj.header.EVENT.TYP;
+      latency = round(obj.header.EVENT.POS);
+      if isfield(obj.header.EVENT,'TYP')
+        type = obj.header.EVENT.TYP;
+      else
+        type = [];
+      end;
             
       if isfield(obj.header.EVENT,'CodeDesc')
         desc(1:numel(latency)) = {'EDFEVENT'};      

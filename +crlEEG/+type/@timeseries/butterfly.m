@@ -87,7 +87,7 @@ end
 
 if any(~dataChans)
   ax.NextPlot = 'add';
-  tmp = plot(xvals(useIdx),tmpData(:,~dataChans),[plotOpts], ...
+  tmp = plot(xvals(useIdx),tmpData(:,~dataChans)./p.Results.scale,[plotOpts], ...
             'linewidth',2,'ButtonDownFcn',get(ax,'ButtonDownFcn'));
   if exist('plotOut','var')
     plotOut = [plotOut ; tmp];

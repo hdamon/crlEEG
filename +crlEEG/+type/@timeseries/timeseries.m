@@ -121,11 +121,11 @@ classdef timeseries < handle & matlab.mixin.Copyable
       % Need to use copy here, because derived classes need to be
       % maintained
       out = obj.copy;      
-      out.labels_ = out.labels(idxCol);
-      out.xvals_  = out.xvals(idxRow);        
-      out.yunits_ = out.yUnits(idxCol);  
+      out.labels_   = out.labels(idxCol);
+      out.xvals_    = out.xvals(idxRow);        
+      out.yunits_   = out.yUnits(idxCol);  
       out.chanType_ = out.chanType(idxCol);
-      tmp = out.data(idxRow,idxCol);
+      tmp       = out.data(idxRow,idxCol);
       out.data_ = tmp;
     end
         
@@ -230,7 +230,17 @@ classdef timeseries < handle & matlab.mixin.Copyable
       % character string (Uniform across channels), or cell arrays with
       % individual values for each channel.
       % 
-            
+        
+      if ~exist('replace','var'), replace = false; end;
+      if replace
+        obj.removeChannel(label);
+      end
+        
+      
+      if (size(data,2)==size(obj,1))&&(size(data,1)~=size(obj,1))
+        data = data';
+      end;
+      
       assert(size(data,1)==size(obj,1),'Channel Data Size is Incorrect');
       if iscellstr(label)
         assert(size(data,2)==numel(label),'Incorrect number of labels provided');
@@ -470,6 +480,12 @@ classdef timeseries < handle & matlab.mixin.Copyable
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     plotOut = butterfly(tseries,varargin)
     outEEG = filtfilt(EEG,dFilter)
+    
+    function outTseries = filter(tseries,dFilter)
+      tmp = filter(dFilter,tseries.data(:,tseries.getChannelsByType('data')));
+      outTseries = tseries.copy;
+      outTseries.data(:,outTseries.getChannelsByType('data')) = tmp;
+    end
     
     %% Deprecated functionality.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

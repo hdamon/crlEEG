@@ -1,5 +1,17 @@
 classdef EEG_event
-  
+  % Class for EEG Events
+  %
+  % Constructor
+  % -----------  
+  %  obj = EEG_event(latency,type,description)
+  %
+  % Properties
+  % ----------
+  %   description:
+  %   type:
+  %   latency: Latency of the event (in samples)
+  %
+  %
   properties
     description
     type
@@ -58,9 +70,9 @@ classdef EEG_event
     end
     
     function out = get.type(obj)
-      out = nan(1,numel(obj));
+      out = [];
       for i = 1:numel(obj)
-        out(i) = obj(i).type;
+        out = [out obj(i).type];
       end;
     end
     
@@ -68,6 +80,20 @@ classdef EEG_event
       out = {};
       for i = 1:numel(obj)
         out = {out{:} obj(i).description};
+      end;
+    end
+    
+    function out = isempty(obj)
+      % Returns true if the entire array obj is full of empty
+      % crlEEG.type.EEG_event objects
+      %
+      if numel(obj)==1      
+        out = isempty(obj.description)&&isempty(obj.type)&&isempty(obj.latency);      
+      else
+        isEmpty = true;
+        for i = 1:numel(obj)
+          out = isEmpty&&obj(i).isempty;
+        end;
       end;
     end
     

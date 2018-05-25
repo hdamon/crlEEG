@@ -5,6 +5,8 @@ function n = numArgumentsFromSubscript(obj,s,indexingContext)
 if ~iscell(s(1).subs)
   n = builtin('numArgumentsFromSubscript',obj,s,indexingContext);
 else
+  % Invoked when passing a cell array as an indexing term
+  %  IE: Using character based referencing.
   n = 1;
 end;
   

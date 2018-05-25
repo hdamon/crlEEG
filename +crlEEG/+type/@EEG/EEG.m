@@ -32,10 +32,42 @@ classdef EEG < crlEEG.type.timeseries
       obj = obj@crlEEG.type.timeseries(p.Results.data,p.Results.labels,p.Unmatched);
             
       obj.setname = p.Results.setname;
-      obj.fname = p.Results.fname;
-      obj.EVENTS = p.Results.EVENTS; 
+      obj.fname   = p.Results.fname;
+      obj.EVENTS  = p.Results.EVENTS; 
       
     end    
+    
+    function out = subcopy(obj,idxRow,idxCol)
+      out = subcopy@crlEEG.type.timeseries(obj,idxRow,idxCol);
+      
+      if ~isempty(obj.decomposition)
+        decompNames = fields(obj.decomposition);
+        for i = 1:numel(decompNames)
+          tmpDecomp = obj.decomposition.(decompNames{i}).copy;
+          tmpDecomp = tmpDecomp.selectTimes(out.xvals);
+          out.decomposition.(decompNames{i}) = tmpDecomp;
+        end
+        
+      end
+    end
+    
+    function setStartTime(obj,startTime)
+      % Shift the starting point of the time series, and adjust timings for
+      % all decompositions as well.
+      delta = startTime-obj.xrange(1);
+      
+      obj.xvals_ = obj.xvals_ + delta;
+      
+      if ~isempty(obj.decomposition)
+        decompNames = fields(obj.decomposition);
+        for i = 1:numel(decompNames)
+        obj.decomposition.(decompNames{i}).tx = ...
+          obj.decomposition.(decompNames{i}).tx + delta;
+        end;
+      end
+      
+    end
+    
     
     function decompose(obj,varargin)
       % Run one of a range of decompositions
@@ -51,16 +83,18 @@ classdef EEG < crlEEG.type.timeseries
       EEGout = EEGIn.filtfilt(EEGIn.standardFilters(fType,EEGIn.sampleRate,varargin{:}));
     end
     
+    function EEGout = filter(EEGIn,f)
+      EEGout = EEGIn.filter@crlEEG.type.timeseries(f);
+      EEGout.filters{end+1} = f;
+    end
+    
     function EEGout = filtfilt(EEGIn,f)
       % Filtfilt for crlEEG.type.EEG objects includes tracking of all
       % applied filters in the obj.filters property.
       %
       
-      EEGout = EEGIn.filtfilt@crlEEG.type.timeseries(f);
-      
-      
-      EEGout.filters{end+1} = f;
-      
+      EEGout = EEGIn.filtfilt@crlEEG.type.timeseries(f);            
+      EEGout.filters{end+1} = f;      
     end
     
     function n = numArgumentsFromSubscript(obj,s,indexingContext)

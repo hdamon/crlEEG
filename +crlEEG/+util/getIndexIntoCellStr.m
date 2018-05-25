@@ -5,12 +5,12 @@ function outIdx = getIndexIntoCellStr(cellIn,refIn,isNumericValid)
 %
 % Inputs
 % ------
-%   cellIn : Cell array of strings to reference into
-%    refIn : Requested references. This can be:
-%             ':'       : Return all indices
-%             'string'  : Return a single index matching 'string'
-%             {'a' 'b'} : A cell array of strings to match
-%             numeric   : A numeric array
+%         cellIn : Cell array of strings to reference into
+%          refIn : Requested references. This can be:
+%                     ':'       : Return all indices
+%                     'string'  : Return a single index matching 'string'
+%                     {'a' 'b'} : A cell array of strings to match
+%                     numeric   : A numeric array
 % isNumericValid : Flag to determine if numeric indexing should be allowed. 
 %                     DEFAULT: True
 %

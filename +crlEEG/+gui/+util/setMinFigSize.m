@@ -1,33 +1,21 @@
-function setMinFigSize(figureH,uiObj,border)
+function setMinFigSize(figureH,origin,imgsize,border)
 % function setMinFigSize(figureH,origin,size)
 %
-% Given a figure and a UI object, resizes the figure so that the UI object
-% will be fully visible. An optional border can be specified
-%
+% Resize the figure pointed to by figureH such that an image defined by the
+% origin and size will be fully displayed in the figure.
 %
 % Written By: Damon Hyde
 % Last Edited: May 23, 2016
 % Part of the cnlEEG Project
 %
 
-if ~exist('border','var'), border = [2 2 2 2]; end;
+if ~exist('border','var'), border = [10 10 10 10]; end;
 
-objUnits = get(uiObj,'Units');
-figUnits = get(figureH,'Units');
-
-set(figureH,'Units','pixels');
-set(uiObj,'Units','pixels');
-
-posObj = get(uiObj,'Position');
 currFigSize = get(figureH,'Position');
-
-if ~all( (posObj(1:2)+posObj(3:4)) <= currFigSize(3:4))
-  newBnd = [ currFigSize(3:4) ; posObj(1:2)+posObj(3:4)];
-  newBnd = max(newBnd,[],1);
-  set(figureH,'Position',[currFigSize(1:2) newBnd] + border);
-end;
-
-set(figureH,'Units',figUnits);
-set(uiObj,'Units',objUnits);
-
+ if ~all( (origin+[imgsize]) <= currFigSize(3:4))    
+    newBnd = [ currFigSize(3:4) ; origin+imgsize];
+    newBnd = max(newBnd,[],1);
+    set(figureH,'Position',[currFigSize(1:2) newBnd] + border);
+ end;
+ 
 end

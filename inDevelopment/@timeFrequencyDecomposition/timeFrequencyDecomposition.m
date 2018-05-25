@@ -61,7 +61,8 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       out = obj.type_;
     end   
     function set.type(obj,val)
-      error('Cannot set decomposition type after creation');
+      obj.type_ = val;
+      %error('Cannot set decomposition type after creation');
     end
     
     %% Set/Get Methods for obj.labels
@@ -76,9 +77,11 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       end;      
       out = obj.labels_;      
     end % END get.labels
+    
     function set.labels(obj,val)
       % Redirect to internal property
       if isempty(val), obj.labels_ = []; return; end;        
+      if ischar(val), val = {val}; end;
       assert(iscellstr(val),'Labels must be provided as a cell array of strings');      
       assert(isempty(obj.tfX)||(numel(val)==size(obj,3)),...
         'Number of labels must match number of channels');
@@ -174,16 +177,40 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       out.tfX = abs(out.tfX) - repmat(baseline,1,size(out.tfX,2));
     end        
     
-    function tfOut = selectTimes(tfIn,timesOut)
-      % Select a portion of the 
-      
+    function tfOut = selectTimes(tfIn,timesOut,varargin)
+      % Select a subset of times from a time-frequency decomposition
+      %
+      % function tfOut = selectTimes(tfIn,timesOut)
+      %
+      % Inputs
+      % ------
+      %      tfIn : timeFrequencyDecomposition object
+      %  timesOut : Timepoints to include in the output
+      %               timeFrequencyDecomposition
+      %
+      % Outputs
+      % -------
+      %  tfOut : timeFrequencyDecomposition object with subselected times.
+      %
+      % Part of the crlEEG project
+      % 2009-2018
+      %
+            
+      % Output range must be sorted
       assert(issorted(timesOut),'Output times must be sorted');
       inRange = ( timesOut(1) >= tfIn.tx(1) ) & ( timesOut(end) <= tfIn.tx(end));
-      assert(inRange,'Requested times are out of range');
       
+      % Just drop them?
+      timesOut(timesOut<tfIn.tx(1)) = [];
+      timesOut(timesOut>tfIn.tx(end)) = [];
+      
+      %assert(inRange,'Requested times are out of range');
+      
+      % Get indices of the time range to search in.
       [~,searchStart] = min(abs(tfIn.tx-timesOut(1)));
-      [~,searchEnd] = min(abs(tfIn.tx-timesOut(end)));
+      [~,searchEnd]   = min(abs(tfIn.tx-timesOut(end)));
             
+      % Initialize output index
       outIdx = nan(numel(timesOut),1);
       outIdx(1) = searchStart;
       outIdx(end) = searchEnd;
@@ -198,20 +225,22 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
           deltaT = abs(tfIn.tx(idxSearch)-timesOut(idxOut));  % Update deltaT       
         end;
         
-        idxSearch = idxSearch-1; % Take one step back
+        idxSearch = idxSearch-1; % Take one step back. 
         outIdx(idxOut) = idxSearch; % Update output                        
       end
-       
       
+      % Don't duplicate points in the output?
+      %outIdx = unique(outIdx);
+      
+      % Select the appropriate points to output.
       s.type = '()';
       s.subs = {':' outIdx ':'};
       
       tfOut = tfIn.subsref(s);
-      
-      
+            
     end
     
-    function imagesc(obj,varargin)
+    function varargout = imagesc(obj,varargin)
       % Overloaded imagesc method for timeFrequencyDecomposition objects
       %
       % Inputs
@@ -264,7 +293,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
         [~,idxHi ] = min(abs(obj.fx-p.Results.showBand(2)));
         idxF = idxLow:idxHi;
       else
-        idxF = ':';
+        idxF = 1:numel(obj.fx);
       end
       
       if ~isempty(p.Results.showTimes)
@@ -299,6 +328,8 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
         imgRange = log10(imgRange);
       end;
       
+      %showImg = angle(obj.subsref(s));
+      
       cmap = p.Results.colormap;    
       if isempty(cmap.range)||isequal(cmap.range,[0 1])
         % Only override if it's the default
@@ -308,22 +339,156 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       tData = obj.tx(idxT);
       fData = obj.fx(idxF);
       
-      img = image(tData,fData,rgb,'AlphaData',alpha);
-            
-%       if p.Results.logImg
-%         img = imagesc(obj.tx(idxT),obj.fx(idxF),log10(abs(showImg)),log10(imgRange));
-%       else      
-%         img =  imagesc(obj.tx(idxT),obj.fx(idxF),abs(showImg),imgRange);
-%       end;
+      img = image(tData,[],rgb,'AlphaData',alpha);
+      
+      currAxis = gca;
+      showF = obj.fx(idxF(round(currAxis.YTick)));
+      for i = 1:numel(showF)
+        fLabel{i} = num2str(showF(i));
+      end;
+      currAxis.YTickLabel = fLabel;
+      
+      
       set(gca,'YDir','normal');
       ylabel('Frequency');
       xlabel('Time');
       
       if nargout>0
-       % varargout{1} = img;
+        varargout{1} = img;
       end;
       
+    end % imagesc()
+    
+    function out = PSD(obj)
+      % Convert a time-frequency decomposition to power spectral density      
+      out = obj.copy;
+      out.type = [out.type '_PSD'];
+      out.tfX = abs(out.tfX).^2;      
     end
+    
+    function out = abs(obj)
+      % Convert a time-frequency decomposition to spectral magnitude
+      out = obj.copy;
+      out.type = [out.type '_ABS'];
+      out.tfX = abs(out.tfX);
+    end;
+    
+    function out = PLF(obj)  
+      % Convert a time-frequency decomposition to Phase Locking Factor
+      %
+      % (NEEDS TO BE AVERAGED ACROSS A LOT OF DECOMPOSITIONS)
+      out = obj.copy;
+      out.type = [out.type '_PLF'];
+      out.tfX = out.tfX./abs(out.tfX);
+    end;
+              
+    function isValid = isConsistent(obj,b)
+      % Check consistency between timeFrequencyDecomposition objects
+      %
+      % Used to check if math operations can be applied between two
+      % timefrequency decompositions
+      %
+      isValid = isa(b,'timeFrequencyDecomposition');      
+      if ~isValid, return; end;
+      
+      sizeEqual = size(obj)==size(b);
+            
+      fxEqual = true;
+      if sizeEqual(1)
+       % If frequency dimensions are equal, check that they're the same
+       fxEqual = isequal(obj.fx,b.fx);
+      end;
+      
+      txEqual = true;
+      if sizeEqual(2)
+        % If time dimensions are equal, check that they're the same.
+        txEqual = isequal(obj.fx,b.fx);
+      end
+      
+      sizeValid = crlEEG.util.validation.arraySizeForBSXFUN(size(obj),size(b));
+      
+      isValid = sizeValid && txEqual && fxEqual;      
+    end
+    
+    function [fx,tx,chan] = consistentDimensions(obj,b)
+      assert(isa(b,'timeFrequencyDecomposition'),...
+                'Second input must be a timeFrequencyDecomposition object');
+              
+      assert(isConsistent(obj,b),'Inconsistent decomposition sizes');        
+              
+      sizeEqual = size(obj)==size(b);
+      
+      fields = {'fx' 'tx' 'labels'};        
+      for i = 1:numel(sizeEqual)
+        if sizeEqual(i)
+          tmp = obj.(fields{i});
+        else
+          if size(obj,i)==1
+            tmp = b.(fields{i});
+          elseif size(b,i)==1
+            tmp = obj.(fields{i});
+          else
+            error('Shouldn''t be getting here');
+          end;
+        end
+        switch i
+          case 1
+            fx = tmp;
+          case 2
+            tx = tmp;
+          case 3
+            chan = tmp;
+        end
+      end                            
+    end
+    
+    function decompOut = applyFcnToTFX(obj,b,funcHandle)
+      % Use bsxfun to apply funcHandle to obj.tfX
+      %
+      % decompOut = applyFcnToTFX(obj,b,funcHandle)
+      %
+      % Inputs
+      % ------
+      %        obj : timeFrequencyDecomposition object
+      %          b : Value to apply
+      % funcHandle : Function handle
+      %
+      % Checks the consistency of the inputs, and then calls:
+      %
+      % tfX = bsxfun(funcHandle,obj,tfX,coeff)
+      %
+      % When b is:
+      %   A timeFrequencyDecomposition obj:  coeff = b.tfX
+      %                          OTHERWISE:  coeff = b;
+      %
+      %      
+      if isa(b,'timeFrequencyDecomposition')
+        assert(isConsistent(obj,b),'Inconsistent decomposition sizes');
+        coeff = b.tfX;
+        [fx,tx,chan] = consistentDimensions(obj,b);
+      else
+        coeff = b;
+        fx = obj.fx;
+        tx = obj.tx;
+        chan = obj.labels;
+      end;
+            
+      tfX = bsxfun(funcHandle,obj.tfX,coeff);
+      newType = [obj.type '_' func2str(funcHandle)];
+      decompOut = timeFrequencyDecomposition(newType,tfX,tx,fx,chan);      
+    end
+    
+    function out = plus(obj,b)      
+      out = applyFcnToTFX(obj,b,@plus);      
+    end;
+    
+    function out = rdivide(obj,b)
+      out = applyFcnToTFX(obj,b,@rdivide);            
+    end
+    
+    function out = times(obj,b)
+      out = applyFcnToTFX(obj,b,@times);      
+    end;
     
   end
   
