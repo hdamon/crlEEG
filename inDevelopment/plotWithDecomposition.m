@@ -44,6 +44,7 @@ for i = 1:nChan
     'range',p.Results.imgRange,...
     'units','normalized',...
     'position',[0.001 (nChan-i+1)*unitHeight 0.999 0.999*unitHeight]);
+  drawnow;
   %p1(i).Units = 'normalized';
   %p1(i).Position = [0.001 i*unitHeight 0.999 0.999*unitHeight];
 end;
@@ -74,9 +75,8 @@ end;
 % end;
 drawnow;
 %f2 = figure(2); clf;
-tmpEEG = eegIn.copy;
-tmpEEG.decomposition = [];
-p2 = tmpEEG.plot('Parent',f1,'units','normalized','position',[0.001 0.001*unitHeight 0.999 0.999*unitHeight]);
+
+p2 = eegIn.plot('Parent',f1,'units','normalized','position',[0.001 0.001*unitHeight 0.999 0.999*unitHeight]);
 %f2.Position = [ 8 35 2550 425];
 %p2.Position = [0.001 0.001 0.999 0.499];
 

@@ -7,6 +7,15 @@ classdef alphacolor < handle
   %
   % Uitools class for colormaps including an alpha value.
   %
+  % Optional Param-Value Inputs
+  % ---------------------------
+  %   'type' : Colormap type. DEFAULT: 'jet'
+  %  'range' : Range of colormap
+  %   'cmap' : Manually defined clormap
+  %  'alpha' : Colormap alpha level: Default: 1
+  %  'depth' : Colormap Depth. DEFAULT: 265
+  %  'interptype' : Alpha level interpolation type
+  %
   % Written By: Damon Hyde
   % Last Edited: June 21, 2016
   % Part of the cnlEEG Project
@@ -116,6 +125,8 @@ classdef alphacolor < handle
       switch obj.type
         case 'custom'
           out = obj.storedVals.cmap;
+        case 'redblue'
+          out = crlEEG.gui.util.redblue(obj.depth);
         otherwise
           out = feval(obj.type,obj.depth);
       end
@@ -340,13 +351,14 @@ classdef alphacolor < handle
       offsetY = 0.07;
       sizeY = 0.06;
       
-      orderAlpha05 = 4;
+      orderAlpha05 = 5;
       orderRange = 0 ;
       orderZeroTransp = 1;
       orderTransparent = 2;
       orderOpaque = 3;
-      orderInterp = 5;
-      orderShift = 6;
+      orderSymmetric = 4;
+      orderInterp = 6;
+      orderShift = 7;
       
       buttons(1) = uicontrol(...
         'Parent',guiObj,...
@@ -438,7 +450,15 @@ classdef alphacolor < handle
         'Position',[baseXLoc+0.33 baseYLoc-orderShift*offsetY 0.3 sizeY],...
         'Callback',@(h,evt) obj.shiftTransp(0.05));
       setappdata(guiObj,'shift',shift);
-      
+     
+      symetric = uicontrol(...
+        'Parent',guiObj,...
+        'Style','pushbutton',...
+        'String','Symmetrize Colormap',...
+        'Units','normalized',...
+        'Position',[baseXLoc baseYLoc-orderSymmetric*offsetY 0.63 sizeY],...
+        'Callback',@(h,evt) obj.makeSymmetric);
+
       obj.gui = guiObj;
       
       % Update the plot whenever the underlying colormap is modified.
@@ -465,7 +485,17 @@ classdef alphacolor < handle
     %       set(range(2),'String',num2str(obj.range(1)));
     %       set(range(3),'String',num2str(obj.range(2)));
     %     end;
-    
+   
+    function makeSymmetric(obj)
+      rangeLow = obj.range(1);
+      rangeHigh = obj.range(2);
+
+      peak = max([abs(rangeLow) abs(rangeHigh)]);
+      obj.range(1) = -peak;
+      obj.range(2) = peak;
+      obj.updateGUI;
+    end;
+
     function resetAlpha(obj)
       % Reset the colormap alpha to 0.5
       %
@@ -521,7 +551,7 @@ classdef alphacolor < handle
       adata = getappdata(obj.gui);
       
       % Update the Colormap Type
-      cmaps = uitools.util.colorMapList;
+      cmaps = crlEEG.gui.widget.alphacolor.colorMapList;
       
       radioGroup = getappdata(obj.gui,'radioGroup');
       radioButtons = getappdata(obj.gui,'radioButtons');
@@ -683,8 +713,8 @@ classdef alphacolor < handle
       %maps(8).name = 'pink';
       %maps(9).name = 'colorcube';
       %maps(10).name = 'prism';
-      maps(5).name = 'cool';
-      maps(6).name = 'autumn';
+      maps(5).name = 'redblue';
+      maps(6).name = 'prism';
       maps(7).name = 'winter';
       maps(8).name = 'spring';
       maps(9).name = 'summer';

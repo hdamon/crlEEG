@@ -1,4 +1,4 @@
-function [epochs,avgEpoch] = getEpochsAndAvgFromRisingEdge(EEG,activeChan,eventDesc)
+function [epochs] = getEpochsAndAvgFromRisingEdge(EEG,activeChan,eventDesc,varargin)
 % Extract events at the rising edge of a binary channel
 %
 % Inputs
@@ -13,6 +13,14 @@ function [epochs,avgEpoch] = getEpochsAndAvgFromRisingEdge(EEG,activeChan,eventD
 % avgEpoch : The averaged epochs.
 %
 
+p = inputParser;
+p.addRequired('activeChan',@(x) ischar(x));
+p.addRequired('eventDesc',@(x) ischar(x));
+p.addParameter('preTime',3,@(x) isscalar(x)&&isnumeric(x));
+p.addParameter('postTime',3,@(x) isscalar(x)&&isnumeric(x));
+p.parse(activeChan,eventDesc,varargin{:});
+
+
 EMG = EEG.data(:,activeChan);
 
 eventIdx = [];
@@ -25,9 +33,12 @@ for i = 2:size(EEG,1)
   end
 end
 
+preTime = p.Results.preTime;
+postTime = p.Results.postTime;
+
 % Drop early and late events
-eventIdx(eventIdx<1250) = [];
-eventIdx(eventIdx>(length(EMG)-1250)) = [];
+eventIdx(eventIdx<preTime*EEG.sampleRate) = [];
+eventIdx(eventIdx>(length(EMG)-postTime*EEG.sampleRate)) = [];
 
 % Remove Bad Events
 %badEvents = [1 3 22 37];
@@ -38,8 +49,8 @@ for i = 1:numel(eventIdx)
   events(i) = crlEEG.type.EEG_event(eventIdx(i),1,eventDesc);
 end
 EEG.EVENTS = events;
-epochs = extractEpochsByName(EEG,eventDesc,2,1);
+epochs = extractEpochsByName(EEG,eventDesc,preTime,postTime);
 
-avgEpoch = averageEpochs(epochs);
+%avgEpoch = averageEpochs(epochs);
 
 end

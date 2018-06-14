@@ -225,7 +225,7 @@ classdef togglePlot < crlEEG.gui.uipanel
       axesPos = get(obj.axes,'Position');
       axesPos(1) = axesXOffset;
       axesPos(2) = toggleBtnSize(2)+axesYOffset;
-      axesPos(3) = xSize - axesPos(1) - btnWidth - 5; if axesPos(3)<=0, axesPos(3) = 1; end;
+      axesPos(3) = xSize - axesPos(1) - btnWidth - 5; if axesPos(3)<=0, axesPos(3) = 1; end;      
       axesPos(4) = ySize - axesPos(2); if axesPos(4)<=0, axesPos(4) = 1; end;
      % disp(['Setting EEG Axes Position: ' num2str(axesPos)]);
       set(obj.axes,'Position',axesPos);

@@ -9,7 +9,6 @@ tmpA(1:numel(sizeA)) = sizeA;
 tmpB(1:numel(sizeB)) = sizeB;
 
 test = ( tmpA==tmpB );
-
-isValid = all((sizeA(~test)==1)|(sizeB(~test)==1));
+isValid = all((tmpA(~test)==1)|(tmpB(~test)==1));
 
 end

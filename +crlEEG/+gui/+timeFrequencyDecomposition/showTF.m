@@ -19,6 +19,7 @@ classdef showTF < crlEEG.gui.uipanel
    
   properties (Hidden)
     chanSelect
+    editCMap
   end
   
   properties (Access=protected)
@@ -27,6 +28,7 @@ classdef showTF < crlEEG.gui.uipanel
     logImg_
     imgRange_ = [];
     listeners_ 
+    cbar_
   end
   
   
@@ -57,8 +59,12 @@ classdef showTF < crlEEG.gui.uipanel
         
         % Interactive Colormap
         obj.cmap = p.Results.colormap;
-        obj.cmap.range = p.Results.range;
-                
+        if ~isempty(p.Results.range)
+          obj.cmap.range = p.Results.range;
+        end;
+             
+
+        
         % Input Data Handle
         obj.tfDecomp = p.Results.tfDecomp;
         
@@ -67,6 +73,12 @@ classdef showTF < crlEEG.gui.uipanel
                                    'String',obj.tfDecomp.labels,...
                                    'Parent',obj.panel,...                                   
                                    'CallBack',@(h,evt) updateImage(obj));
+                                 
+        obj.editCMap = uicontrol('Style','pushbutton',...
+                                  'String','Edit Colormap',...
+                                  'Parent',obj.panel,...
+                                  'CallBack',@(h,evt) obj.cmap.edit);
+                                
         
         if ~isempty(p.Results.showChan)
           if iscellstr(p.Results.showChan)||ischar(p.Results.showChan)
@@ -149,9 +161,12 @@ classdef showTF < crlEEG.gui.uipanel
       obj.chanSelect.Units = 'pixels';
       obj.chanSelect.Position = [2 2 100 30];
             
+      obj.editCMap.Units = 'pixels';
+      obj.editCMap.Position = [ 105 2 100 30];
+      
       obj.ax.Units = 'pixels';
-      xSize = max([5 (pixPos(3)-100)]);
-      ySize = max([5 0.95*(pixPos(4)-50)]);
+      xSize = max([5 (pixPos(3)-95)]);      
+      ySize = max([5 0.95*(pixPos(4)-50)]);      
       obj.ax.Position = [70 50 xSize ySize];            
       
       %disp(['Setting TF Axes Position: ' num2str([70 50 xSize ySize])]);
@@ -175,6 +190,7 @@ classdef showTF < crlEEG.gui.uipanel
         
     function updateImage(obj)
       axes(obj.ax); cla;
+      set(crlEEG.gui.util.parentfigure.get(obj),'colormap',obj.cmap.cmap);
       obj.tfDecomp.imagesc('parent',obj.ax,...
                            'showBand',obj.showBand,...
                            'showChan',obj.showChan,...
@@ -183,7 +199,16 @@ classdef showTF < crlEEG.gui.uipanel
                            'range',obj.imgRange,...
                            'colormap',obj.cmap)
                          
-            
+      if isempty(obj.cbar_)||~ishghandle(obj.cbar_)
+        obj.cbar_ = colorbar('peer',obj.ax,'East');                   
+      end;
+      obj.cbar_.FontSize = 20;
+      obj.cbar_.FontWeight = 'bold';
+      
+      tvals = obj.cbar_.Ticks;
+      tickLabels = strsplit(num2str(obj.cmap.range(1) + tvals*(obj.cmap.range(2)-obj.cmap.range(1))));
+      obj.cbar_.TickLabels = tickLabels;
+
       %obj.ax.Position = [0.025 0.05 0.965 0.9];
     end
     

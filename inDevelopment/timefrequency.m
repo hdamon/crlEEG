@@ -169,6 +169,7 @@ end
 WAVE = flip(WAVE,1);
 F = flip(1./PERIOD);
 
+
 if ~isempty(p.Results.freqs)
   % Interpolate to desired frequencies.
   Fout = p.Results.freqs;

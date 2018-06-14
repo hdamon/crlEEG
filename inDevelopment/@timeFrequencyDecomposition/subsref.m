@@ -97,7 +97,8 @@ switch s(1).type
     elseif ( length(s) == 3 && strcmp(s(2).type,'.') ...
                                 && strcmp(s(3).type,'()') )
       %% Implement obj(indices).PropertyName(indices)
-      varargout = {builtin('subsref',obj,s)};
+      tmp = subsref(obj,s(1));      
+      varargout = {subsref(tmp,s(2:3))};
     else
       %% Use built-in for any other expression
       varargout = {builtin('subsref',obj,s)};

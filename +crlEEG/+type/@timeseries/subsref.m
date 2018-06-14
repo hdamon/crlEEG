@@ -9,16 +9,16 @@ function varargout = subsref(obj,s)
 switch s(1).type
   case '.'
     %%
-    if (length(s)==2)&isequal(s(2).type,'()')
+    if (length(s)==2)&&isequal(s(2).type,'()')
       
-      if (numel(obj)==1)&(isequal(s(1).subs,'data'))
+      if (numel(obj)==1)&&(isequal(s(1).subs,'data'))
         % Enables use of non-numeric referencing for obj.data(a,b) type
         % referencing.
         %
         % IE:
         %  obj.data('Cz')
         %  obj.data(1:10,{'Cz' 'Pz'});
-        tmp = obj.subsref(s(2));
+        tmp = obj.subsref(s(2)); %This is lazy and slow when there are decompositions involved
         varargout = {tmp.data};
       else
         % This is poorly coded.

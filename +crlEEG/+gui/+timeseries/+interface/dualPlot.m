@@ -87,11 +87,10 @@ classdef dualPlot < crlEEG.gui.uipanel
       obj.ResizeFcn = @(h,evt) obj.resizeInternals;
       obj.resizeInternals;
       
+      % Copy without decompositions to speed things up.
       tmp = p.Results.timeseries.copy;
-      if isfield(tmp,'decomposition')
-        % To vastly speed things up.
-        tmp.decomposition = [];
-      end;
+      tmp.decomposition = [];
+      
       obj.chanselect.input = tmp;
       obj.miniplot.windowEnd = size(p.Results.timeseries,1);
       

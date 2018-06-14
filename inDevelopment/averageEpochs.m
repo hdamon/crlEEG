@@ -15,6 +15,7 @@ if ~isempty(epochIn(1).decomposition)
     tmpDecomp = epochIn(1).decomposition.(decompNames{idxName}).copy;
     tmpDecomp.type = [tmpDecomp.type 'AvgDecomp'];
     tmpDecomp.tfX = zeros(size(tmpDecomp));                          
+    decompLabels{idxName} = tmpDecomp.labels;
     decompOut.(decompNames{idxName}) = tmpDecomp;
   end
 end
@@ -24,9 +25,10 @@ for idxEpoch = 1:numel(epochIn)
   
   if exist('decompOut','var')
     for idxName = 1:numel(decompNames)
-      tmpDecomp = epochIn(idxEpoch).decomposition.(decompNames{idxName}).PSD;
+      tmpDecomp = epochIn(idxEpoch).decomposition.(decompNames{idxName}).(avgType);
       decompOut.(decompNames{idxName}) = decompOut.(decompNames{idxName}) + ...
-                                      tmpDecomp;
+                                      tmpDecomp;      
+      decompOut.(decompNames{idxName}).labels = decompLabels{idxName};
     end
   end  
 end
