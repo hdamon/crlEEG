@@ -283,15 +283,16 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       end
     end
     
-    function obj = copyValuesFrom(obj,valObj)
+    function out = copyValuesFrom(obj,valObj)
       % Individually copies values from another object
       %
       % This is preferential to obj.copy, as it preserves subclasses.
       %
       
-      obj.data_   = valObj.data_;
-      obj.labels_ = valObj.labels_;
-      obj.values_ = valObj.values_;
+      out = obj.copy;
+      out.data_   = valObj.data_;
+      out.labels_ = valObj.labels_;
+      out.values_ = valObj.values_;
     end
         
     function out = subcopy(obj,varargin)
@@ -319,22 +320,26 @@ classdef labelledArray < handle & matlab.mixin.Copyable
         'Must include referencing for all dimensions');
       
       tmpData = obj.data(varargin{:});
-      tmpLabels = cell(obj.ndims,2);
-      tmpValues = cell(obj.ndims,2);
+      tmpLabels = cell(obj.ndims,1);
+      tmpValues = cell(obj.ndims,1);
       
       for idxDim = 1:obj.ndims
-        tmpLabels{idxDim,1} = idxDim;
-        if ~isempty(obj.labels{idxDim})
-          tmpLabels{idxDim,2} = obj.labels{idxDim}(dimIdx{idxDim});
-        end
         
-        tmpValues{idxDim,1} = idxDim;
+        if ~isempty(obj.labels{idxDim})
+          tmpLabels(idxDim) = obj.labels{idxDim}(dimIdx{idxDim});
+        end
+                
         if ~isempty(obj.values{idxDim})
-          tmpValues{idxDim,2} = obj.values{idxDim}(dimIdx{idxDim});
+          tmpValues(idxDim) = obj.values{idxDim}(dimIdx{idxDim});
         end
       end;
       
-      out = labelledArray(tmpData,'labels',tmpLabels,'values',tmpValues);
+      out = obj.copy;
+      out.data_ = tmpData;
+      out.labels_ = tmpLabels;
+      out.values_ = tmpValues;
+      
+      %out = labelledArray(tmpData,'labels',tmpLabels,'values',tmpValues);
       
     end
   end

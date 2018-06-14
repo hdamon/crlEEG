@@ -99,38 +99,7 @@ classdef timeseries < labelledArray
       end;
     end
     
-    function obj = copyValuesFrom(obj,valObj)
-      % Individually copy values from a second object
-      obj.data   = valObj.data;
-      obj.labels = valObj.labels;
-      obj.xvals  = valObj.xvals;
-      obj.sampleRate = valObj.sampleRate;
-      obj.yUnits = valObj.yUnits;
-      obj.xUnits = valObj.xUnits;
-    end
-    
-    %% SubCopy
-    function out = subcopy(obj,idxRow,idxCol)
-      % Copy object, including only a subset of timepoints and columns. If
-      % not provided or empty, indices default to all values.
-      %
-      % Mostly intended as a utility function to simplify subsref.
-      %
-      if ~exist('idxRow','var'), idxRow = ':'; end;
-      if ~exist('idxCol','var'), idxCol = ':'; end;
-                 
-      out = obj.subcopy@labelledArray(idxRow,idxCol);
-      
-      % Need to use copy here, because derived classes need to be
-      % maintained
-      %out = obj.copy;      
-      %out.labels_   = out.labels(idxCol);
-      %out.xvals_    = out.xvals(idxRow);        
-      out.yunits_   = out.yUnits(idxCol);  
-      out.chanType_ = out.chanType(idxCol);
-      %tmp       = out.data(idxRow,idxCol);
-      %out.data_ = tmp;
-    end
+   
         
     %% Overloaded 
 %     function out = size(obj,dim)
@@ -390,41 +359,41 @@ classdef timeseries < labelledArray
     end    
     
     %% Get/Set Methods for Data
-    function out = get.data(obj)
-      out = obj.data_;
-    end    
-    function set.data(obj,val)
-      if ~isempty(obj.labels_)
-        assert(size(val,2)==numel(obj.labels_),...
-                'Number of channels in data must match number of labels');              
-      end
-      if ~isempty(obj.xvals_)
-        assert(size(val,1)==numel(obj.xvals_),...
-                'Number of timepoints must match numel(obj.xvals)');
-      end
-      obj.data_ = val;
-    end
+%     function out = get.data(obj)
+%       out = obj.data_;
+%     end    
+%     function set.data(obj,val)
+%       if ~isempty(obj.labels_)
+%         assert(size(val,2)==numel(obj.labels_),...
+%                 'Number of channels in data must match number of labels');              
+%       end
+%       if ~isempty(obj.xvals_)
+%         assert(size(val,1)==numel(obj.xvals_),...
+%                 'Number of timepoints must match numel(obj.xvals)');
+%       end
+%       obj.data_ = val;
+%     end
            
     %% Set/Get Methods for obj.labels
-    function out = get.labels(obj)
-      if isempty(obj.labels_)              
-        % Default channel labels        
-        out = cell(1,size(obj.data,2));
-        for i = 1:size(obj.data,2),
-          out{i} = ['Chan' num2str(i)];
-        end
-        return;
-      end;      
-      out = obj.labels_;      
-    end % END get.labels
-    function set.labels(obj,val)
-      % Redirect to internal property
-      if isempty(val), obj.labels_ = []; return; end;        
-      assert(iscellstr(val),'Labels must be provided as a cell array of strings');
-      assert(isempty(obj.data)||(numel(val)==size(obj,2)),...
-        'Number of labels must match number of channels');
-      obj.labels_ = strtrim(val);
-    end % END set.labels
+%     function out = get.labels(obj)
+%       if isempty(obj.labels_)              
+%         % Default channel labels        
+%         out = cell(1,size(obj.data,2));
+%         for i = 1:size(obj.data,2),
+%           out{i} = ['Chan' num2str(i)];
+%         end
+%         return;
+%       end;      
+%       out = obj.labels_;      
+%     end % END get.labels
+%     function set.labels(obj,val)
+%       % Redirect to internal property
+%       if isempty(val), obj.labels_ = []; return; end;        
+%       assert(iscellstr(val),'Labels must be provided as a cell array of strings');
+%       assert(isempty(obj.data)||(numel(val)==size(obj,2)),...
+%         'Number of labels must match number of channels');
+%       obj.labels_ = strtrim(val);
+%     end % END set.labels
             
     %% Get/Set Methods for obj.sampleRate
     function out = get.sampleRate(obj)
@@ -443,8 +412,8 @@ classdef timeseries < labelledArray
             
     %% Get/Set Methods for obj.xvals    
     function out = get.xvals(obj)
-      if ~isempty(obj.xvals_)
-        out = obj.xvals_;
+      if ~isempty(obj.values_{1})
+        out = obj.values{1};
       else    
         % Default timing values
         out = (1./obj.sampleRate)*(0:size(obj.data,1)-1);
@@ -455,7 +424,8 @@ classdef timeseries < labelledArray
       assert( isvector(val) && numel(val)==size(obj.data,1),...
             'xVals vector length must match size(obj.data,1)');
       assert( issorted(val), 'xVals should be a sorted list of time values');
-      obj.xvals_ = val;
+      
+      obj.values = {1,val};
     end;    
     
     %% Get/Set Methods for obj.yrange
@@ -518,6 +488,43 @@ classdef timeseries < labelledArray
     end    
     
   end;
+  
+  methods (Access=protected)
+     function obj = copyValuesFrom(obj,valObj)
+      % Individually copy values from a second object
+      obj = obj.copyValuesFrom@labelledArray(valObj);
+      
+      %obj.data   = valObj.data;
+      %obj.labels = valObj.labels;
+      %obj.xvals  = valObj.xvals;
+      obj.sampleRate = valObj.sampleRate;
+      obj.yUnits = valObj.yUnits;
+      obj.xUnits = valObj.xUnits;
+    end
+    
+    %% SubCopy
+    function out = subcopy(obj,idxRow,idxCol)
+      % Copy object, including only a subset of timepoints and columns. If
+      % not provided or empty, indices default to all values.
+      %
+      % Mostly intended as a utility function to simplify subsref.
+      %
+      if ~exist('idxRow','var'), idxRow = ':'; end;
+      if ~exist('idxCol','var'), idxCol = ':'; end;
+                 
+      out = obj.subcopy@labelledArray(idxRow,idxCol);
+      
+      % Need to use copy here, because derived classes need to be
+      % maintained
+      %out = obj.copy;      
+      %out.labels_   = out.labels(idxCol);
+      %out.xvals_    = out.xvals(idxRow);        
+      out.yunits_   = out.yUnits(idxCol);  
+      out.chanType_ = out.chanType(idxCol);
+      %tmp       = out.data(idxRow,idxCol);
+      %out.data_ = tmp;
+    end
+  end
   
   methods (Static=true)
   end
