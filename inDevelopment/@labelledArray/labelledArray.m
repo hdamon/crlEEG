@@ -6,10 +6,10 @@ classdef labelledArray < handle & matlab.mixin.Copyable
   % Inputs
   % ------
   %   data : The data to put in the array
-  %  
+  %
   % Optional Param-Value Inputs
   % ---------------------------
-  %  'labels' : An cell array defining labels for one or more dimensions.  
+  %  'labels' : An cell array defining labels for one or more dimensions.
   %               This array must be of size (N X 2), arranged as:
   %                { <DIMENSION A> , <CellString of Labels> ;
   %                  <DIMENSION B> , <CellString of Labels> }
@@ -43,7 +43,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
   % Referencing into labelledData Objects
   % -------------------------------------
   %   Referencing for labelledData objects behaves slightly differently
-  %   than for normal Matlab arrays. 
+  %   than for normal Matlab arrays.
   %
   %  obj.<property> : Behaves normally.
   %
@@ -86,37 +86,37 @@ classdef labelledArray < handle & matlab.mixin.Copyable
         
         p = inputParser;
         p.addRequired('data',@(x) (isnumeric(x)||isa(x,'labelledArray')));
-        p.addParameter('labels',[],@(x) isempty(x)||checkType(x));        
+        p.addParameter('labels',[],@(x) isempty(x)||checkType(x));
         p.addParameter('values',[],@(x) isempty(x)||checkType(x));
         p.parse(data,varargin{:});
-       
+        
         obj.data   = p.Results.data;
         obj.labels = p.Results.labels;
         obj.values = p.Results.values;
       end
       
     end
-          
-    %% Overloaded 
+    
+    %% Overloaded
     function out = size(obj,dim)
       if numel(obj)==1
-       if ~exist('dim','var')
-         out = size(obj.data);
-       else
-         out = size(obj.data,dim);
-       end;
+        if ~exist('dim','var')
+          out = size(obj.data);
+        else
+          out = size(obj.data,dim);
+        end;
       else
         out = builtin('size',obj);
       end
-    end      
-           
+    end
+    
     function out = get.ndims(obj)
       % Get dimensionality of array
       %
       % Ignores trailing singleton dimensions.
       %
       
-      if numel(obj)==1      
+      if numel(obj)==1
         if isempty(obj.data_)
           out = 0;
           return;
@@ -130,16 +130,16 @@ classdef labelledArray < handle & matlab.mixin.Copyable
     %% Data Get/Set Methods
     function set.data(obj,val)
       %% Set data method
-            
+      
       if ~isempty(obj.data_)
         % Check Overall Dimensionality
-        nDims = builtin('ndims',val); 
-        if (nDims~=obj.ndims)&&(obj.ndims~=0) 
+        nDims = builtin('ndims',val);
+        if (nDims~=obj.ndims)&&(obj.ndims~=0)
           error('Data dimensionality does not match existing size');
         end
         
         % Check Individual Dimension Sizes
-        for idxDim = 1:nDims 
+        for idxDim = 1:nDims
           dimSize = size(val,idxDim);
           
           if ( dimSize ~= size(obj.data_,idxDim) )
@@ -164,7 +164,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
     function out = get.data(obj)
       out = obj.data_;
     end;
-                        
+    
     %% Label Get/Set Methods
     function set.labels(obj,val)
       
@@ -178,31 +178,31 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       % Check Input
       for i = 1:size(val,1)
         currDim = val{i,1};
-        currVal = val{i,2};        
+        currVal = val{i,2};
         
         assert(isnumeric(currDim)&&isscalar(currDim),...
-                'Dimension parameter must be a numeric scalar');
+          'Dimension parameter must be a numeric scalar');
         
         % Convert char to cellstr
         if ischar(currVal), currVal = {currVal}; end;
         assert(iscellstr(currVal)||isempty(currVal),...
-                ['Labels must be strings or cellstrings']);              
+          ['Labels must be strings or cellstrings']);
         
         assert(isempty(currVal)||(numel(currVal)==size(obj.data_,currDim)),...
-                 'Must provide labels for the full dimension');
-                       
+          'Must provide labels for the full dimension');
+        
       end
       
       % Assign Labels if All Checks Passed
       for i = 1:size(val,1)
-        obj.labels_{val{i,1}} = val{i,2};                   
+        obj.labels_{val{i,1}} = val{i,2};
       end
-                        
+      
     end
     
     function out = get.labels(obj)
       out = obj.labels_;
-    end;            
+    end;
     
     %% Value Get/Set Methods
     function set.values(obj,val)
@@ -213,18 +213,18 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       end;
       
       assert(iscell(val)&&size(val,2)==2,'Incorrect input shape');
-            
+      
       for i = 1:size(val,1)
         currDim = val{i,1};
         currVal = val{i,2};
         assert(isnumeric(currDim)&&isscalar(currDim),...
-                'Dimension parameter must be a numeric scalar');
+          'Dimension parameter must be a numeric scalar');
         
         assert(isempty(currVal)||(isnumeric(currVal)&&isvector(currVal)),...
-                 'Value inputs must be numeric vectors');     
-               
+          'Value inputs must be numeric vectors');
+        
         assert(isempty(currVal)||(numel(currVal)==size(obj.data_,currDim)),...
-                  'Most provide values for the full dimension');
+          'Most provide values for the full dimension');
       end
       
       % Assign Values if All Checks Passed
@@ -243,7 +243,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods (Access=protected)
     
-     function idxOut = getNumericIndex(obj,varargin)
+    function idxOut = getNumericIndex(obj,varargin)
       % Get numeric indexing into a single labelledArray object
       %
       % idxOut = getNumericIndex(obj,varargin)
@@ -265,7 +265,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       %
       
       assert(numel(obj)==1,'Multiple objects passed. Not sure why we''re getting here');
-       
+      
       % Strict for now, might loosen later
       assert(numel(varargin)==obj.ndims,...
         'Indexing into labelledArray objects must include all dimensions');
@@ -280,9 +280,20 @@ classdef labelledArray < handle & matlab.mixin.Copyable
           idxOut{idxDim} = ...
             crlEEG.util.getDimensionIndex(size(obj.data_,idxDim),varargin{idxDim});
         end
-      end            
+      end
     end
     
+    function obj = copyValuesFrom(obj,valObj)
+      % Individually copies values from another object
+      %
+      % This is preferential to obj.copy, as it preserves subclasses.
+      %
+      
+      obj.data_   = valObj.data_;
+      obj.labels_ = valObj.labels_;
+      obj.values_ = valObj.values_;
+    end
+        
     function out = subcopy(obj,varargin)
       % Copy a subset of the object
       %
@@ -292,7 +303,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       % ------
       %       obj : A labelledArray object
       %  varargin : Numeric indexes into each dimension.
-      %               NOTE: Must satisfy numel(varargin)==obj.ndims      
+      %               NOTE: Must satisfy numel(varargin)==obj.ndims
       %
       % Outputs
       % -------
@@ -305,18 +316,18 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       assert(numel(obj)==1,'Passed multiple objects. Not sure why we''re getting here');
       
       assert(numel(varargin)==obj.ndims,...
-              'Must include referencing for all dimensions');
+        'Must include referencing for all dimensions');
       
       tmpData = obj.data(varargin{:});
       tmpLabels = cell(obj.ndims,2);
       tmpValues = cell(obj.ndims,2);
       
-      for idxDim = 1:obj.ndims        
+      for idxDim = 1:obj.ndims
         tmpLabels{idxDim,1} = idxDim;
-        if ~isempty(obj.labels{idxDim})          
+        if ~isempty(obj.labels{idxDim})
           tmpLabels{idxDim,2} = obj.labels{idxDim}(dimIdx{idxDim});
         end
-                
+        
         tmpValues{idxDim,1} = idxDim;
         if ~isempty(obj.values{idxDim})
           tmpValues{idxDim,2} = obj.values{idxDim}(dimIdx{idxDim});

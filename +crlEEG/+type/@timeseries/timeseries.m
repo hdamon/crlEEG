@@ -1,4 +1,4 @@
-classdef timeseries < handle & matlab.mixin.Copyable
+classdef timeseries < labelledArray
   % crlEEG.gui data class for time series data
   %
   % Data is stored as: time X channels
@@ -38,8 +38,8 @@ classdef timeseries < handle & matlab.mixin.Copyable
   
   
   properties (Dependent = true)
-    data
-    labels;
+    %data
+    %labels;
     xvals  
     xrange
     sampleRate
@@ -56,10 +56,10 @@ classdef timeseries < handle & matlab.mixin.Copyable
   end;
     
   properties (Access=protected)
-    data_;
+   % data_;
     sampleRate_;
     xvals_;
-    labels_;
+   % labels_;
     yunits_;
     chanType_;
   end;
@@ -69,6 +69,7 @@ classdef timeseries < handle & matlab.mixin.Copyable
     function obj = timeseries(varargin)
       
       %% Input Parsing
+      obj = obj@labelledArray;
       if nargin>0
         p = inputParser;
         p.addRequired('data',@(x) (isnumeric(x)&&ismatrix(x))||...
@@ -85,11 +86,11 @@ classdef timeseries < handle & matlab.mixin.Copyable
         if isa(p.Results.data,'crlEEG.type.timeseries')
           obj = obj.copyValuesFrom(p.Results.data);
           return;
-        end
+        end                
         
         %% Set Object Properties
         obj.data   = p.Results.data;
-        obj.labels = p.Results.labels;
+        obj.labels = {2,p.Results.labels};
         obj.xvals  = p.Results.xvals;
         obj.sampleRate = p.Results.sampleRate;
         obj.yUnits = p.Results.yunits;
@@ -117,30 +118,32 @@ classdef timeseries < handle & matlab.mixin.Copyable
       %
       if ~exist('idxRow','var'), idxRow = ':'; end;
       if ~exist('idxCol','var'), idxCol = ':'; end;
+                 
+      out = obj.subcopy@labelledArray(idxRow,idxCol);
       
       % Need to use copy here, because derived classes need to be
       % maintained
-      out = obj.copy;      
-      out.labels_   = out.labels(idxCol);
-      out.xvals_    = out.xvals(idxRow);        
+      %out = obj.copy;      
+      %out.labels_   = out.labels(idxCol);
+      %out.xvals_    = out.xvals(idxRow);        
       out.yunits_   = out.yUnits(idxCol);  
       out.chanType_ = out.chanType(idxCol);
-      tmp       = out.data(idxRow,idxCol);
-      out.data_ = tmp;
+      %tmp       = out.data(idxRow,idxCol);
+      %out.data_ = tmp;
     end
         
     %% Overloaded 
-    function out = size(obj,dim)
-      if numel(obj)==1
-       if ~exist('dim','var')
-         out = size(obj.data);
-       else
-         out = size(obj.data,dim);
-       end;
-      else
-        out = builtin('size',obj);
-      end
-    end           
+%     function out = size(obj,dim)
+%       if numel(obj)==1
+%        if ~exist('dim','var')
+%          out = size(obj.data);
+%        else
+%          out = size(obj.data,dim);
+%        end;
+%       else
+%         out = builtin('size',obj);
+%       end
+%     end           
     
     %% Main crlEEG.type.timeseries plotting function
     function out = plot(obj,varargin)
