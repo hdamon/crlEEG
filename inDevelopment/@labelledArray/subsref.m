@@ -42,18 +42,7 @@ switch s(1).type
     else
       varargout = {tmp.subsref(s(2:end))};
     end;
-    
-    
-%     if length(s) == 1
-%       % Implement obj{indices}
-%       ...
-%     elseif length(s) == 2 && strcmp(s(2).type,'.')
-%     % Implement obj{indices}.PropertyName
-%     ...
-%     else
-%     % Use built-in for any other expression
-%     [varargout{1:nargout}] = builtin('subsref',obj,s);
-%     end
+
   otherwise
     error('Not a valid indexing expression')
 end
