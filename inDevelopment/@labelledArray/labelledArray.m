@@ -9,6 +9,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
   %
   % Optional Param-Value Inputs
   % ---------------------------
+	%  'names'  : Names for each dimension.
   %  'labels' : An cell array defining labels for one or more dimensions.
   %               This array must be of size (N X 2), arranged as:
   %                { <DIMENSION A> , <CellString of Labels> ;
@@ -65,14 +66,15 @@ classdef labelledArray < handle & matlab.mixin.Copyable
   
   properties (Hidden,Dependent)
     data
+		names
     labels
     values
-    ndims
   end
   
   properties (Access=protected) % Should possibly be private?
     data_   % The data array
-    labels_ % Labels for each axis
+		names_  % Names for each dimension
+    labels_ % Labels for individual elements of each axis
     values_ % Values for each axis (time,frequency,etc)
   end
   
@@ -88,9 +90,11 @@ classdef labelledArray < handle & matlab.mixin.Copyable
         p.addRequired('data',@(x) (isnumeric(x)||isa(x,'labelledArray')));
         p.addParameter('labels',[],@(x) isempty(x)||checkType(x));
         p.addParameter('values',[],@(x) isempty(x)||checkType(x));
+				p.addParameter('names',[],@(x) isempty(x)||checkTYpe(x));
         p.parse(data,varargin{:});
         
         obj.data   = p.Results.data;
+				obj.names  = p.Results.names;
         obj.labels = p.Results.labels;
         obj.values = p.Results.values;
       end
@@ -99,6 +103,16 @@ classdef labelledArray < handle & matlab.mixin.Copyable
     
     %% Overloaded
     function out = size(obj,dim)
+			% Return the size of a labelledArray object
+			% 
+			% out = size(obj,dim)
+			%
+			% Behaves in one of two ways:
+			%  1) If obj is a single labelledArray object, returns the
+			%				size of obj.data_
+			%	 2) If obj is an array of labelledArray objects, returns the 
+			%				size of the array.
+			%
       if numel(obj)==1
         if ~exist('dim','var')
           out = size(obj.data);
@@ -110,7 +124,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       end
     end
     
-    function out = get.ndims(obj)
+    function out = ndims(obj)
       % Get dimensionality of array
       %
       % Ignores trailing singleton dimensions.
@@ -125,8 +139,45 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       else
         out = builtin('ndims',obj);
       end;
-    end
-    
+    end		
+
+		function out = permute(obj,order)
+		  % Permute the order of the array
+			%
+			% out = permute(obj,order)
+			%
+			% Inputs
+			% ------
+			%  obj : labelledArray object
+			%  order : One of two forms:
+			%						1) A numeric array of dimension indices
+			%						2) A cell array combining numeric indices and
+			%								dimension names.
+			%	
+	
+			% Get the numeric indices of the new ordering.	
+			if isnumeric(order)&&isvector(order)
+				newOrder = order;
+			elseif iscell(order)
+				for i = 1:numel(order)
+					if isnumeric(order{i})&&isscalar(order{i})
+						newOrder(i) = order{i};
+					elseif ischar(order{i})
+					  newOrder(i) = obj.getDimByName(order{i});
+					else
+						error('Invalid permutation argument');
+					end;
+				end
+			end
+			
+			out = obj.copy;
+			out.data_   = permute(obj.data_,newOrder);
+			out.names_  = obj.names_(newOrder);
+			out.labels_ = obj.names_(newOrder);
+			out.values_ = obj.names_(newOrder);
+
+		end
+
     %% Data Get/Set Methods
     function set.data(obj,val)
       %% Set data method
@@ -164,7 +215,36 @@ classdef labelledArray < handle & matlab.mixin.Copyable
     function out = get.data(obj)
       out = obj.data_;
     end;
-    
+   
+		%% Name Get/Set Methods
+		function set.names(obj,val)
+			
+			if isempty(val)
+				obj.names_ = cell(obj.ndims,1);
+			end;
+
+			assert(iscell(val)&&size(val,2)==2);
+
+			for i = 1:size(val,1)
+				currDim = val{i,1};
+	      currVal = val{i,2};
+        
+        assert(isnumeric(currDim)&&isscalar(currDim),...
+          'Dimension parameter must be a numeric scalar');
+        
+        % Convert char to cellstr
+        if ischar(currVal), currVal = {currVal}; end;
+        assert(iscellstr(currVal)||isempty(currVal),...
+          ['Names must be strings or cellstrings']);
+      end
+      
+      % Assign Names if All Checks Passed
+      for i = 1:size(val,1)
+        obj.names_{val{i,1}} = val{i,2};
+      end
+  	
+		end
+ 
     %% Label Get/Set Methods
     function set.labels(obj,val)
       
@@ -179,7 +259,11 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       for i = 1:size(val,1)
         currDim = val{i,1};
         currVal = val{i,2};
-        
+       
+				if ischar(currDim), 
+					currDim = obj.getDimByName(currDim); 
+				end;
+	 
         assert(isnumeric(currDim)&&isscalar(currDim),...
           'Dimension parameter must be a numeric scalar');
         
@@ -190,7 +274,6 @@ classdef labelledArray < handle & matlab.mixin.Copyable
         
         assert(isempty(currVal)||(numel(currVal)==size(obj.data_,currDim)),...
           'Must provide labels for the full dimension');
-        
       end
       
       % Assign Labels if All Checks Passed
@@ -217,6 +300,11 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       for i = 1:size(val,1)
         currDim = val{i,1};
         currVal = val{i,2};
+
+				if ischar(currDim),
+					currDim = obj.getDimByName(currDim);
+				end;
+
         assert(isnumeric(currDim)&&isscalar(currDim),...
           'Dimension parameter must be a numeric scalar');
         
@@ -242,7 +330,73 @@ classdef labelledArray < handle & matlab.mixin.Copyable
   %% Protected Methods
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods (Access=protected)
-    
+   
+		function idxOut = getDimByName(obj,names)
+			% Return the numeric index of the dimension associated with a name
+			%
+			% idxOut = getDimByName(obj,names)
+			%	
+			% Inputs
+			% ------
+			%		obj : labelledArray object
+			%	names : Character string or stringcell of dimension names
+			%
+			% Outputs	
+			% -------
+			%  idxOut : Numeric index of the dimensions associated with
+			%							the strings in names
+			%
+			%
+	
+				assert(ischar(names)|iscellstr(names),...
+								'Dimension names must be strings of cellstrings');
+
+				if ischar(names), names = {names}; end;
+
+				idxOut = nan(1,numel(names));
+				for i = 1:numel(names)
+					matchedName = validateString(names{i},obj.names);
+					idx{i} = find(ismember(obj.names,matchedName);
+					if isempty(idx{i})
+						error(['Dimension name: ' names{i} ' not found']);
+					end
+				end
+
+		end
+
+		function indexOrder = getIndexOrder(obj,varargin)
+			% 
+    end
+
+		function idxOut = anyIndexToNumeric(obj,varargin)
+			% Super generalized conversion of indexing into numeric indices
+			%
+			% idxOut = rectifyIndexing(obj,varargin)
+			%
+			% Inputs
+			% ------
+			%       obj : labelledArray object
+			%  varargin : Input indexing
+			%
+			% What options for indexing should this support?
+			%  1) Straight up numeric indexing
+			%				obj(x,y,z)
+			%	 2) Name indexing along each dimension
+			%				obj({'A' 'B' 'C'},'X','foo')
+			%  3) Name indexing by both dimension and index
+			%       obj({'dimA', {'A' 'B' 'C'}},{'dimB', {'X' 'Y' 'Z'}},[1 2 3]})
+			%
+			% How much freedom should be allowed in the indexing?
+			% Should arbitrary indexing with automatic permutation be supported?
+			%
+
+
+			% Straight up numeric indexing
+			fullyNumeric = true;
+			for i = 1:numel(varargin)
+				if isnumeric(varargin{i})&&
+		end
+ 
     function idxOut = getNumericIndex(obj,varargin)
       % Get numeric indexing into a single labelledArray object
       %
@@ -274,9 +428,11 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       idxOut = cell(obj.ndims,1);
       for idxDim = 1:obj.ndims
         if ~isempty(obj.labels_{idxDim})
+					% Dimension has names	
           idxOut{idxDim} = ...
             crlEEG.util.getDimensionIndex(obj.labels_{idxDim},varargin{idxDim});
         else
+					% Dimension does not have names
           idxOut{idxDim} = ...
             crlEEG.util.getDimensionIndex(size(obj.data_,idxDim),varargin{idxDim});
         end
@@ -286,11 +442,26 @@ classdef labelledArray < handle & matlab.mixin.Copyable
     function out = copyValuesFrom(obj,valObj)
       % Individually copies values from another object
       %
-      % This is preferential to obj.copy, as it preserves subclasses.
+      % out = copyValuesFrom(obj,valObj)
       %
+			% Inputs
+			% ------
+			%     obj : labelledArray object
+			%  valObj : labelledArray object to copy values from
+			%
+			% Output
+			% ------
+			%     out : New labelledArray object with values copied from valObj
+			%
+			% This method is designed to allow copying of object values from one
+			% object to another without losing the class of the original passed
+			% object. This is primarily used in the constructor when constructing
+			% subclasses.
+			%
       
       out = obj.copy;
       out.data_   = valObj.data_;
+			out.names_  = valObj.names_;
       out.labels_ = valObj.labels_;
       out.values_ = valObj.values_;
     end
