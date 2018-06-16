@@ -69,10 +69,14 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
     function out = get.labels(obj)
       if isempty(obj.labels_)              
         % Default channel labels        
+        if isempty(obj.tfX)
+          out = [];
+          return;
+        end;
         out = cell(1,size(obj.tfX,3));
         for i = 1:size(obj.tfX,3),
           out{i} = ['Chan' num2str(i)];
-        end
+        end        
         return;
       end;      
       out = obj.labels_;      
@@ -138,7 +142,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
     end
        
     function out = size(obj,dim)
-      if numel(obj==1)
+      if numel(obj)==1
        if ~exist('dim','var')
          out = size(obj.tfX);
        else
@@ -388,21 +392,27 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
     end
     
     function out = PSD(obj,varargin)
-      % Convert a time-frequency decomposition to power spectral density            
-      out = abs(obj.subsrefTFX(varargin{:})).^2;      
+      % Convert a time-frequency decomposition to power spectral density                  
+      out = obj.copy;
+      out.tfX = abs(obj.subsrefTFX(varargin{:})).^2;
+      out.type = [obj.type '_PSD'];
     end
     
     function out = abs(obj,varargin)
-      % Convert a time-frequency decomposition to spectral magnitude      
+      % Convert a time-frequency decomposition to spectral magnitude            
+      out = obj.copy;
       out.tfX = abs(obj.subsrefTFX(varargin{:}));
+      out.type = [obj.type '_ABS'];      
     end;
     
     function out = PLF(obj,varargin)  
       % Convert a time-frequency decomposition to Phase Locking Factor
       %
       % (NEEDS TO BE AVERAGED ACROSS A LOT OF DECOMPOSITIONS)      
+      out = obj.copy;
+      out.type = [obj.type '_PLF'];
       tmp = obj.subsrefTFX(varargin{:});
-      out = tmp./abs(tmp);
+      out.tfX = tmp./abs(tmp);
     end;
               
     function isValid = isConsistent(obj,b)
@@ -517,6 +527,14 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       end;
     end
     
+    function isEmpty = isempty(obj)
+      if isempty(obj.tfX)
+        isEmpty = true;
+      else
+        isEmpty = false;
+      end;
+    end
+    
     function out = plus(obj,b)      
       out = applyFcnToTFX(obj,b,@plus);      
       if isa(b,'timeFrequencyDecomposition')
@@ -559,29 +577,45 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
     
     function out = cat(dim,obj,a,varargin)
       
+      assert(isa(a,'timeFrequencyDecomposition'),'Can only concatenate with like objects');
+      
+      if isempty(obj)
+        out = a;
+        return;
+      end;
+      
       switch dim
         case 1
           error('Concatenation along frequency axis not implemented');
         case 2
-          error('Concatenation along time axis not implemented');
+          assert(isequal(obj.fx,a.fx),'Frequencies must match');
+          assert(isequal(obj.labels,a.labels),'Labels must match');
+          
+          newType = ['TimeConcatenated'];
+          
+          concat = cat(2,obj.tfX,a.tfX);
+          tx = cat(1,obj.tx,a.tx); %#ok<PROPLC>
+          fx = obj.fx; %#ok<PROPLC>
+          labels = obj.labels; %#ok<PROPLC>
         case 3
           assert(isequal(obj.fx,a.fx),'Frequencies must match');
           assert(isequal(obj.tx,a.tx),'Times must match');
 
           newType = ['cat(' obj.type ',' a.type ')'];
-          concat = cat(3,obj.tfX,a.tfX);
+          concat = cat(3,obj.tfX,a.tfX);          
+          tx = obj.tx; %#ok<PROPLC>
+          fx = obj.fx; %#ok<PROPLC>
           labels = [obj.labels ; a.labels]; %#ok<PROPLC>
-          
-          out = timeFrequencyDecomposition(newType,concat,...
-                                            obj.tx,obj.fx,labels); %#ok<PROPLC>
-          
-          if ~isempty(varargin)
-            out = cat(3,out,varargin{:});
-          end
         otherwise
           error('Invalid dimension for concatenation');
       end;
-                        
+       
+      out = timeFrequencyDecomposition(newType,concat,tx,fx,labels); %#ok<PROPLC>
+      
+      if ~isempty(varargin)
+        out = cat(dim,out,varargin{:});
+      end;
+      
     end
     
     function out = mean(obj,dim)
@@ -594,7 +628,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
           labels = obj.labels;           %#ok<PROPLC>
           newType = ['MeanF(' obj.type ')'];          
         case 2
-          tx = 0; %#ok<PROPLC>
+          tx = mean(obj.tx); %#ok<PROPLC>
           fx = obj.fx; %#ok<PROPLC>
           labels = obj.labels; %#ok<PROPLC>
           newType = ['MeanT(' obj.type ')'];
@@ -609,6 +643,35 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       
       meanTFX = mean(obj.tfX,dim);
       out = timeFrequencyDecomposition(newType,meanTFX,tx,fx,labels); %#ok<PROPLC>
+      
+    end
+    
+    function out = std(obj,W,dim)
+      if ~exist('dim','var'), dim = 1; end;
+      if ~exist('W','var'), W = 0; end;
+                  
+      switch dim
+        case 1          
+          tx = obj.tx; %#ok<PROPLC>
+          fx = 0; %#ok<PROPLC>
+          labels = obj.labels;           %#ok<PROPLC>
+          newType = ['StdF(' obj.type ')'];          
+        case 2
+          tx = 0; %#ok<PROPLC>
+          fx = obj.fx; %#ok<PROPLC>
+          labels = obj.labels; %#ok<PROPLC>
+          newType = ['StdT(' obj.type ')'];
+        case 3
+          tx = obj.tx; %#ok<PROPLC>
+          fx = obj.fx; %#ok<PROPLC>
+          labels = {'StdChan'}; %#ok<PROPLC>
+          newType = ['StdC(' obj.type ')'];
+        otherwise
+          error('Invalid dimension selection');
+      end      
+      
+      stdTFX = std(obj.tfX,W,dim);
+      out = timeFrequencyDecomposition(newType,stdTFX,tx,fx,labels); %#ok<PROPLC>
       
     end
     

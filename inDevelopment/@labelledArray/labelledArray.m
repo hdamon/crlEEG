@@ -422,7 +422,7 @@ classdef labelledArray < handle & matlab.mixin.Copyable
       %% Numeric or name based indexing into a single dimension
       
       if isempty(obj.dimLabels_{dim})
-        cellIn = repmat({''},size(obj.array_,dim),1);
+        cellIn = [];
         isStringValid = false;
       else
         cellIn = obj.dimLabels_{dim};
@@ -436,13 +436,13 @@ classdef labelledArray < handle & matlab.mixin.Copyable
         
       elseif islogical(index)
         %% Logical Indexing
-        assert(numel(index)==numel(cellIn),'FOOOO_-');
+        assert(numel(index)==size(obj,dim),'FOOOO_-');
         idxOut = find(index);
         return;
         
       elseif isnumeric(index)
         %% Numeric Reference
-        if any(index<1)||any(index>numel(cellIn))
+        if any(index<1)||any(index>size(obj,dim))
           error('Requested index outside of available range');
         end;
         idxOut = index;
