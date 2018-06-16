@@ -1,4 +1,4 @@
-classdef timeseries < labelledArray
+classdef timeseries < labelledArray_withValues
   % crlEEG.gui data class for time series data
   %
   % Data is stored as: time X channels
@@ -38,8 +38,8 @@ classdef timeseries < labelledArray
   
   
   properties (Dependent = true)
-    %data
-    %labels;
+    data % Redirected from obj.a
+    labels;
     xvals  
     xrange
     sampleRate
@@ -55,12 +55,8 @@ classdef timeseries < labelledArray
     chanType
   end;
     
-  properties (Access=protected)
-   % data_;
-    sampleRate_;
-    xvals_;
-   % labels_;
-    yunits_;
+  properties (Access=protected)   
+    sampleRate_;   
     chanType_;
   end;
         
@@ -69,7 +65,7 @@ classdef timeseries < labelledArray
     function obj = timeseries(varargin)
       
       %% Input Parsing
-      obj = obj@labelledArray;
+      obj = obj@labelledArray_withValues;
       if nargin>0
         p = inputParser;
         p.addRequired('data',@(x) (isnumeric(x)&&ismatrix(x))||...
@@ -89,31 +85,16 @@ classdef timeseries < labelledArray
         end                
         
         %% Set Object Properties
-        obj.data   = p.Results.data;
-        obj.labels = {2,p.Results.labels};
-        obj.xvals  = p.Results.xvals;
+        obj.data       = p.Results.data;
+        obj.labels     = p.Results.labels;
+        obj.xvals      = p.Results.xvals;
         obj.sampleRate = p.Results.sampleRate;
-        obj.yUnits = p.Results.yunits;
-        obj.chanType = p.Results.chanType;
-        obj.xUnits = p.Results.xunits;
+        obj.yUnits     = p.Results.yunits;
+        obj.chanType   = p.Results.chanType;
+        obj.xUnits     = p.Results.xunits;
       end;
     end
-    
-   
-        
-    %% Overloaded 
-%     function out = size(obj,dim)
-%       if numel(obj)==1
-%        if ~exist('dim','var')
-%          out = size(obj.data);
-%        else
-%          out = size(obj.data,dim);
-%        end;
-%       else
-%         out = builtin('size',obj);
-%       end
-%     end           
-    
+         
     %% Main crlEEG.type.timeseries plotting function
     function out = plot(obj,varargin)
       % Overloaded plot function for crlEEG.type.timeseries objects
@@ -207,19 +188,16 @@ classdef timeseries < labelledArray
       if replace
         obj.removeChannel(label);
       end
-        
-      
+              
       if (size(data,2)==size(obj,1))&&(size(data,1)~=size(obj,1))
         data = data';
       end;
       
       assert(size(data,1)==size(obj,1),'Channel Data Size is Incorrect');
-      if iscellstr(label)
-        assert(size(data,2)==numel(label),'Incorrect number of labels provided');
-      else
-        assert(size(data,2)==1,'Incorrect number of labels provided');
-      end;
-            
+      test1 = iscellstr(label)&&(size(data,2)==numel(label));
+      test2 = size(data,2)==1;
+      assert(test1||test2,'Incorrect number of labels provided');
+                  
       % Recurse
       if iscellstr(label)
         if ~exist('units','var')||isempty(units), units = repmat({'_'},numel(label),1); end;
@@ -246,7 +224,7 @@ classdef timeseries < labelledArray
       if ~exist('replace','var'), replace = false; end;
       
       % Add a single label
-      if ismember(label,obj.labels_)
+      if ismember(label,obj.labels)
         if replace
           warning('Channel replacement unimplemented');
           return;
@@ -254,10 +232,10 @@ classdef timeseries < labelledArray
           error('Channel already exists');
         end;
       else
-         obj.labels_{end+1} = label;
-         obj.yunits_{end+1} = units;
-         obj.chanType_{end+1} = type;
-         obj.data_ = [obj.data data(:)];        
+         obj.array_ = [obj.data data(:)];        
+         obj.dimLabels{2}{end+1} = label;
+         obj.dimUnits_{2}{end+1} = units;
+         obj.chanType_{end+1} = type;         
       end
     end;
         
@@ -279,9 +257,9 @@ classdef timeseries < labelledArray
       idx = ~ismember(obj.labels,label);
            
       % Truncate the internal channels
-      obj.labels_ = obj.labels_(idx);
-      obj.yunits_ = obj.yunits_(idx);
-      obj.data_ = obj.data_(:,idx);
+      obj.dimLabels_{2} = obj.labels(idx);
+      obj.dimUnits_{2} = obj.yunits(idx);
+      obj.array_ = obj.data(:,idx);
       obj.chanType_ = obj.chanType_(idx);
     end
            
@@ -337,14 +315,15 @@ classdef timeseries < labelledArray
                 
     %% Get/Set Methods for obj.yUnits
     function out = get.yUnits(obj)
-      if ~isempty(obj.yunits_)
-        out = obj.yunits_;
+      if ~isempty(obj.dimUnits{2})
+        out = obj.dimUnits{2};
       else
         out{1:size(obj,2)} = deal('uV');
       end;
     end;    
+    
     function set.yUnits(obj,val)
-      if isempty(val), obj.yunits_ = []; return; end;
+      if isempty(val), obj.dimUnits{2} = []; return; end;
       assert(ischar(val)||iscellstr(val),...
               'yunits must be a character string or cell array of strings');
       if ~iscellstr(val)
@@ -355,45 +334,34 @@ classdef timeseries < labelledArray
       
       assert(numel(cellVal)==size(obj,2),...
               'yunits must have a number of elements equal to the number of channels');
-      obj.yunits_ = cellVal;                        
+      obj.dimUnits_{2} = cellVal;                        
     end    
     
     %% Get/Set Methods for Data
-%     function out = get.data(obj)
-%       out = obj.data_;
-%     end    
-%     function set.data(obj,val)
-%       if ~isempty(obj.labels_)
-%         assert(size(val,2)==numel(obj.labels_),...
-%                 'Number of channels in data must match number of labels');              
-%       end
-%       if ~isempty(obj.xvals_)
-%         assert(size(val,1)==numel(obj.xvals_),...
-%                 'Number of timepoints must match numel(obj.xvals)');
-%       end
-%       obj.data_ = val;
-%     end
+    function out = get.data(obj)
+      out = obj.array;
+    end    
+    
+    function set.data(obj,val)
+      obj.array = val;
+    end
            
     %% Set/Get Methods for obj.labels
-%     function out = get.labels(obj)
-%       if isempty(obj.labels_)              
-%         % Default channel labels        
-%         out = cell(1,size(obj.data,2));
-%         for i = 1:size(obj.data,2),
-%           out{i} = ['Chan' num2str(i)];
-%         end
-%         return;
-%       end;      
-%       out = obj.labels_;      
-%     end % END get.labels
-%     function set.labels(obj,val)
-%       % Redirect to internal property
-%       if isempty(val), obj.labels_ = []; return; end;        
-%       assert(iscellstr(val),'Labels must be provided as a cell array of strings');
-%       assert(isempty(obj.data)||(numel(val)==size(obj,2)),...
-%         'Number of labels must match number of channels');
-%       obj.labels_ = strtrim(val);
-%     end % END set.labels
+    function out = get.labels(obj)     
+      if isempty(obj.dimLabels{2})              
+        % Default channel labels        
+        out = cell(1,size(obj.data,2));
+        for i = 1:size(obj.data,2),
+          out{i} = ['Chan' num2str(i)];
+        end
+        return;
+      end;      
+      out = obj.dimLabels{2};      
+    end % END get.labels
+    
+    function set.labels(obj,val)
+      obj.dimLabels = {2, val};      
+    end % END set.labels
             
     %% Get/Set Methods for obj.sampleRate
     function out = get.sampleRate(obj)
@@ -412,21 +380,15 @@ classdef timeseries < labelledArray
             
     %% Get/Set Methods for obj.xvals    
     function out = get.xvals(obj)
-      if ~isempty(obj.values_{1})
-        out = obj.values{1};
-      else    
-        % Default timing values
-        out = (1./obj.sampleRate)*(0:size(obj.data,1)-1);
-      end;
+      out = obj.dimValues{1};      
     end    
     function set.xvals(obj,val)
-      if isempty(val), obj.xvals_ = []; return; end;
-      assert( isvector(val) && numel(val)==size(obj.data,1),...
-            'xVals vector length must match size(obj.data,1)');
-      assert( issorted(val), 'xVals should be a sorted list of time values');
-      
-      obj.values = {1,val};
-    end;    
+      if isempty(val)
+        % Default time values.
+        val = (1./obj.sampleRate)*(0:size(obj.data,1)-1);
+      end
+      obj.dimValues{1} = val;
+    end;
     
     %% Get/Set Methods for obj.yrange
     function rangeOut = get.yrange(obj)
@@ -492,11 +454,7 @@ classdef timeseries < labelledArray
   methods (Access=protected)
      function obj = copyValuesFrom(obj,valObj)
       % Individually copy values from a second object
-      obj = obj.copyValuesFrom@labelledArray(valObj);
-      
-      %obj.data   = valObj.data;
-      %obj.labels = valObj.labels;
-      %obj.xvals  = valObj.xvals;
+      obj = obj.copyValuesFrom@labelledArray(valObj);      
       obj.sampleRate = valObj.sampleRate;
       obj.yUnits = valObj.yUnits;
       obj.xUnits = valObj.xUnits;
@@ -512,17 +470,10 @@ classdef timeseries < labelledArray
       if ~exist('idxRow','var'), idxRow = ':'; end;
       if ~exist('idxCol','var'), idxCol = ':'; end;
                  
-      out = obj.subcopy@labelledArray(idxRow,idxCol);
-      
-      % Need to use copy here, because derived classes need to be
-      % maintained
-      %out = obj.copy;      
-      %out.labels_   = out.labels(idxCol);
-      %out.xvals_    = out.xvals(idxRow);        
-      out.yunits_   = out.yUnits(idxCol);  
-      out.chanType_ = out.chanType(idxCol);
-      %tmp       = out.data(idxRow,idxCol);
-      %out.data_ = tmp;
+      out = obj.subcopy@labelledArray(idxRow,idxCol);            
+      out.dimValues_{1} = obj.xvals(idxRow);
+      out.dimUnits_{2}   = obj.yUnits(idxCol);        
+      out.chanType_ = obj.chanType(idxCol);      
     end
   end
   

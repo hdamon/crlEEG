@@ -12,7 +12,7 @@ function obj = subsasgn(obj,s,varargin)
               if numel(s(2).subs)==2
                 rowIdx = s(2).subs{1};
                 colIdx = getElectrodeIndex(s(2).subs{2},true);
-                obj.data_(rowIdx,colIdx) = varargin{:};
+                obj.array_(rowIdx,colIdx) = varargin{:};
               else
               keyboard;
               end;

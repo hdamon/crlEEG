@@ -35,7 +35,7 @@ EVENT.latency = nPre+1;
 EEGOut.EVENTS = EVENT;
 
 % Modify the Timings to center on the event.
-EEGOut.setStartTime(-preTime);
+setStartTime(EEGOut,-preTime);
 
 %xvals = -preTime:(1/EEGIn.sampleRate):postTime;
 %EEGOut.xvals = xvals;

@@ -268,6 +268,7 @@ classdef dualPlot < crlEEG.gui.uipanel
     end
     
     function updateMini(obj)      
+      
       % Callback to update miniplot input when channel selection is changed
       obj.miniplot.timeseries = obj.chanselect.output;      
     end

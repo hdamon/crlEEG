@@ -61,7 +61,7 @@ switch s(1).type
         elseif numel(s.subs)==3
           fIdx = s.subs{1};
           tIdx = s.subs{2};
-          chanIdx = crlEEG.util.getIndexIntoCellStr(obj.labels,s.subs{3},true);          
+          chanIdx = crlEEG.util.getDimensionIndex(obj.labels,s.subs{3},true);          
         end;
         
         if islogical(fIdx) && (numel(fIdx)==size(obj,1))
