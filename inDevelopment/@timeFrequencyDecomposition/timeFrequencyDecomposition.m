@@ -574,7 +574,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
         end
       end;
     end;
-   
+  
     function out = power(obj,a)
       out = applyFcnToTFX(obj,a,@power);
     end
@@ -623,7 +623,34 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
       
     end
     
-    function out = mean(obj,dim)
+    function out = sum(obj,dim)
+      if ~exist('dim','var'), dim = 1; end;
+      
+      switch dim
+        case 1          
+          tx = obj.tx; %#ok<PROPLC>
+          fx = 0; %#ok<PROPLC>
+          labels = obj.labels;           %#ok<PROPLC>
+          newType = ['MeanF(' obj.type ')'];          
+        case 2
+          tx = mean(obj.tx); %#ok<PROPLC>
+          fx = obj.fx; %#ok<PROPLC>
+          labels = obj.labels; %#ok<PROPLC>
+          newType = ['MeanT(' obj.type ')'];
+        case 3
+          tx = obj.tx; %#ok<PROPLC>
+          fx = obj.fx; %#ok<PROPLC>
+          labels = {'MeanChan'}; %#ok<PROPLC>
+          newType = ['MeanC(' obj.type ')'];
+        otherwise
+          error('Invalid dimension selection');
+      end
+      
+      meanTFX = sum(obj.tfX,dim);
+      out = timeFrequencyDecomposition(newType,meanTFX,tx,fx,labels); %#ok<PROPLC>
+      
+    end
+   function out = mean(obj,dim)
       if ~exist('dim','var'), dim = 1; end;
       
       switch dim
