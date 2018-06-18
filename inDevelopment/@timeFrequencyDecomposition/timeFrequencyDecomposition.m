@@ -574,7 +574,11 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
         end
       end;
     end;
-    
+   
+    function out = power(obj,a)
+      out = applyFcnToTFX(obj,a,@power);
+    end
+
     function out = cat(dim,obj,a,varargin)
       
       assert(isa(a,'timeFrequencyDecomposition'),'Can only concatenate with like objects');
@@ -596,6 +600,7 @@ classdef timeFrequencyDecomposition < handle & matlab.mixin.Copyable
           concat = cat(2,obj.tfX,a.tfX);
           tx = cat(1,obj.tx,a.tx); %#ok<PROPLC>
           fx = obj.fx; %#ok<PROPLC>
+          
           labels = obj.labels; %#ok<PROPLC>
         case 3
           assert(isequal(obj.fx,a.fx),'Frequencies must match');
