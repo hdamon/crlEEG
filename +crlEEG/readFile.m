@@ -30,15 +30,9 @@ function fileOut = readFile(varargin)
 [~,~,EXT] = fileparts(fName);
 
 switch lower(EXT)
-  case {'.nrrd','nhdr'}
-    fileOut = crlEEG.fileio.NRRD(fName,fPath,...
-                                'readonly',p.Results.readOnly,p.Unmatched);
   case '.edf'
     fileOut = crlEEG.fileio.EDF(fName,fPath,...
                                 'readonly',p.Results.readOnly,p.Unmatched);
-  case '.nii'
-    fileOut = crlEEG.fileio.NIFTI(fName,fPath,...
-                                'readonly',p.Results.readOnly,p.Unmatched);                              
   case '.ev2'
     fileOut = crlEEG.fileio.EV2(fName,fPath,...
                                 'readonly',p.Results.readOnly,p.Unmatched);

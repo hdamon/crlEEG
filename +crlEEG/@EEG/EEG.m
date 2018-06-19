@@ -1,7 +1,7 @@
 classdef EEG < crlEEG.type.timeseries
   % Object class for EEG data
   %
-  % classdef EEG < crlEEG.type.timeseries
+  % classdef EEG < crlBase.type.timeseries
   %
   
   properties
@@ -21,10 +21,10 @@ classdef EEG < crlEEG.type.timeseries
       p = inputParser;
       p.KeepUnmatched = true;
       p.addOptional('data',[],@(x) (isnumeric(x)&&ismatrix(x))||...
-        isa(x,'crlEEG.type.timeseries')||...
-        isa(x,'crlEEG.type.EEG') );
+        isa(x,'crlBase.type.timeseries')||...
+        isa(x,'crlEEG.EEG') );
       p.addOptional('labels',[],@(x) isempty(x)||iscellstr(x));
-      p.addParameter('EVENTS',[],@(x) isa(x,'crlEEG.type.EEG_event'));
+      p.addParameter('EVENTS',[],@(x) isa(x,'crlEEG.event'));
       p.addParameter('setname',[],@ischar);
       p.addParameter('fname',[],@ischar);
       p.parse(varargin{:});
@@ -98,7 +98,7 @@ classdef EEG < crlEEG.type.timeseries
   
   methods (Access=protected)
     function out = subcopy(obj,idxRow,idxCol)
-      out = subcopy@crlEEG.type.timeseries(obj,idxRow,idxCol);
+      out = subcopy@crlBase.type.timeseries(obj,idxRow,idxCol);
       
       if ~isempty(obj.decomposition)
         decompNames = fields(obj.decomposition);
