@@ -3,14 +3,14 @@ function EEGOut = extractEpochAroundEvent(EEGIn,EVENT,preTime,postTime)
 %
 % Inputs
 % ------
-%    EEGIn : crlEEG.type.EEG object to extract the epoch from
-%    EVENT : crlEEG.type.EEG_event object to 
+%    EEGIn : crlEEG.EEG object to extract the epoch from
+%    EVENT : crlEEG.EEG_event object to 
 %  preTime : Time in seconds to extract before event.
 % postTime : Time in seconds to extract after event.
 %
 % Outputs
 % -------
-%   EEGOut : crlEEG.type.EEG object with the extracted epoch
+%   EEGOut : crlEEG.EEG object with the extracted epoch
 %             This will have a single EVENT that corresponds to the
 %
 % Part of the crlEEG project

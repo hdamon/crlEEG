@@ -1,5 +1,5 @@
 function varargout = subsref(obj,s)
-%% Subsref for crlEEG.type.EEG_event
+%% Subsref for crlEEG.EEG_event
 %
    switch s(1).type
       case '.'

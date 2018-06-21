@@ -3,14 +3,14 @@ function epochsOut = extractEpochsByName(EEG,lookForDescription,preTime,postTime
 %
 % Inputs
 % ------
-%           EEG : crlEEG.type.EEG object to extract epochs from
+%           EEG : crlEEG.EEG object to extract epochs from
 % targetTrigger : Name of the events to look for
 %       preTime : Time in seconds to window before trigger
 %      postTime : Time in seconds to window after trigger
 %
 % Outputs
 % -------
-%  epochsOut : Array of crlEEG.type.EEG objects containing the requested
+%  epochsOut : Array of crlEEG.EEG objects containing the requested
 %               epochs.
 %
 % Part of the crlEEG Project
@@ -27,7 +27,7 @@ postSamples = ceil(EEG.sampleRate*postTime);
 
 % Get an Epoch for Each Event
 idxOut = 0;
-epochsOut = crlEEG.type.EEG;
+epochsOut = crlEEG.EEG;
 for i = 1:numel(tmpEvents)
   % Test that there are enough samples to get the requested window
   testPre   = tmpEvents(i).latency > preSamples; % Too close to the beginning

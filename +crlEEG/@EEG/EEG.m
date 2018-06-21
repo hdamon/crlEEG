@@ -1,4 +1,4 @@
-classdef EEG < crlEEG.type.timeseries
+classdef EEG < MatTSA.timeseries
   % Object class for EEG data
   %
   % classdef EEG < crlBase.type.timeseries
@@ -8,20 +8,19 @@ classdef EEG < crlEEG.type.timeseries
     setname
     fname
     fpath
-    EVENTS
-    decomposition
+    EVENTS    
     filters = cell(0);
   end
   
   methods
     
     function obj = EEG(varargin)
-      % Constructor method for crlEEG.type.EEG objects
+      % Constructor method for crlEEG.EEG objects
       
       p = inputParser;
       p.KeepUnmatched = true;
       p.addOptional('data',[],@(x) (isnumeric(x)&&ismatrix(x))||...
-        isa(x,'crlBase.type.timeseries')||...
+        isa(x,'MatTSA.timeseries')||...
         isa(x,'crlEEG.EEG') );
       p.addOptional('labels',[],@(x) isempty(x)||iscellstr(x));
       p.addParameter('EVENTS',[],@(x) isa(x,'crlEEG.event'));
@@ -29,7 +28,7 @@ classdef EEG < crlEEG.type.timeseries
       p.addParameter('fname',[],@ischar);
       p.parse(varargin{:});
       
-      obj = obj@crlEEG.type.timeseries(p.Results.data,p.Results.labels,p.Unmatched);
+      obj = obj@MatTSA.timeseries(p.Results.data,p.Results.labels,p.Unmatched);
       
       obj.setname = p.Results.setname;
       obj.fname   = p.Results.fname;
@@ -57,37 +56,28 @@ classdef EEG < crlEEG.type.timeseries
     end
     
     
-    function decompose(obj,varargin)
-      % Run one of a range of decompositions
-      p = inputParser;
-      p.KeepUnmatched = true;
-      p.addParameter('type','timefrequency');
-      p.addParameter('method','eeglab');
-      p.parse(varargin{:});
-    end
-    
     function EEGout = applyStandardFilter(EEGIn,fType,varargin)
       % Simplifies calls to filter an eeg using the standard methods.
       EEGout = EEGIn.filtfilt(EEGIn.standardFilters(fType,EEGIn.sampleRate,varargin{:}));
     end
     
     function EEGout = filter(EEGIn,f)
-      EEGout = EEGIn.filter@crlEEG.type.timeseries(f);
+      EEGout = EEGIn.filter@MatTSA.timeseries(f);
       EEGout.filters{end+1} = f;
     end
     
     function EEGout = filtfilt(EEGIn,f)
-      % Filtfilt for crlEEG.type.EEG objects includes tracking of all
+      % Filtfilt for crlEEG.EEG objects includes tracking of all
       % applied filters in the obj.filters property.
       %
       
-      EEGout = EEGIn.filtfilt@crlEEG.type.timeseries(f);
+      EEGout = EEGIn.filtfilt@MatTSA.timeseries(f);
       EEGout.filters{end+1} = f;
     end
     
     function n = numArgumentsFromSubscript(obj,s,indexingContext)
       % Not 100% sure this is necessary, but probably not a bad idea.
-      n = numArgumentsFromSubscript@crlEEG.type.timeseries(...
+      n = numArgumentsFromSubscript@MatTSA.timeseries(...
         obj,s,indexingContext);
     end
     
