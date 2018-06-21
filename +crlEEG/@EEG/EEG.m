@@ -54,7 +54,8 @@ classdef EEG < MatTSA.timeseries
       end
       
     end
-        
+    
+    
     function EEGout = applyStandardFilter(EEGIn,fType,varargin)
       % Simplifies calls to filter an eeg using the standard methods.
       EEGout = EEGIn.filtfilt(EEGIn.standardFilters(fType,EEGIn.sampleRate,varargin{:}));

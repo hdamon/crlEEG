@@ -1,3 +1,3 @@
-# crlEEG : A Matlab package for viewing, annotating, and processing M/EEG data
+# crlEEG : 
 
-
+An object oriented Matlab package for reading, viewing, marking, and processing electroencephalography (EEG) signals
