@@ -75,28 +75,28 @@ classdef EDF < crlEEG.fileio.baseobj
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    function out = crlEEG.type.timeseries(obj)
+    function out = MatTSA.timeseries(obj)
       % Convert EDF file to a GUI data object
-      out = crlEEG.type.timeseries(obj.data,obj.labels,...
+      out = MatTSA.timeseries(obj.data,obj.labels,...
                           'yunits',obj.header.PhysDim,...
                           'samplerate',obj.header.SampleRate,...
                           'xvals',(1./obj.sampleRate)*[0:(size(obj.data,1)-1)]);
     end    
     
-    function out = crlEEG.type.EEG(obj)
-      out = crlEEG.type.EEG(obj.data,obj.labels,...
+    function out = crlEEG.EEG(obj)
+      out = crlEEG.EEG(obj.data,obj.labels,...
                           'yunits',obj.header.PhysDim(1:size(obj.data,2)),...
                           'samplerate',obj.header.SampleRate,...
                           'xvals',(1./obj.sampleRate)*[0:(size(obj.data,1)-1)],...
-                          'EVENTS',crlEEG.type.EEG_event(obj));
+                          'EVENTS',crlEEG.EEG_event(obj));
     end;
         
-    function out = crlEEG.type.EEG_event(obj)
+    function out = crlEEG.EEG_event(obj)
       %% Extract EEG_event objects from the EDF Header
       %
       if isempty(obj.header.EVENT.POS)
         % If not latencies defined, return an empty object.
-        out = crlEEG.type.EEG_event;
+        out = crlEEG.EEG_event;
         return;
       end;
       
@@ -115,7 +115,7 @@ classdef EDF < crlEEG.fileio.baseobj
         desc = [];
       end;
       
-      out = crlEEG.type.EEG_event(latency,type,desc);
+      out = crlEEG.EEG_event(latency,type,desc);
     end
     
     function obj = purge(obj)

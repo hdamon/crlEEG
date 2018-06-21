@@ -3,13 +3,13 @@ function [epochs] = getEpochsAndAvgFromRisingEdge(EEG,activeChan,eventDesc,varar
 %
 % Inputs
 % ------
-%         EEG : crlEEG.type.EEG object
+%         EEG : crlEEG.EEG object
 %  activeChan : Label of binary channel in EEG to evaluate
 %   eventDesc : Description to assign to the events
 %
 % Outputs
 % -------
-%   epochs : Array of crlEEG.type.EEG objects containing individual epochs
+%   epochs : Array of crlEEG.EEG objects containing individual epochs
 % avgEpoch : The averaged epochs.
 %
 
@@ -44,9 +44,9 @@ eventIdx(eventIdx>(length(EMG)-postTime*EEG.sampleRate)) = [];
 %badEvents = [1 3 22 37];
 %eventIdx(badEvents) = [];
 
-events = crlEEG.type.EEG_event;
+events = crlEEG.EEG_event;
 for i = 1:numel(eventIdx)
-  events(i) = crlEEG.type.EEG_event(eventIdx(i),1,eventDesc);
+  events(i) = crlEEG.EEG_event(eventIdx(i),1,eventDesc);
 end
 EEG.EVENTS = events;
 epochs = extractEpochsByName(EEG,eventDesc,preTime,postTime);
