@@ -44,9 +44,9 @@ eventIdx(eventIdx>(length(EMG)-postTime*EEG.sampleRate)) = [];
 %badEvents = [1 3 22 37];
 %eventIdx(badEvents) = [];
 
-events = crlEEG.EEG_event;
+events = crlEEG.event;
 for i = 1:numel(eventIdx)
-  events(i) = crlEEG.EEG_event(eventIdx(i),1,eventDesc);
+  events(i) = crlEEG.event(eventIdx(i),1,eventDesc);
 end
 EEG.EVENTS = events;
 epochs = extractEpochsByName(EEG,eventDesc,preTime,postTime);
