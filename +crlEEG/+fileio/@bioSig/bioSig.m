@@ -1,4 +1,4 @@
-classdef bioSig < crlEEG.fileio.baseobj
+classdef bioSig < crlBase.baseFileObj
   %% Object Class for Reading Files with BioSig
   %
   % A lightweight crlEEG object oriented wrapper for BioSig
@@ -19,11 +19,11 @@ classdef bioSig < crlEEG.fileio.baseobj
       
       p = inputParser;
       p.KeepUnmatched = true;
-      p.addOptional('fname',[],@(x) crlEEG.fileio.baseobj.fnameFcn(x,'crlEEG.fileio.BioSig'))
-      p.addOptional('fpath',[],@(x) crlEEG.fileio.baseobj.fpathFcn(x));
+      p.addOptional('fname',[],@(x) crlBase.baseFileObj.fnameFcn(x,'crlEEG.fileio.BioSig'))
+      p.addOptional('fpath',[],@(x) crlBase.baseFileObj.fpathFcn(x));
       p.parse(varargin{:});
       
-      obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...    
+      obj = obj@crlBase.baseFileObj(p.Results.fname,p.Results.fpath,...    
                                         p.Unmatched);
                                       
       if obj.existsOnDisk

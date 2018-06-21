@@ -35,9 +35,7 @@ classdef EEG < MatTSA.timeseries
       obj.EVENTS  = p.Results.EVENTS;
       
     end
-    
-    
-    
+            
     function setStartTime(obj,startTime)
       % Shift the starting point of the time series, and adjust timings for
       % all decompositions as well.
@@ -54,27 +52,11 @@ classdef EEG < MatTSA.timeseries
       end
       
     end
-    
-    
     function EEGout = applyStandardFilter(EEGIn,fType,varargin)
       % Simplifies calls to filter an eeg using the standard methods.
       EEGout = EEGIn.filtfilt(EEGIn.standardFilters(fType,EEGIn.sampleRate,varargin{:}));
     end
-    
-    function EEGout = filter(EEGIn,f)
-      EEGout = EEGIn.filter@MatTSA.timeseries(f);
-      EEGout.filters{end+1} = f;
-    end
-    
-    function EEGout = filtfilt(EEGIn,f)
-      % Filtfilt for crlEEG.EEG objects includes tracking of all
-      % applied filters in the obj.filters property.
-      %
-      
-      EEGout = EEGIn.filtfilt@MatTSA.timeseries(f);
-      EEGout.filters{end+1} = f;
-    end
-    
+
     function n = numArgumentsFromSubscript(obj,s,indexingContext)
       % Not 100% sure this is necessary, but probably not a bad idea.
       n = numArgumentsFromSubscript@MatTSA.timeseries(...
@@ -90,15 +72,7 @@ classdef EEG < MatTSA.timeseries
     function out = subcopy(obj,idxRow,idxCol)
       out = subcopy@crlBase.type.timeseries(obj,idxRow,idxCol);
       
-      if ~isempty(obj.decomposition)
-        decompNames = fields(obj.decomposition);
-        for i = 1:numel(decompNames)
-          tmpDecomp = obj.decomposition.(decompNames{i}).copy;
-          tmpDecomp = tmpDecomp.selectTimes(out.xvals);
-          out.decomposition.(decompNames{i}) = tmpDecomp;
-        end
-        
-      end
+      
     end
   end;
   

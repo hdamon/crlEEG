@@ -1,5 +1,5 @@
-classdef EDF < crlEEG.fileio.baseobj
-  % classdef EDF < crlEEG.fileio.baseobj
+classdef EDF < crlBase.baseFileObj
+  % classdef EDF < crlBase.baseFileObj
   %
   % Object class for EDF files.
   %
@@ -67,7 +67,7 @@ classdef EDF < crlEEG.fileio.baseobj
       p.addOptional('fpath',[],fpathFcn);
       p.parse(varargin{:});
       
-      obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...
+      obj = obj@crlBase.baseFileObj(p.Results.fname,p.Results.fpath,...
                                         p.Unmatched);
     end
     
