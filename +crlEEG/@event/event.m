@@ -56,7 +56,7 @@ classdef event
         if numel(latency)>1
           % Recurse for multiple objects
           for i = 1:numel(latency)
-            obj(i) = crlEEG.type.event(latency(i),type(i),description{i});
+            obj(i) = crlEEG.event(latency(i),type(i),description{i});
           end
           return
         end
@@ -77,15 +77,15 @@ classdef event
     end
     
     function out = eventNames(obj)
-      out = {};
+      out = cell(numel(obj),1);
       for i = 1:numel(obj)
-        out = {out{:} obj(i).description};
+        out{i} = obj(i).description;
       end;
     end
     
     function out = isempty(obj)
       % Returns true if the entire array obj is full of empty
-      % crlEEG.type.event objects
+      % crlEEG.event objects
       %
       if numel(obj)==1      
         out = isempty(obj.description)&&isempty(obj.type)&&isempty(obj.latency);      
