@@ -69,19 +69,19 @@ classdef event
       end
     end
     
-    function out = get.type(obj)
-      out = [];
-      for i = 1:numel(obj)
-        out = [out obj(i).type];
-      end;
-    end
+%     function out = get.type(obj)
+%       out = [];
+%       for i = 1:numel(obj)
+%         out = [out obj(i).type];
+%       end;
+%     end
     
-    function out = eventNames(obj)
-      out = cell(numel(obj),1);
-      for i = 1:numel(obj)
-        out{i} = obj(i).description;
-      end;
-    end
+%     function out = eventNames(obj)
+%       out = cell(numel(obj),1);
+%       for i = 1:numel(obj)
+%         out{i} = obj(i).description;
+%       end;
+%     end
     
     function out = isempty(obj)
       % Returns true if the entire array obj is full of empty
