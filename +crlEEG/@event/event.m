@@ -16,6 +16,11 @@ classdef event
     description
     type
     latency
+    latencyTime
+  end
+  
+  properties (Hidden = true)
+    line % Gui object
   end
   
   methods
@@ -82,12 +87,45 @@ classdef event
 %         out{i} = obj(i).description;
 %       end;
 %     end
-    
+
+    function obj =  plot(obj,ax,varargin)
+      
+      if ~exist('ax','var'), ax = axes; end;
+      
+      if numel(obj)>1
+        for i = 1:numel(obj)
+          plot(obj(i),ax,varargin{:});
+        end
+      end
+            
+      if ~isempty(obj.line), delete(obj.line); end;
+      
+      yRange = get(ax,'YLim');
+      xRange = get(ax,'XLim');
+      
+      xVal = obj.latencyTime;
+      
+      if ( xVal>xRange(1) ) && (xVal<xRange(2))
+        axes(ax); 
+        hold on;
+        tmp = get(ax,'ButtonDownFcn');
+        obj.line = plot([xVal xVal],yRange,varargin{:},'ButtonDownFcn',tmp);
+        text(xVal+0.005*(xRange(2)-xRange(1)),0.95*yRange(2),obj.description);
+        set(ax,'ButtonDownFcn',tmp);
+        hold off;
+      end
+      
+    end
+
+
     function out = isempty(obj)
       % Returns true if the entire array obj is full of empty
       % crlEEG.event objects
       %
-      if numel(obj)==1      
+      if numel(obj)==0
+        out = true;
+        
+      elseif numel(obj)==1      
         out = isempty(obj.description)&&isempty(obj.type)&&isempty(obj.latency);      
       else
         isEmpty = true;

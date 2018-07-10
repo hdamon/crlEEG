@@ -77,8 +77,9 @@ classdef EDF < crlBase.baseFileObj
     
     function out = MatTSA.timeseries(obj)
       % Convert EDF file to a GUI data object
-      out = MatTSA.timeseries(obj.data,obj.labels,...
-                          'dataUnits',obj.header.PhysDim,...
+      out = MatTSA.timeseries(obj.data,...
+                          'chanLabels',obj.labels,...
+                          'dataUnits',obj.header.PhysDim(1:size(obj.data,2)),...
                           'samplerate',obj.header.SampleRate,...
                           'tVals',(1./obj.sampleRate)*[0:(size(obj.data,1)-1)]);
     end    
@@ -179,10 +180,10 @@ classdef EDF < crlBase.baseFileObj
       error('Writing of EDF files not currently supported');
     end
     
-    function varargout = plot(obj)
+    function varargout = plot(obj,varargin)
       %% Open a 
-      p = uitools.plots.dataexplorer(obj.data,obj.header.Label);
-      p.units = 'normalized';
+      tmp = MatTSA.timeseries(obj);
+      p = tmp.plot(varargin{:});
       if nargout>0, varargout{1} = p; end;
     end;
             
