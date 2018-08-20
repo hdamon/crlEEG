@@ -7,13 +7,32 @@ classdef EEG < MatTSA.timeseries
   % labelledArray object class), this adds data set naming, events, and
   % tracking of applied filters.
   %
+  %
+  % Properties
+  % ----------
+  %    setname
+  %    fname : (Not really used ATM)
+  %    fpath
+  %    EVENTS : Stores information about events
+  %    filters : Stores a history of filters applied to the data
+  %
   
   properties
     setname
     fname
     fpath
+  end
+  
+  properties (Dependent = true)    
     EVENTS
+  end
+  
+  properties
     filters = cell(0);
+  end
+  
+  properties (Access=protected)
+    EVENTS_
   end
   
   methods
@@ -39,6 +58,61 @@ classdef EEG < MatTSA.timeseries
       
     end
     
+    function out = eventsFromEV2(obj,EV2)
+      
+      types = EV2.dataByType;
+      newEVENTS = [];
+      for i = 1:numel(types)
+        for j = 1:numel(types{i}.Type)
+          new = crlEEG.event('description',['Spike ' num2str(i)],...
+                             'type',types{i}.Type(j),...
+                             'latencyTime',types{i}.Offset(j));
+          newEVENTS = [newEVENTS new];
+        end;
+      end
+      
+      newEVENTS = [obj.EVENTS newEVENTS];
+      
+      out = obj.copy;
+      out.EVENTS = newEVENTS;
+      
+    end
+    
+    function out = get.EVENTS(obj)
+      out = obj.EVENTS_;
+      % Compute Latency Times
+      if ~isempty(out)
+      latencies = {out.latency};
+      startTime = obj.tVals(1);
+      sampleRate = obj.sampleRate;
+      for i = 1:numel(out)
+        out(i).latencyTime = startTime + (latencies{i}-1)/sampleRate;
+      end
+      end;
+    end
+    
+    function set.EVENTS(obj,val)
+      if isempty(val), obj.EVENTS_ = []; return; end;
+      assert(isa(val,'crlEEG.event'));
+      for i = 1:numel(val)
+        if isempty(val(i).latency)&&~isempty(val(i).latencyTime)
+          % Convert a latency time into a sample latency.
+          val(i).latency = round(obj.sampleRate*(val(i).latencyTime-obj.tVals(1))+1);
+          val(i).latencyTime = [];
+        end;
+        
+%         if ~isempty(val(i).latency)&&~isempty(val(i).latencyTime)
+%           assert(val(i).latencyTime==(obj.tVals(1) + (val(i).latency-1)*(1/obj.sampleRate)),...
+%                   'Event latencies are inconsistent');
+%         elseif isempty(val(i).latencyTime)
+%           val(i).latencyTime = obj.tVals(1) + (val(i).latency-1)/obj.sampleRate;
+%         elseif isempty(val(i).latency)
+%           val(i).latency = val(i).latencyTime*obj.sampleRate;
+%         end        
+      end
+      obj.EVENTS_ = val;
+    end
+    
     function obj = setStartTime(obj,startTime)
       % Shift the starting point of the time series, and adjust timings for
       % all events and decompositions as well.
@@ -56,8 +130,11 @@ classdef EEG < MatTSA.timeseries
       
       if ~isempty(obj.EVENTS)
         for i = 1:numel(obj.EVENTS)
-          obj.EVENTS(i).latencyTime = obj.EVENTS(i).latencyTime + delta;
+          tmpEVENTS(i) = obj.EVENTS(i);
+          tmpEVENTS(i).latencyTime = obj.EVENTS(i).latencyTime + delta;
+          
         end
+        obj.EVENTS = tmpEVENTS;
       end
             
     end
@@ -65,6 +142,8 @@ classdef EEG < MatTSA.timeseries
     function out = cat(dim,obj,a,varargin)
       % Concatenate timeseries objects
       %
+      % Calls cat@MatTSA.timeseries, and additionally performs
+      % concatenation of events.
       %
       
       assert(isa(a,class(obj)),'Can only concatenate like objects');
@@ -75,6 +154,7 @@ classdef EEG < MatTSA.timeseries
         tmp = a.EVENTS;
         for i = 1:numel(tmp)
           tmp(i).latency = tmp(i).latency+size(obj,1);
+          tmp(i).latencyTime = [];
         end;
         out.EVENTS = [obj.EVENTS tmp];
       else
@@ -90,32 +170,68 @@ classdef EEG < MatTSA.timeseries
     
     %% Filtering Options
     function EEGout = applyStandardFilter(EEGIn,fType,varargin)
-      % Simplifies calls to filter an eeg using the standard methods.
+      % Apply one of the standard filters to a crlEEG.EEG object
+      %
+      % EEGout = applyStandardFilter(EEGIn,fType,varargin)
+      %
+      % This method uses filtfilt() to perform zero-phase filtering.
+      %
+      % Inputs
+      % ------
+      %   EEGIn  : crlEEG.EEG object to filter
+      %   fType  : Filter type
+      % varargin : Filter Options
+      %
+      % Outputs
+      % -------
+      %  EEGout : Copy of the input object, with appropriate filter applied
+      %             to the data.
+      %
+      % See crlEEG.EEG.standardFilters for available filter options.
+      %
       EEGout = EEGIn.filtfilt(EEGIn.standardFilters(fType,EEGIn.sampleRate,varargin{:}));
     end
     
     function EEGout = filter(EEGIn,f)
       % Overloaded to add filter tracking
-      EEGout = EEGIn.filter@crlEEG.type.timeseries(f);
+      EEGout = EEGIn.filter@MatTSA.timeseries(f);
       EEGout.filters{end+1} = f;
     end
     
     function EEGout = filtfilt(EEGIn,f)
       % Filtfilt for crlEEG.type.EEG objects includes tracking of all
-      % applied filters in the obj.filters property.
+      % applied filters in the obj.filters property.      
       %
+      % EEGout = filtfilt(EEGIn,dFilter)
+      %
+      % Inputs
+      % ------
+      %    EEGIn : A crlEEG.EEG object to be filtered
+      %  dFilter : A Matlab digital filter (typically created with designfilt)
+      %
+      % Output
+      % ------
+      %   EEGout : A new crlEEG.EEG object, copied from the
+      %                 original, with the specified filter applied to
+      %                 all data channels.
+      %      
       
-      EEGout = EEGIn.filtfilt@crlEEG.type.timeseries(f);
+      EEGout = EEGIn.filtfilt@MatTSA.timeseries(f);
       EEGout.filters{end+1} = f;
     end
     
     function n = numArgumentsFromSubscript(obj,s,indexingContext)
-      % Not 100% sure this is necessary, but probably not a bad idea.
+      % Not 100% necessary, but nice to have
       n = numArgumentsFromSubscript@MatTSA.timeseries(...
         obj,s,indexingContext);
     end
     
     function out = plot(obj,varargin)
+      % Plot function for crlEEG.EEG objects
+      %
+      % crlEEG.EEG objects have a dualPlot function that overloads the
+      % version from MatTSA.timeseries.
+      %
       
       p = inputParser;
       p.KeepUnmatched = true;
@@ -141,27 +257,31 @@ classdef EEG < MatTSA.timeseries
       
       [out,dimIdx] = subcopy@MatTSA.timeseries(obj,varargin{:});
       
+      %% Copy EVENTS and adjust latency appropriately.
       if ~isempty(out.EVENTS)
         timeIdx = dimIdx{obj.timeDim}; % Get indices used for time referencing
         newEVENTS = out.EVENTS;
         removeEvents = [];
         
         if isequal(timeIdx,':')
-          % Unmodified time axis
-                    
+          % Unmodified time axis                    
         else
           % Need to shift event timing.
-          for idxEvent = 1:numel(out.EVENTS)
-            currEVENT = newEVENTS(idxEvent);
-            
-            if ( currEVENT.latency>min(timeIdx) ) && ...
-                ( currEVENT.latency<max(timeIdx) )
+          startTime = out.tRange(1);
+          sampleRate = obj.sampleRate;
+          
+          latencies = {newEVENTS.latency};
+          
+          for idxEvent = 1:numel(out.EVENTS)               
+            if ( latencies{idxEvent}>min(timeIdx) ) && ...
+                ( latencies{idxEvent}<max(timeIdx) )
               
               % Find closest sample in the new index set
-              [~,newSampleLatency] = min(abs(out.EVENTS(idxEvent).latency-timeIdx));
-              
+              [~,newSampleLatency] = min(abs(latencies{idxEvent}-timeIdx));
+              newLatencyTime = startTime + (newSampleLatency-1)*(1/sampleRate);
+                            
               newEVENTS(idxEvent).latency = newSampleLatency;
-              newEVENTS(idxEvent).latencyTime = out.tRange(1) + (newSampleLatency-1)*(1/obj.sampleRate);
+              newEVENTS(idxEvent).latencyTime = newLatencyTime;
             else
               removeEvents = [removeEvents idxEvent];
             end;
@@ -180,6 +300,67 @@ classdef EEG < MatTSA.timeseries
   
   methods (Static=true)
     fOut = standardFilters(fType,sampleRate,varargin);
+    
+    function [bands,varargout] = standardBands(type)
+      % Returns standard EEG frequency bands 
+      %
+      % Inputs
+      % ------
+      %   type : String to declare desired output format. 
+      %             DEFAULT: 'standard'
+      %
+      % Output Formats
+      % --------------
+      %        'standard' : 
+      %   'subreferenced' : 
+      %
+      %
+      if ~exist('type','var'), type = 'standard'; end;
+      
+      bandNames = {'0.5-4','4-7','7-13','8-13','13-30','30-50','50-70','70-100','>100'};
+      
+      switch lower(type)
+        case 'standard'
+          % Standard EEG Frequency Bands, sampled at 4 Samples/Hz
+          bands{1} = linspace(0.5,4,15); % Delta
+          bands{2} = linspace(4.25,7,12); % Theta
+          bands{3} = linspace(7.25,13,24); % Alpha
+          bands{4} = linspace(8.25, 13,20); % Mu
+          bands{5} = linspace(13.25,30,68); % Beta
+          bands{6} = linspace(30.25,50,80); % Gamma
+          bands{7} = linspace(50.25,70,80);
+          bands{8} = linspace(70.25,100,120);
+          bands{9} = linspace(100.25,150,200);
+          
+          if nargout>1
+            %varargout{1} = {'Delta' , 'Theta', 'Alpha', 'Mu', 'Beta', 'LowGamma','MidGamma','HighGamma','Over100'};
+            varargout{1} = bandNames;
+          end;
+        case 'subreferenced'
+          fullSpectrum = [0.5:0.25:150];
+          
+          bands{1} = [1:15];
+          bands{2} = [16:27];
+          bands{3} = [28:51];
+          bands{4} = [32:51];
+          bands{5} = [52:119];
+          bands{6} = [120:199];
+          bands{7} = [200:279];
+          bands{8} = [280:399];
+          bands{9} = [400:599];
+          
+          if nargout==2
+            varargout{1} = fullSpectrum;
+          elseif nargout>2
+            varargout{1} = bandNames;
+            varargout{2} = fullSpectrum;
+          end
+          
+      end
+      
+    end
+    
+    
   end
   
 end

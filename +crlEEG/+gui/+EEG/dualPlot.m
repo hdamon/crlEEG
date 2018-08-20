@@ -10,20 +10,35 @@ classdef dualPlot < MatTSA.gui.timeseries.dualPlot
     function obj = dualPlot(EEG,varargin)     
       obj = obj@MatTSA.gui.timeseries.dualPlot(EEG,varargin{:});
       
+%       obj.listenTo{end+1} = ...
+%         addlistener(obj.miniplot,'updatedOut',@(h,evt) obj.plotEventsOnMini);
+      obj.plotEventsOnMini;
+      
       obj.listenTo{end+1} = ...
-        addlistener(obj.toggleplot,'updatedOut',@(h,evt) obj.plotEvents);
-      obj.plotEvents;
+        addlistener(obj.toggleplot,'updatedOut',@(h,evt) obj.plotEventsOnToggle);
+      obj.plotEventsOnToggle;
     end
     
     function updateToggle(obj)
       updateToggle@MatTSA.gui.timeseries.dualPlot(obj);         
     end
     
-    function plotEvents(obj)
+    function updateWindow(obj)
+      updateWindow@MatTSA.gui.timeseries.dualPlot(obj);
+    end;
+    
+    function plotEventsOnToggle(obj)
       tmpEVENTS = obj.toggleplot.timeseries.EVENTS;
-      for i = 1:numel(tmpEVENTS)
-        tmpEVENTS(i).plot(obj.toggleplot.axes,'LineWidth',2);
+      if ~isempty(tmpEVENTS)              
+        tmpEVENTS.plot(obj.toggleplot.axes,'LineWidth',2);
       end
+    end
+    
+    function plotEventsOnMini(obj)
+      tmpEVENTS = obj.miniplot.timeseries.EVENTS;
+      if ~isempty(tmpEVENTS)
+        tmpEVENTS.plot(obj.miniplot.axes,'LineWidth',2);
+      end;
     end
     
     function captureMouseClick(obj,h,varargin)

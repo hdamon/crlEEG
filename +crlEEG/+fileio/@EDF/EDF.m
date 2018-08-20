@@ -117,7 +117,10 @@ classdef EDF < crlBase.baseFileObj
         desc = [];
       end;
       
-      out = crlEEG.event(latency,type,desc);
+      % Return an event object
+      out = crlEEG.event('latency',latency,...
+                         'type',type,...
+                         'description',desc);
     end
     
     function obj = purge(obj)

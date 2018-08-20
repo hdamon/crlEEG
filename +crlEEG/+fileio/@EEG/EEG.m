@@ -34,7 +34,7 @@ classdef EEG < crlBase.baseFileObj
     
     function out = crlEEG.EEG(obj)
       % Typecast to crlEEG.EEG
-      out = crlEEG.EEG(obj.data,obj.header.Label,'sampleRate',obj.header.SampleRate);
+      out = crlEEG.EEG(obj.data,'chanLabels',obj.header.Label,'sampleRate',obj.header.SampleRate);
     end
     
     function read(obj)

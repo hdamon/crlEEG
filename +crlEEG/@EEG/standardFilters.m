@@ -1,9 +1,13 @@
 function fOut = standardFilters(fType,sampleRate,varargin)
 % Generate standard filters useful for processing EEG
 %
+% Usage
+% -----
+%    fOut = crlEEG.EEG.standardFilters(fType,sampleRate,varargin)
+%
 % Inputs
 % ------
-%   fType : Name of the filter
+%       fType : Name of the filter
 %  sampleRate : Samplerate of the EEG
 % 
 % Outputs
@@ -13,9 +17,33 @@ function fOut = standardFilters(fType,sampleRate,varargin)
 % Currently supported values for fType are:
 %   '60HzNotch' : 60hz 10th Order Butterworth Bandstop Filter w/ 
 %                   3dB Frequencies @ 58Hz and 62Hz
-%   'bandPass'
-%   'lowPass'
-%   'highPass'
+%                 Available Options and Defaults:
+%                   'HalfPowerFrequency1' : 58
+%                   'HalfPowerFrequency2' : 62
+%                           'FilterOrder' : 10
+%                          'DesignMethod' : 'butter'
+%   'bandStop' : Bandstop Filter
+%                 Availabile Options and Defaults:
+%                   'HalfPowerFrequency1' : 58
+%                   'HalfPowerFrequency2' : 62
+%                           'FilterOrder' : 10
+%                          'DesignMethod' : 'butter'
+%   'bandPass' : Bandpass Filter
+%                 Availabile Options and Defaults:
+%                   'HalfPowerFrequency1' : 0.5
+%                   'HalfPowerFrequency2' : 150
+%                           'FilterOrder' : 10
+%                          'DesignMethod' : 'butter'
+%   'lowPass'  : Lowpass Filter
+%                 Availabile Options and Defaults:
+%                    'HalfPowerFrequency' : 150
+%                           'FilterOrder' : 10
+%                          'DesignMethod' : 'butter'
+%   'highPass' : Highpass Filter
+%                 Availabile Options and Defaults:
+%                    'HalfPowerFrequency' : 0.5
+%                           'FilterOrder' : 10
+%                          'DesignMethod' : 'butter'
 %
 % There are also <name>_HighOrder versions of most filters, that use higher
 % order Butterworth filters to obtain more tightly filtered signals. The
@@ -31,14 +59,16 @@ function fOut = standardFilters(fType,sampleRate,varargin)
 %% Input Parsing
 import crlEEG.util.validation.*
 
+isScalarNumeric = @(x) isscalar(x)&&isnumeric(x);
+
 p = inputParser;
-p.addParameter('lowCutoff',0.5,@(x) isscalar(x)&&isnumeric(x));
-p.addParameter('highCutoff',0.5,@(x) isscalar(x)&&isnumeric(x));
-p.addParameter('fOrder',[],@(x) isscalar(x)&&isnumeric(x));
-p.addParameter('HalfPowerFrequency1',[], @isScalarNumeric);
-p.addParameter('HalfPowerFrequency2',[], @isScalarNumeric);
-p.addParameter('HalfPowerFrequency',[],@isScalarNumeric);
-p.addParameter('FilterOrder',10,@isScalarNumeric);
+p.addParameter('lowCutoff',0.5,isScalarNumeric);
+p.addParameter('highCutoff',0.5,isScalarNumeric);
+p.addParameter('fOrder',[],isScalarNumeric);
+p.addParameter('HalfPowerFrequency1',[], isScalarNumeric);
+p.addParameter('HalfPowerFrequency2',[], isScalarNumeric);
+p.addParameter('HalfPowerFrequency',[],isScalarNumeric);
+p.addParameter('FilterOrder',10,isScalarNumeric);
 p.addParameter('DesignMethod','butter',@(x) ischar(x));
 p.parse(varargin{:});
 

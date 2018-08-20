@@ -3,7 +3,8 @@ classdef EV2 < crlBase.baseFileObj
   %
   % classdef file_EV2 < file
   %
-  %
+  % File object class for EV2 event files.
+  %  
   % Properties:
   %   ID
   %   Type
@@ -41,21 +42,30 @@ classdef EV2 < crlBase.baseFileObj
   
   methods
     
-    function obj = file_EV2(fname,fpath)
-            
-      % Input Parser Object
-      p = inputParser;
-      p.KeepUnmatched = true;
-      p.addOptional('fname',[],@(x) crlBase.baseFileObj.fnameFcn(x,'crlEEG.fileio.EV2'));
-      p.addOptional('fpath',[],@(x) crlBase.baseFileObj.fpathFcn(x));      
-      p.parse(varargin{:});
-            
-      %% Call Parent Constructor
-      obj = obj@crlBase.baseFileObj(p.Results.fname,p.Results.fpath,...
-                                      p.Unmatched);         
+    function obj = EV2(varargin)
+      
+      
+        % Input Parser Object
+        p = inputParser;
+        p.KeepUnmatched = true;
+        p.addOptional('fname',[],@(x) crlBase.baseFileObj.fnameFcn(x,'crlEEG.fileio.EV2'));
+        p.addOptional('fpath',[],@(x) crlBase.baseFileObj.fpathFcn(x));
+        p.parse(varargin{:});
+        
+        %% Call Parent Constructor
+        obj = obj@crlBase.baseFileObj(varargin{:});
         if obj.existsOnDisk
           obj.read;
-        end                     
+        end
+        
+    end
+    
+    function out = crlEEG.event(obj)
+      % Typecast to crlEEG.event objects
+      
+      out = crlEEG.event('type',obj.Type,...
+                         'latencyTime',obj.Offset);
+      
     end
     
     function read(obj)
