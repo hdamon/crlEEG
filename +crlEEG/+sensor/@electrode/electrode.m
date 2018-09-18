@@ -44,14 +44,14 @@ classdef electrode
       if nargin==0, return; end;
       
       % If passed an electrode, return an electrode.
-      if (nargin>0)&&(isa(varargin{1},'crlEEG.type.sensor.electrode'))
+      if (nargin>0)&&(isa(varargin{1},'crlEEG.sensor.electrode'))
         obj = varargin{1};
         return;
       end;
       
       % Legacy support for previous crlEEG version
       if (nargin>0)&&(isa(varargin{1},'cnlElectrodes'))
-        crlEEG.disp('Converting from old cnlElectrodes object');
+        crlBase.disp('Converting from old cnlElectrodes object');
         
         opts.label = varargin{1}.Labels;
         opts.position = varargin{1}.Positions;        
@@ -59,7 +59,7 @@ classdef electrode
         opts.impedance = varargin{1}.Impedance;       
         opts.nodes = varargin{1}.Nodes;        
                   
-        obj = crlEEG.type.sensor.electrode(opts);
+        obj = crlEEG.sensor.electrode(opts);
         return;
       end
       
@@ -171,7 +171,7 @@ classdef electrode
       end;
       
       % Finally, construct the actual objects.
-      obj(nElec) = crlEEG.type.sensor.electrode;
+      obj(nElec) = crlEEG.sensor.electrode;
       
       for i = 1:nElec
         obj(i).label = label{i};
@@ -193,7 +193,7 @@ classdef electrode
         obj.conductivities = repmat(obj.conductivities,1,numel(obj.voxels));
       end;
       
-      isValid = ( numel(obj.conductivities)==numel(obj.voxels) ) || ...
+      isValid = ( isempty(obj.conductivities)|| numel(obj.conductivities)==numel(obj.voxels) ) || ...
         ( numel(obj.voxels)==0 );
       assert(isValid,'Number of voxels and provided conductivities do not match');
     end
@@ -240,9 +240,9 @@ classdef electrode
     
     %% Overloaded Methods
     function isEq = eq(a,b)
-      % Overloaded eq(a,b) method for crlEEG.type.sensor.electrode objects
-      if ~isa(a,'crlEEG.type.sensor.electrode'), isEq = false; return; end;
-      if ~isa(b,'crlEEG.type.sensor.electrode'), isEq = false; return; end;
+      % Overloaded eq(a,b) method for crlEEG.sensor.electrode objects
+      if ~isa(a,'crlEEG.sensor.electrode'), isEq = false; return; end;
+      if ~isa(b,'crlEEG.sensor.electrode'), isEq = false; return; end;
       
       assert((numel(a)==1)||(numel(b)==1)||isequal(size(a),size(b)),...
         'Matrix dimensions must agree');
@@ -378,7 +378,7 @@ classdef electrode
       % Returns NaN's if an electrode requested by name is not present in
       % the array.
       %
-      outIdx = crlEEG.util.getIndexIntoCellStr({obj.label},refIn);      
+      outIdx = crlBase.util.getDimensionIndex({obj.label},refIn);      
     end
     
     %%

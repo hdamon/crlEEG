@@ -94,6 +94,8 @@ classdef EEG < MatTSA.timeseries
     function set.EVENTS(obj,val)
       if isempty(val), obj.EVENTS_ = []; return; end;
       assert(isa(val,'crlEEG.event'));
+      
+      keepEVENTS = false(1,numel(val));
       for i = 1:numel(val)
         if isempty(val(i).latency)&&~isempty(val(i).latencyTime)
           % Convert a latency time into a sample latency.
@@ -101,6 +103,11 @@ classdef EEG < MatTSA.timeseries
           val(i).latencyTime = [];
         end;
         
+        % Discard events that are outside the sample collection range
+        if (val(i).latency>0)&(val(i).latency<size(obj,1))
+          keepEVENTS(i) = true;
+        end;
+                        
 %         if ~isempty(val(i).latency)&&~isempty(val(i).latencyTime)
 %           assert(val(i).latencyTime==(obj.tVals(1) + (val(i).latency-1)*(1/obj.sampleRate)),...
 %                   'Event latencies are inconsistent');
@@ -110,7 +117,8 @@ classdef EEG < MatTSA.timeseries
 %           val(i).latency = val(i).latencyTime*obj.sampleRate;
 %         end        
       end
-      obj.EVENTS_ = val;
+                  
+      obj.EVENTS_ = sort(val(keepEVENTS));
     end
     
     function obj = setStartTime(obj,startTime)

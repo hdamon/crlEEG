@@ -126,6 +126,12 @@ classdef event
       end
     end
     
+    function [objOut,idx] = sort(obj,varargin)
+      [~,idx] = sort([obj.latency]);
+      
+      objOut = obj(idx);
+    end
+    
     function obj =  plot(obj,ax,varargin)
       % Plot a crlEEG.event on an axis
       %
