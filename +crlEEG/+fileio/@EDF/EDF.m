@@ -65,10 +65,16 @@ classdef EDF < crlBase.baseFileObj
       p.KeepUnmatched = true;
       p.addOptional('fname',[],fnameFcn);
       p.addOptional('fpath',[],fpathFcn);
+      p.addOptional('dataAndHeader',[]);
       p.parse(varargin{:});
       
       obj = obj@crlBase.baseFileObj(p.Results.fname,p.Results.fpath,...
                                         p.Unmatched);
+                                      
+      if ~isempty(p.Results.dataAndHeader)
+        obj.header = p.Results.dataAndHeader{1};
+        obj.data = p.Results.dataAndHeader{2};
+      end;
     end
     
     %% Typecasting
@@ -180,7 +186,16 @@ classdef EDF < crlBase.baseFileObj
       % function write(obj)
       %
       % Writing of EDF files is not currently supported
-      error('Writing of EDF files not currently supported');
+      %error('Writing of EDF files not currently supported');
+      
+      head = obj.header;
+      head.FileName = fullfile(obj.fpath,obj.fname);
+      head.Type = 'EDF';            
+      head = sopen(head,'w');
+      head = swrite(head,obj.data);
+      head = sclose(head);
+      obj.header = head;
+                  
     end
     
     function varargout = plot(obj,varargin)

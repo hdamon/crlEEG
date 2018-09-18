@@ -32,6 +32,22 @@ classdef EEG < crlBase.baseFileObj
       end;
     end
     
+    function out = crlEEG.fileio.EDF(obj)
+      
+      newFName = [obj.fname(1:end-4) '.edf'];
+            
+      head = obj.header;
+      head.TYPE = 'EDF';
+      head.FileName = fullfile(obj.fpath,newFName);      
+      
+      for i = 1:numel(head.PhysDim)
+        head.PhysDim{i}(ismember(head.PhysDim{i},'µ')) = 'u';
+      end
+      
+      out = crlEEG.fileio.EDF(newFName,obj.fpath,'dataAndHeader',{head,obj.data});
+      
+    end
+    
     function out = crlEEG.EEG(obj)
       % Typecast to crlEEG.EEG
       out = crlEEG.EEG(obj.data,'chanLabels',obj.header.Label,'sampleRate',obj.header.SampleRate);
