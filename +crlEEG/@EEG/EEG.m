@@ -48,6 +48,7 @@ classdef EEG < MatTSA.timeseries
       p.addParameter('EVENTS',[],@(x) isa(x,'crlEEG.event'));
       p.addParameter('setname',[],@ischar);
       p.addParameter('fname',[],@ischar);
+      p.addParameter('fpath',[],@ischar);
       p.parse(varargin{:});
       
       obj = obj@MatTSA.timeseries(p.Results.data,p.Unmatched);
@@ -82,12 +83,12 @@ classdef EEG < MatTSA.timeseries
       out = obj.EVENTS_;
       % Compute Latency Times
       if ~isempty(out)
-      latencies = {out.latency};
-      startTime = obj.tVals(1);
-      sampleRate = obj.sampleRate;
-      for i = 1:numel(out)
-        out(i).latencyTime = startTime + (latencies{i}-1)/sampleRate;
-      end
+        latencies = {out.latency};
+        startTime = obj.tVals(1);
+        sampleRate = obj.sampleRate;
+        for i = 1:numel(out)
+          out(i).latencyTime = startTime + (latencies{i}-1)/sampleRate;
+        end
       end;
     end
     
@@ -157,8 +158,9 @@ classdef EEG < MatTSA.timeseries
       assert(isa(a,class(obj)),'Can only concatenate like objects');
       
       out = cat@MatTSA.timeseries(dim,obj,a);
-      
+            
       if dim==1
+        % Adjust event latencies when concatenating in time.
         tmp = a.EVENTS;
         for i = 1:numel(tmp)
           tmp(i).latency = tmp(i).latency+size(obj,1);
