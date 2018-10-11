@@ -6,9 +6,9 @@ crlEEG is an M/EEG specific extension of the MatTSA package for timeseries analy
 
 ## INSTALLATION:
 The crlEEG library is dependant on the follow two external libraries:
-   MatTSA (https://github.com/hdamon/MatTSA)   : Provides timeseries and time-frequency decomposition functionality.
-   labelledArray : https://github.com/hdamon/) : Provides the basic data structure underlying the crlEEG.EEG, MatTSA.timeseries, and 
-   crlBase : https://github.com/hdamon/crlBase : Provides certain basic functionality the is reused across multiple packages. May soon be incorporated as a proper submodule.
+- MatTSA (https://github.com/hdamon/MatTSA)   : Provides timeseries and time-frequency decomposition functionality.
+- labelledArray : https://github.com/hdamon/) : Provides the basic data structure underlying the crlEEG.EEG, MatTSA.timeseries, and 
+- crlBase : https://github.com/hdamon/crlBase : Provides certain basic functionality the is reused across multiple packages. May soon be incorporated as a proper submodule.
 
 ## INTRODUCTION:
 The primary function of the crlEEG package is to provide an EEG specific implementation of a MatTSA.timeseries object, as well as file I/O for a range of common M/EEG filetypes.
