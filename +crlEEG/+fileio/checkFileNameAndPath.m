@@ -27,7 +27,7 @@ switch nargin
     % No input provided. This will return
     fName = [];
     fPath = [];
-  case 1
+  case 1    
     [path,name,ext] = fileparts(fName);
     fName = [name ext];
     fPath = path;
@@ -35,7 +35,11 @@ switch nargin
   case 2
     [path,name,ext] = fileparts(fName);
     if ~isempty(path)
-      error('Define path in either fName or fPath, but not both');
+      if ~isempty(fPath)
+        error('Define path in either fName or fPath, but not both');
+      else
+        fPath = path;
+      end;
     end
     fName = [name ext];    
 end

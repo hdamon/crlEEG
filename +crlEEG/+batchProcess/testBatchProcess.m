@@ -1,0 +1,13 @@
+%% Use a silly test function to batch process a bunch of files.
+function test = testBatchProcess(d)
+test = crlEEG.batchProcess.allFilesInDirectory(d,...
+                            'saveOutput',true,...
+                            'outputPostfix','_FOO',...
+                            'processFuncHandle',@testFunc,...
+                            'recurseSubdirs',true);
+end
+
+function out = testFunc(x)
+  disp(['Successfully ran batch processing on:' newline x]);
+  out = [];
+end
