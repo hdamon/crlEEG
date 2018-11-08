@@ -265,16 +265,17 @@ classdef EEG < MatTSA.timeseries
   methods (Access=protected)
     function [out, varargout] = subcopy(obj,varargin)
       
-      %% Call Superclass Method
       [out,dimIdx] = subcopy@MatTSA.timeseries(obj,varargin{:});
       
       %% Copy EVENTS and adjust latency appropriately.
-      timeIdx = dimIdx{obj.timeDim};
-      if ~isempty(out.EVENTS)&&~isequal(timeIdx,':')
-         % Get indices used for time referencing
+      if ~isempty(out.EVENTS)
+        timeIdx = dimIdx{obj.timeDim}; % Get indices used for time referencing
         newEVENTS = out.EVENTS;
         removeEvents = [];
-
+        
+        if isequal(timeIdx,':')
+          % Unmodified time axis                    
+        else
           % Need to shift event timing.
           startTime = out.tRange(1);
           sampleRate = obj.sampleRate;
@@ -297,6 +298,7 @@ classdef EEG < MatTSA.timeseries
           end
           newEVENTS(removeEvents) = [];
           out.EVENTS = newEVENTS;
+        end;
       end
       
       if nargout>1
