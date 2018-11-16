@@ -121,22 +121,34 @@ if hasCheck
   chanName = EEG.chanLabels;
   if ischar(chanName), chanName = {chanName}; end;
   for i = 1:numel(chanName)
+    % Mean and Std of Decomposition
     useTimes = find(EEG.data(:,[chanName{i} '_forAnalysis']));
     output.decomp = cat(3,output.decomp,...
       mean(A(:,useTimes,chanName{i}),'time'));
+    output.stdDecomp = cat(3,output.stdDecomp,...
+      std(A(:,useTimes,chanName{i})),'time');
+    % Mean and Std Of Normalized Decomp
     output.normDecomp = cat(3,output.normDecomp,...
-      mean(Anorm(:,useTimes,chanName{i}),'time'));
+      mean(Anorm(:,useTimes,chanName{i})),'time');
+    output.stdNormDecomp = cat(3,output.stdNormDecomp,...
+      std(Anorm(:,useTimes,chanName{i})),'time');
     output.nSamples = numel(useTimes);
   end;
 else
   % Average over all timepoints
   output.decomp = mean(A,'time');
+  output.stdDecomp = std(A,'time');
+  
   if isempty(output.decomp.tVals), keyboard; end;
   output.normDecomp = mean(Anorm,'time');
+  output.normDecomp.decompType = 'wavelet_PSD_normalized';
+  output.stdNormDecomp = std(Anorm,'time');
   output.nSamples = size(A,'time');
 end
 
+output.normDecomp.decompType = [output.normDecomp.decompType '_normalized'];
+
 % Total Power is the Same Either Way
-output.totPow = totPow;
+%output.totPow = totPow;
 
 end

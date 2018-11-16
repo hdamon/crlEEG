@@ -292,362 +292,362 @@ end;
 
 
 FlagLoaded = 0;
-% if exist('mexSLOAD','file')==3,
-%   try
-%     valid_rerefmx = 1;
-%     if ischar(CHAN)
-%       HDR = sopen(CHAN,'r'); HDR=sclose(HDR);
-%       if isfield(HDR.Calib),
-%         ReRefMx = HDR.Calib;
-%       else
-%         valid_rerefmx = 0;
-%       end;
-%     elseif all(size(CHAN)>1) || any(floor(CHAN)~=CHAN) || any(CHAN<0) || (any(CHAN==0) && (numel(CHAN)>1));
-%       ReRefMx = CHAN;
-%       CHAN = find(any(CHAN,2));
-%     elseif all(CHAN>0) && all(floor(CHAN)==CHAN),
-%       [tmp,ix]= sort(CHAN);
-%       ReRefMx = sparse(CHAN,1:length(CHAN),1);
-%     else
-%       ReRefMx = [];
-%       valid_rerefmx=0;
-%     end
-%     
-%     if STATE.EOG_CORRECTION,
-%       ReRefMx = h.r0*ReRefMx;
-%       valid_rerefmx=1;
-%     end
-%     if STATE.OVERFLOWDETECTION,
-%       arg1 = 'OVERFLOWDETECTION:ON';
-%     else
-%       arg1 = 'OVERFLOWDETECTION:OFF';
-%     end
-%     if STATE.UCAL,
-%       arg2 = {'UCAL:ON'};
-%     else
-%       arg2 = {'UCAL:OFF'};
-%     end
-%     if STATE.CNT32
-%       arg2 = {arg2,'CNT32'};
-%     end
-%     if ~valid_rerefmx,
-%       [signal,HDR] = mexSLOAD(FILENAME,0,arg1,arg2{:});
-%       if isfield(HDR,'ErrNum') && (HDR.ErrNum>0),
-%         fprintf(1,'%s\n',HDR.ErrMsg);
-%         H = HDR;
-%         x = HDR.nonsense; 	% hack: triggers CATCH branch in TRY-CATCH-END;
-%       end
-%       
-%       if isfield(HDR.FLAG,'ROW_BASED_CHANNELS') && HDR.FLAG.ROW_BASED_CHANNELS, signal = signal.'; end;
-%       FlagLoaded   = isfield(HDR,'NS');
-%       HDR.InChanSelect = 1:HDR.NS;
-%     else
-%       InChanSelect = find(any(ReRefMx,2));
-%       [signal,HDR] = mexSLOAD(FILENAME,InChanSelect,arg1,arg2{:});
-%       if isfield(HDR,'ErrNum') && HDR.ErrNum==3,
-%         %% file not found - fopen failed
-%         H = HDR;
-%         return;
-%       end
-%       if isfield(HDR.FLAG,'ROW_BASED_CHANNELS') && HDR.FLAG.ROW_BASED_CHANNELS, signal = signal.'; end;
-%       FlagLoaded   = isfield(HDR,'NS');
-%       HDR.InChanSelect = InChanSelect(InChanSelect <= HDR.NS);
-%       signal = signal*ReRefMx(InChanSelect,:); %% can be sparse if just a single channel is loaded
-%       signal = full(signal);  %% make sure signal is not sparse
-%     end;
-%     HDR = bdf2biosig_events(HDR, STATE.BDF);
-%     
-%     HDR.T0 = datevec(HDR.T0);
-%     HDR.Patient.Birthday = datevec(HDR.Patient.Birthday);
-%     HDR.Calib = [HDR.Off(:)';diag(HDR.Cal)];
-%     [HDR.FILE.Path,HDR.FILE.Name,HDR.FILE.Ext] = fileparts(FILENAME);
-%     HDR.FileName = FILENAME;
-%     HDR = leadidcodexyz(HDR);
-%     
-%     H=HDR;
-%     H.FLAG.EOG_CORRECTION = STATE.EOG_CORRECTION;
-%     if isfield(HDR,'Patient') && isfield(HDR.Patient,'Weight') && isfield(HDR.Patient,'Height')
-%       %% Body Mass Index
-%       HDR.Patient.BMI = HDR.Patient.Weight * HDR.Patient.Height^-2 * 1e4;
-%       
-%       %% Body Surface Area
-%       % DuBois D, DuBois EF. A formula to estimate the approximate surface area if height and weight be known. Arch Intern Medicine. 1916; 17:863-71.
-%       % Wang Y, Moss J, Thisted R. Predictors of body surface area. J Clin Anesth. 1992; 4(1):4-10.
-%       HDR.Patient.BSA = 0.007184 * HDR.Patient.Weight^0.425 * HDR.Patient.Height^0.725;
-%     end;
-%     
-%     if strcmp(H.TYPE,'GDF');
-%       % Classlabels according to
-%       % http://biosig.cvs.sourceforge.net/*checkout*/biosig/biosig/doc/eventcodes.txt
-%       
-%       % sort event table before extracting HDR.Classlabel and HDR.TRIG
-%       [H.EVENT.POS,ix] = sort(H.EVENT.POS);
-%       H.EVENT.TYP = H.EVENT.TYP(ix);
-%       if isfield(H.EVENT,'CHN')
-%         H.EVENT.CHN = H.EVENT.CHN(ix);
-%       end;
-%       if isfield(H.EVENT,'DUR')
-%         H.EVENT.DUR = H.EVENT.DUR(ix);
-%       end;
-%       if isfield(H.EVENT,'TimeStamp')
-%         H.EVENT.TimeStamp = H.EVENT.TimeStamp(ix);
-%       end;
-%       
-%       if (length(H.EVENT.TYP)>0)
-%         ix = (H.EVENT.TYP>hex2dec('0300')) & (H.EVENT.TYP<hex2dec('030d'));
-%         ix = ix | ((H.EVENT.TYP>=hex2dec('0320')) & (H.EVENT.TYP<=hex2dec('037f')));
-%         ix = ix | (H.EVENT.TYP==hex2dec('030f')); % unknown/undefined cue
-%         H.Classlabel = mod(H.EVENT.TYP(ix),256);
-%         H.Classlabel(H.Classlabel==15) = NaN; % unknown/undefined cue
-%       end;
-%       
-%       % Trigger information and Artifact Selection
-%       ix = find(H.EVENT.TYP==hex2dec('0300'));
-%       H.TRIG = H.EVENT.POS(ix);
-%       ArtifactSelection = repmat(logical(0),length(ix),1);
-%       for k = 1:length(ix),
-%         ix2 = find(H.EVENT.POS(ix(k))==H.EVENT.POS);
-%         if any(H.EVENT.TYP(ix2)==hex2dec('03ff'))
-%           ArtifactSelection(k) = logical(1);
-%         end;
-%       end;
-%       if any(ArtifactSelection), % define only if necessary
-%         H.ArtifactSelection = ArtifactSelection;
-%       end;
-%       
-%       % apply channel selections to EVENT table
-%       if valid_rerefmx && ~isempty(H.EVENT.POS) && (isfield(H.EVENT,'CHN')),	% only if channels are selected.
-%         sel = (H.EVENT.CHN(:)==0);	% memory allocation, select all general events
-%         for k = find(~sel'),		% select channel specific elements
-%           sel(k) = any(H.EVENT.CHN(k)==InChanSelect);
-%         end;
-%         H.EVENT.POS = H.EVENT.POS(sel);
-%         H.EVENT.TYP = H.EVENT.TYP(sel);
-%         H.EVENT.DUR = H.EVENT.DUR(sel);	% if EVENT.CHN available, also EVENT.DUR is defined.
-%         H.EVENT.CHN = H.EVENT.CHN(sel);
-%         if isfield(H.EVENT,'TimeStamp')
-%           H.EVENT.TimeStamp = H.EVENT.TimeStamp(sel);
-%         end;
-%         % assigning new channel number
-%         a = zeros(1,HDR.NS);
-%         for k = 1:length(InChanSelect),		% select channel specific elements
-%           a(InChanSelect(k)) = k;		% assigning to new channel number.
-%         end;
-%         ix = H.EVENT.CHN>0;
-%         H.EVENT.CHN(ix) = a(H.EVENT.CHN(ix));	% assigning new channel number
-%       end;
-%       
-%     elseif strcmp(H.TYPE,'BDF');
-%       H.BDF.ANNONS = zeros(HDR.NRec*HDR.SPR,1);
-%       ix  = HDR.EVENT.TYP==hex2dec('7ffe');
-%       ix1 = find(~ix);
-%       POS = HDR.EVENT.POS(ix1);
-%       TYP = HDR.EVENT.TYP(ix1);
-%       [s,ix2] = sort([POS; HDR.NRec*HDR.SPR+1]);
-%       for k = 1:length(s)-1,
-%         H.BDF.ANNONS(s(k):s(k+1)-1) = TYP(ix2(k));
-%       end;
-%       H.BDF.ANNONS(HDR.EVENT.POS(ix)) = H.BDF.ANNONS(HDR.EVENT.POS(ix)) | hex2dec('10000');
-%       
-%     elseif strcmp(H.TYPE,'BKR');
-%       H.Classlabel = [];
-%       H.TRIG = [];
-%       tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.mat']);
-%       if ~exist(tmp,'file'),
-%         tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.MAT']);
-%       end
-%       x = [];
-%       if exist(tmp,'file'),
-%         x = load('-mat',tmp);
-%       end;
-%       
-%       if isfield(x,'header'),
-%         H.MAT  = x.header;
-%         if isfield(x.header,'Setup'),
-%           if isfield(x.header.Setup,'Bits'),
-%             H.Bits = x.header.Setup.Bits;
-%             [datatyp, limits, datatypes] = gdfdatatype(H.Bits+255);
-%             % THRESHOLD for Overflow detection
-%             if ~isfield(H,'THRESHOLD')
-%               H.THRESHOLD = repmat(limits, H.NS, 1);
-%             end;
-%           end;
-%         end;
-%         if isfield(x.header,'Result') && isfield(x.header.Result,'Classlabel'),
-%           H.Classlabel = x.header.Result.Classlabel;
-%         end;
-%         if isfield(x.header,'Paradigm')
-%           if isempty(H.Classlabel) && isfield(x.header.Paradigm,'Classlabel')
-%             H.Classlabel = x.header.Paradigm.Classlabel;
-%           end;
-%           H.BCI.Paradigm = x.header.Paradigm;
-%           if isfield(H.BCI.Paradigm,'TriggerOnset');
-%             H.TriggerOffset = H.BCI.Paradigm.TriggerOnset;
-%           elseif isfield(H.BCI.Paradigm,'TriggerTiming');
-%             %    H.BCI.Paradigm.TriggerTiming,
-%             H.TriggerOffset = H.BCI.Paradigm.TriggerTiming;
-%             fprintf(2,'Warning BKROPEN: Paradigm.TriggerOnset is unknown. Paradigm.TriggerTiming= %f ms is used instead\n',H.TriggerOffset);
-%           end;
-%         end;
-%         
-%         if isfield(x.header,'PhysioRec'), % R. Leeb's data
-%           H.Label = cellstr(x.header.PhysioRec);
-%         end;
-%         if isfield(x.header,'BKRHeader'), % R. Scherer Data
-%           if isfield(x.header.BKRHeader,'TO'),
-%             H.T0 = x.header.BKRHeader.TO;
-%           end;
-%           if isfield(x.header.BKRHeader,'Label'),
-%             H.Label = cellstr(x.header.BKRHeader.Label);
-%             ns = H.NS-length(H.Label);
-%             if ns == 1;
-%               H.Label = strvcat(H.Label,'TRIGGER');
-%             elseif ns > 1;
-%               H.Label = strvcat(H.Label,char(repmat('n.a.',ns,1)));
-%             end;
-%           end;
-%         end;
-%         if isfield(x.header,'Model'), % More
-%           if isfield(x.header.Model,'AnalogInput'),
-%             for k = 1:length(x.header.Model.AnalogInput),
-%               H.Filter.HighPass(k) = x.header.Model.AnalogInput{k}{5};
-%               H.Filter.LowPass(k)  = x.header.Model.AnalogInput{k}{6};
-%               H.Filter.Notch(k)    = strcmpi(x.header.Model.AnalogInput{k}{7},'on');
-%               
-%               H.MAT.Cal(k) = x.header.Model.AnalogInput{k}{3};
-%             end
-%           end;
-%         end;
-%         if ~isempty(strmatch('TRIGGER',H.Label))
-%           H.AS.TRIGCHAN = H.NS; %strmatch('TRIGGER',H.Label);
-%         end;
-%       end;
-%       if 1; ~isfield(H,'Classlabel');
-%         tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.par']);
-%         if ~exist(tmp,'file'),
-%           tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.PAR']);
-%         end
-%         if exist(tmp,'file'),
-%           H.Classlabel = load(tmp);
-%         end;
-%       end;
-%       
-%       %%% Artifact Selection files
-%       tmp1=fullfile(H.FILE.Path,[H.FILE.Name,'.sel']);
-%       if ~exist(tmp1,'file'),
-%         tmp1=fullfile(H.FILE.Path,[H.FILE.Name,'.SEL']);
-%       end
-%       tmp2 = fullfile(H.FILE.Path,[H.FILE.Name,'_artifact.mat']);
-%       SW   = (exist(tmp1,'file')>0) + 2*(exist(tmp2,'file')>0);
-%       if SW == 0,
-%       elseif SW == 1,
-%         if exist('OCTAVE_VERSION','builtin')
-%           H.ArtifactSelection = load('-ascii',tmp1);
-%         else
-%           H.ArtifactSelection = load(tmp1);
-%         end;
-%       elseif SW == 2,
-%         if exist('OCTAVE_VERSION','builtin')
-%           tmp = load('-mat',tmp2);
-%         else
-%           tmp = load(tmp2);
-%         end;
-%         H.ArtifactSelection = tmp.artifact(:);
-%       elseif SW == 3,
-%         fprintf(H.FILE.stderr,'Warning BKROPEN: more than one ArtifactSelection files. File %s is used.\n',tmp1);
-%         if exist('OCTAVE_VERSION')>5
-%           H.ArtifactSelection = load('-ascii',tmp1);
-%         else
-%           H.ArtifactSelection = load(tmp1);
-%         end;
-%       end;
-%       if isfield(H,'ArtifactSelection'),
-%         if any(H.ArtifactSelection>1) || (length(H.ArtifactSelection)<length(H.Classlabel))
-%           sel = zeros(size(H.Classlabel));
-%           sel(H.ArtifactSelection) = 1;
-%           H.ArtifactSelection = sel(:);
-%         end;
-%         H.ArtifactSelection = H.ArtifactSelection(:);
-%       end;
-%       
-%       if isfield(H.AS,'TRIGCHAN') % & isempty(H.EVENT.POS)
-%         if H.AS.TRIGCHAN <= H.NS, %size(H.data,2),
-%           H.THRESHOLD(H.AS.TRIGCHAN,1:2) = [-1-2^15,2^15]; % do not apply overflow detection for Trigger channel
-%           data = mexSLOAD(H.FileName,H.AS.TRIGCHAN,'UCAL:ON','OVERFLOWDETECTION:OFF');
-%           TRIGon = gettrigger(data);
-%           %TRIGoff = gettrigger(-double(H.data(:,H.AS.TRIGCHAN)));
-%           if isfield(H,'TriggerOffset')
-%             TRIGon  = TRIGon - round(H.TriggerOffset/1000*H.SampleRate);
-%             %        TRIGoff = TRIGoff - round(H.TriggerOffset/1000*H.SampleRate);
-%           end;
-%         end;
-%         H.TRIG = TRIGon(:);
-%         H.EVENT.POS = TRIGon(:); %[TRIGon(:); TRIGoff(:)];
-%         H.EVENT.TYP = repmat(hex2dec('0300'),numel(TRIGon),1); %repmat(hex2dec('8300'),numel(TRIGoff),1)];
-%       end;
-%       if length(H.TRIG)~=length(H.Classlabel),
-%         % hack to deal with BCI22 data
-%         fprintf(2,'Warning BKROPEN: Number of triggers (%i) and number of Classlabels (%i) do not fit\n',length(H.TRIG),length(H.Classlabel));
-%         H.TRIG = [];
-%         H.Classlabel = [];
-%         H.ArtifactSelection = [];
-%       end;
-%       %% end of BKR
-%       
-%     elseif strcmp(H.TYPE,'BrainVision');
-%       try
-%         H = bv2biosig_events(H);
-%       catch
-%         %warning('bv2biosig_events not executed');
-%       end;
-%       
-%     elseif strcmp(H.TYPE,'EDF') && isfield(H.EVENT,'Desc');
-%       if length(H.EVENT.TYP)==length(H.EVENT.Desc)
-%         [H.EVENT.CodeDesc, CodeIndex, H.EVENT.TYP] = unique(H.EVENT.Desc);
-%       end;
-%       
-%       %% end of BKR
-%       
-%     elseif strcmp(H.TYPE,'BrainVision');
-%       HDR = sopen(fullfile(H.FILE.Path,[H.FILE.Name,'.vmrk']));
-%       HDR = sclose(HDR);
-%       H.EVENT = HDR.EVENT;
-%       
-%     elseif strcmp(H.TYPE,'PDP');
-%       signal = repmat(NaN,max(HDR.EVENT.POS),HDR.NS);
-%     end;
-%     
-%     if isempty(signal);
-%       signal = repmat(NaN,round(max(HDR.EVENT.POS)*HDR.SampleRate/HDR.EVENT.SampleRate),HDR.NS);
-%       for k = 1:HDR.NS,
-%         ix = find(HDR.EVENT.CHN==k);
-%         signal(round(HDR.EVENT.POS(ix)*HDR.SampleRate/HDR.EVENT.SampleRate),k)=HDR.EVENT.DUR(ix);
-%       end;
-%     end;
-%     
-%     H.CHANTYP = repmat(' ',1,H.NS);
-%     for k=1:H.NS,
-%       if     ~isempty(strfind(lower(H.Label{k}),'eeg')) 	H.CHANTYP(k) = 'E';
-%       elseif ~isempty(strfind(lower(H.Label{k}),'meg')) 	H.CHANTYP(k) = 'E';
-%       elseif ~isempty(strfind(lower(H.Label{k}),'emg')) 	H.CHANTYP(k) = 'M';
-%       elseif ~isempty(strfind(lower(H.Label{k}),'eog')) 	H.CHANTYP(k) = 'O';
-%       elseif ~isempty(strfind(lower(H.Label{k}),'ecg')) 	H.CHANTYP(k) = 'C';
-%       elseif ~isempty(strfind(lower(H.Label{k}),'air')) 	H.CHANTYP(k) = 'R';
-%       elseif ~isempty(strfind(lower(H.Label{k}),'trig')) 	H.CHANTYP(k) = 'T';
-%       end;
-%     end;
-%     
-%   catch
-%     %fprintf(1,lasterr);
-%     fprintf(1, 'SLOAD: mexSLOAD(''%s'') failed - the slower M-function is used.\n', FILENAME);
-%   end;
-% else
+if exist('mexSLOAD','file')==3,
+  try
+    valid_rerefmx = 1;
+    if ischar(CHAN)
+      HDR = sopen(CHAN,'r'); HDR=sclose(HDR);
+      if isfield(HDR.Calib),
+        ReRefMx = HDR.Calib;
+      else
+        valid_rerefmx = 0;
+      end;
+    elseif all(size(CHAN)>1) || any(floor(CHAN)~=CHAN) || any(CHAN<0) || (any(CHAN==0) && (numel(CHAN)>1));
+      ReRefMx = CHAN;
+      CHAN = find(any(CHAN,2));
+    elseif all(CHAN>0) && all(floor(CHAN)==CHAN),
+      [tmp,ix]= sort(CHAN);
+      ReRefMx = sparse(CHAN,1:length(CHAN),1);
+    else
+      ReRefMx = [];
+      valid_rerefmx=0;
+    end
+    
+    if STATE.EOG_CORRECTION,
+      ReRefMx = h.r0*ReRefMx;
+      valid_rerefmx=1;
+    end
+    if STATE.OVERFLOWDETECTION,
+      arg1 = 'OVERFLOWDETECTION:ON';
+    else
+      arg1 = 'OVERFLOWDETECTION:OFF';
+    end
+    if STATE.UCAL,
+      arg2 = {'UCAL:ON'};
+    else
+      arg2 = {'UCAL:OFF'};
+    end
+    if STATE.CNT32
+      arg2 = {arg2,'CNT32'};
+    end
+    if ~valid_rerefmx,
+      [signal,HDR] = mexSLOAD(FILENAME,0,arg1,arg2{:});
+      if isfield(HDR,'ErrNum') && (HDR.ErrNum>0),
+        fprintf(1,'%s\n',HDR.ErrMsg);
+        H = HDR;
+        x = HDR.nonsense; 	% hack: triggers CATCH branch in TRY-CATCH-END;
+      end
+      
+      if isfield(HDR.FLAG,'ROW_BASED_CHANNELS') && HDR.FLAG.ROW_BASED_CHANNELS, signal = signal.'; end;
+      FlagLoaded   = isfield(HDR,'NS');
+      HDR.InChanSelect = 1:HDR.NS;
+    else
+      InChanSelect = find(any(ReRefMx,2));
+      [signal,HDR] = mexSLOAD(FILENAME,InChanSelect,arg1,arg2{:});
+      if isfield(HDR,'ErrNum') && HDR.ErrNum==3,
+        %% file not found - fopen failed
+        H = HDR;
+        return;
+      end
+      if isfield(HDR.FLAG,'ROW_BASED_CHANNELS') && HDR.FLAG.ROW_BASED_CHANNELS, signal = signal.'; end;
+      FlagLoaded   = isfield(HDR,'NS');
+      HDR.InChanSelect = InChanSelect(InChanSelect <= HDR.NS);
+      signal = signal*ReRefMx(InChanSelect,:); %% can be sparse if just a single channel is loaded
+      signal = full(signal);  %% make sure signal is not sparse
+    end;
+    HDR = bdf2biosig_events(HDR, STATE.BDF);
+    
+    HDR.T0 = datevec(HDR.T0);
+    HDR.Patient.Birthday = datevec(HDR.Patient.Birthday);
+    HDR.Calib = [HDR.Off(:)';diag(HDR.Cal)];
+    [HDR.FILE.Path,HDR.FILE.Name,HDR.FILE.Ext] = fileparts(FILENAME);
+    HDR.FileName = FILENAME;
+    HDR = leadidcodexyz(HDR);
+    
+    H=HDR;
+    H.FLAG.EOG_CORRECTION = STATE.EOG_CORRECTION;
+    if isfield(HDR,'Patient') && isfield(HDR.Patient,'Weight') && isfield(HDR.Patient,'Height')
+      %% Body Mass Index
+      HDR.Patient.BMI = HDR.Patient.Weight * HDR.Patient.Height^-2 * 1e4;
+      
+      %% Body Surface Area
+      % DuBois D, DuBois EF. A formula to estimate the approximate surface area if height and weight be known. Arch Intern Medicine. 1916; 17:863-71.
+      % Wang Y, Moss J, Thisted R. Predictors of body surface area. J Clin Anesth. 1992; 4(1):4-10.
+      HDR.Patient.BSA = 0.007184 * HDR.Patient.Weight^0.425 * HDR.Patient.Height^0.725;
+    end;
+    
+    if strcmp(H.TYPE,'GDF');
+      % Classlabels according to
+      % http://biosig.cvs.sourceforge.net/*checkout*/biosig/biosig/doc/eventcodes.txt
+      
+      % sort event table before extracting HDR.Classlabel and HDR.TRIG
+      [H.EVENT.POS,ix] = sort(H.EVENT.POS);
+      H.EVENT.TYP = H.EVENT.TYP(ix);
+      if isfield(H.EVENT,'CHN')
+        H.EVENT.CHN = H.EVENT.CHN(ix);
+      end;
+      if isfield(H.EVENT,'DUR')
+        H.EVENT.DUR = H.EVENT.DUR(ix);
+      end;
+      if isfield(H.EVENT,'TimeStamp')
+        H.EVENT.TimeStamp = H.EVENT.TimeStamp(ix);
+      end;
+      
+      if (length(H.EVENT.TYP)>0)
+        ix = (H.EVENT.TYP>hex2dec('0300')) & (H.EVENT.TYP<hex2dec('030d'));
+        ix = ix | ((H.EVENT.TYP>=hex2dec('0320')) & (H.EVENT.TYP<=hex2dec('037f')));
+        ix = ix | (H.EVENT.TYP==hex2dec('030f')); % unknown/undefined cue
+        H.Classlabel = mod(H.EVENT.TYP(ix),256);
+        H.Classlabel(H.Classlabel==15) = NaN; % unknown/undefined cue
+      end;
+      
+      % Trigger information and Artifact Selection
+      ix = find(H.EVENT.TYP==hex2dec('0300'));
+      H.TRIG = H.EVENT.POS(ix);
+      ArtifactSelection = repmat(logical(0),length(ix),1);
+      for k = 1:length(ix),
+        ix2 = find(H.EVENT.POS(ix(k))==H.EVENT.POS);
+        if any(H.EVENT.TYP(ix2)==hex2dec('03ff'))
+          ArtifactSelection(k) = logical(1);
+        end;
+      end;
+      if any(ArtifactSelection), % define only if necessary
+        H.ArtifactSelection = ArtifactSelection;
+      end;
+      
+      % apply channel selections to EVENT table
+      if valid_rerefmx && ~isempty(H.EVENT.POS) && (isfield(H.EVENT,'CHN')),	% only if channels are selected.
+        sel = (H.EVENT.CHN(:)==0);	% memory allocation, select all general events
+        for k = find(~sel'),		% select channel specific elements
+          sel(k) = any(H.EVENT.CHN(k)==InChanSelect);
+        end;
+        H.EVENT.POS = H.EVENT.POS(sel);
+        H.EVENT.TYP = H.EVENT.TYP(sel);
+        H.EVENT.DUR = H.EVENT.DUR(sel);	% if EVENT.CHN available, also EVENT.DUR is defined.
+        H.EVENT.CHN = H.EVENT.CHN(sel);
+        if isfield(H.EVENT,'TimeStamp')
+          H.EVENT.TimeStamp = H.EVENT.TimeStamp(sel);
+        end;
+        % assigning new channel number
+        a = zeros(1,HDR.NS);
+        for k = 1:length(InChanSelect),		% select channel specific elements
+          a(InChanSelect(k)) = k;		% assigning to new channel number.
+        end;
+        ix = H.EVENT.CHN>0;
+        H.EVENT.CHN(ix) = a(H.EVENT.CHN(ix));	% assigning new channel number
+      end;
+      
+    elseif strcmp(H.TYPE,'BDF');
+      H.BDF.ANNONS = zeros(HDR.NRec*HDR.SPR,1);
+      ix  = HDR.EVENT.TYP==hex2dec('7ffe');
+      ix1 = find(~ix);
+      POS = HDR.EVENT.POS(ix1);
+      TYP = HDR.EVENT.TYP(ix1);
+      [s,ix2] = sort([POS; HDR.NRec*HDR.SPR+1]);
+      for k = 1:length(s)-1,
+        H.BDF.ANNONS(s(k):s(k+1)-1) = TYP(ix2(k));
+      end;
+      H.BDF.ANNONS(HDR.EVENT.POS(ix)) = H.BDF.ANNONS(HDR.EVENT.POS(ix)) | hex2dec('10000');
+      
+    elseif strcmp(H.TYPE,'BKR');
+      H.Classlabel = [];
+      H.TRIG = [];
+      tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.mat']);
+      if ~exist(tmp,'file'),
+        tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.MAT']);
+      end
+      x = [];
+      if exist(tmp,'file'),
+        x = load('-mat',tmp);
+      end;
+      
+      if isfield(x,'header'),
+        H.MAT  = x.header;
+        if isfield(x.header,'Setup'),
+          if isfield(x.header.Setup,'Bits'),
+            H.Bits = x.header.Setup.Bits;
+            [datatyp, limits, datatypes] = gdfdatatype(H.Bits+255);
+            % THRESHOLD for Overflow detection
+            if ~isfield(H,'THRESHOLD')
+              H.THRESHOLD = repmat(limits, H.NS, 1);
+            end;
+          end;
+        end;
+        if isfield(x.header,'Result') && isfield(x.header.Result,'Classlabel'),
+          H.Classlabel = x.header.Result.Classlabel;
+        end;
+        if isfield(x.header,'Paradigm')
+          if isempty(H.Classlabel) && isfield(x.header.Paradigm,'Classlabel')
+            H.Classlabel = x.header.Paradigm.Classlabel;
+          end;
+          H.BCI.Paradigm = x.header.Paradigm;
+          if isfield(H.BCI.Paradigm,'TriggerOnset');
+            H.TriggerOffset = H.BCI.Paradigm.TriggerOnset;
+          elseif isfield(H.BCI.Paradigm,'TriggerTiming');
+            %    H.BCI.Paradigm.TriggerTiming,
+            H.TriggerOffset = H.BCI.Paradigm.TriggerTiming;
+            fprintf(2,'Warning BKROPEN: Paradigm.TriggerOnset is unknown. Paradigm.TriggerTiming= %f ms is used instead\n',H.TriggerOffset);
+          end;
+        end;
+        
+        if isfield(x.header,'PhysioRec'), % R. Leeb's data
+          H.Label = cellstr(x.header.PhysioRec);
+        end;
+        if isfield(x.header,'BKRHeader'), % R. Scherer Data
+          if isfield(x.header.BKRHeader,'TO'),
+            H.T0 = x.header.BKRHeader.TO;
+          end;
+          if isfield(x.header.BKRHeader,'Label'),
+            H.Label = cellstr(x.header.BKRHeader.Label);
+            ns = H.NS-length(H.Label);
+            if ns == 1;
+              H.Label = strvcat(H.Label,'TRIGGER');
+            elseif ns > 1;
+              H.Label = strvcat(H.Label,char(repmat('n.a.',ns,1)));
+            end;
+          end;
+        end;
+        if isfield(x.header,'Model'), % More
+          if isfield(x.header.Model,'AnalogInput'),
+            for k = 1:length(x.header.Model.AnalogInput),
+              H.Filter.HighPass(k) = x.header.Model.AnalogInput{k}{5};
+              H.Filter.LowPass(k)  = x.header.Model.AnalogInput{k}{6};
+              H.Filter.Notch(k)    = strcmpi(x.header.Model.AnalogInput{k}{7},'on');
+              
+              H.MAT.Cal(k) = x.header.Model.AnalogInput{k}{3};
+            end
+          end;
+        end;
+        if ~isempty(strmatch('TRIGGER',H.Label))
+          H.AS.TRIGCHAN = H.NS; %strmatch('TRIGGER',H.Label);
+        end;
+      end;
+      if 1; ~isfield(H,'Classlabel');
+        tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.par']);
+        if ~exist(tmp,'file'),
+          tmp=fullfile(H.FILE.Path,[H.FILE.Name,'.PAR']);
+        end
+        if exist(tmp,'file'),
+          H.Classlabel = load(tmp);
+        end;
+      end;
+      
+      %%% Artifact Selection files
+      tmp1=fullfile(H.FILE.Path,[H.FILE.Name,'.sel']);
+      if ~exist(tmp1,'file'),
+        tmp1=fullfile(H.FILE.Path,[H.FILE.Name,'.SEL']);
+      end
+      tmp2 = fullfile(H.FILE.Path,[H.FILE.Name,'_artifact.mat']);
+      SW   = (exist(tmp1,'file')>0) + 2*(exist(tmp2,'file')>0);
+      if SW == 0,
+      elseif SW == 1,
+        if exist('OCTAVE_VERSION','builtin')
+          H.ArtifactSelection = load('-ascii',tmp1);
+        else
+          H.ArtifactSelection = load(tmp1);
+        end;
+      elseif SW == 2,
+        if exist('OCTAVE_VERSION','builtin')
+          tmp = load('-mat',tmp2);
+        else
+          tmp = load(tmp2);
+        end;
+        H.ArtifactSelection = tmp.artifact(:);
+      elseif SW == 3,
+        fprintf(H.FILE.stderr,'Warning BKROPEN: more than one ArtifactSelection files. File %s is used.\n',tmp1);
+        if exist('OCTAVE_VERSION')>5
+          H.ArtifactSelection = load('-ascii',tmp1);
+        else
+          H.ArtifactSelection = load(tmp1);
+        end;
+      end;
+      if isfield(H,'ArtifactSelection'),
+        if any(H.ArtifactSelection>1) || (length(H.ArtifactSelection)<length(H.Classlabel))
+          sel = zeros(size(H.Classlabel));
+          sel(H.ArtifactSelection) = 1;
+          H.ArtifactSelection = sel(:);
+        end;
+        H.ArtifactSelection = H.ArtifactSelection(:);
+      end;
+      
+      if isfield(H.AS,'TRIGCHAN') % & isempty(H.EVENT.POS)
+        if H.AS.TRIGCHAN <= H.NS, %size(H.data,2),
+          H.THRESHOLD(H.AS.TRIGCHAN,1:2) = [-1-2^15,2^15]; % do not apply overflow detection for Trigger channel
+          data = mexSLOAD(H.FileName,H.AS.TRIGCHAN,'UCAL:ON','OVERFLOWDETECTION:OFF');
+          TRIGon = gettrigger(data);
+          %TRIGoff = gettrigger(-double(H.data(:,H.AS.TRIGCHAN)));
+          if isfield(H,'TriggerOffset')
+            TRIGon  = TRIGon - round(H.TriggerOffset/1000*H.SampleRate);
+            %        TRIGoff = TRIGoff - round(H.TriggerOffset/1000*H.SampleRate);
+          end;
+        end;
+        H.TRIG = TRIGon(:);
+        H.EVENT.POS = TRIGon(:); %[TRIGon(:); TRIGoff(:)];
+        H.EVENT.TYP = repmat(hex2dec('0300'),numel(TRIGon),1); %repmat(hex2dec('8300'),numel(TRIGoff),1)];
+      end;
+      if length(H.TRIG)~=length(H.Classlabel),
+        % hack to deal with BCI22 data
+        fprintf(2,'Warning BKROPEN: Number of triggers (%i) and number of Classlabels (%i) do not fit\n',length(H.TRIG),length(H.Classlabel));
+        H.TRIG = [];
+        H.Classlabel = [];
+        H.ArtifactSelection = [];
+      end;
+      %% end of BKR
+      
+    elseif strcmp(H.TYPE,'BrainVision');
+      try
+        H = bv2biosig_events(H);
+      catch
+        %warning('bv2biosig_events not executed');
+      end;
+      
+    elseif strcmp(H.TYPE,'EDF') && isfield(H.EVENT,'Desc');
+      if length(H.EVENT.TYP)==length(H.EVENT.Desc)
+        [H.EVENT.CodeDesc, CodeIndex, H.EVENT.TYP] = unique(H.EVENT.Desc);
+      end;
+      
+      %% end of BKR
+      
+    elseif strcmp(H.TYPE,'BrainVision');
+      HDR = sopen(fullfile(H.FILE.Path,[H.FILE.Name,'.vmrk']));
+      HDR = sclose(HDR);
+      H.EVENT = HDR.EVENT;
+      
+    elseif strcmp(H.TYPE,'PDP');
+      signal = repmat(NaN,max(HDR.EVENT.POS),HDR.NS);
+    end;
+    
+    if isempty(signal);
+      signal = repmat(NaN,round(max(HDR.EVENT.POS)*HDR.SampleRate/HDR.EVENT.SampleRate),HDR.NS);
+      for k = 1:HDR.NS,
+        ix = find(HDR.EVENT.CHN==k);
+        signal(round(HDR.EVENT.POS(ix)*HDR.SampleRate/HDR.EVENT.SampleRate),k)=HDR.EVENT.DUR(ix);
+      end;
+    end;
+    
+    H.CHANTYP = repmat(' ',1,H.NS);
+    for k=1:H.NS,
+      if     ~isempty(strfind(lower(H.Label{k}),'eeg')) 	H.CHANTYP(k) = 'E';
+      elseif ~isempty(strfind(lower(H.Label{k}),'meg')) 	H.CHANTYP(k) = 'E';
+      elseif ~isempty(strfind(lower(H.Label{k}),'emg')) 	H.CHANTYP(k) = 'M';
+      elseif ~isempty(strfind(lower(H.Label{k}),'eog')) 	H.CHANTYP(k) = 'O';
+      elseif ~isempty(strfind(lower(H.Label{k}),'ecg')) 	H.CHANTYP(k) = 'C';
+      elseif ~isempty(strfind(lower(H.Label{k}),'air')) 	H.CHANTYP(k) = 'R';
+      elseif ~isempty(strfind(lower(H.Label{k}),'trig')) 	H.CHANTYP(k) = 'T';
+      end;
+    end;
+    
+  catch
+    %fprintf(1,lasterr);
+    fprintf(1, 'SLOAD: mexSLOAD(''%s'') failed - the slower M-function is used.\n', FILENAME);
+  end;
+else
   global FLAG_HINT_mexSLOAD;
   if isempty(FLAG_HINT_mexSLOAD)
     fprintf(1, 'Hint: the performance of SLOAD can be improved with mexSLOAD.mex which is part of biosig4c++.\n');
     FLAG_HINT_mexSLOAD = 1;	 	% turn off hint
   end;
-%end;
+end;
 
 if ~FlagLoaded,
   H = getfiletype(FILENAME);
@@ -1044,7 +1044,7 @@ if ~FlagLoaded,
           fprintf(H.FILE.stderr,'Warning SLOAD: could not read line %i in file %s\n',K,H.FileName);
         end;
         
-      elseif line(1)=='c';
+      elseif line(1)=='c'
         [tmp,status] = str2double(line(3:end));
         if ~any(status)
           PalLen = PalLen +1;
@@ -1058,12 +1058,12 @@ if ~FlagLoaded,
       K = K+1;
     end;
     fclose(H.FILE.FID);
-    if all(H.Ngon(1)==H.Ngon),
+    if all(H.Ngon(1)==H.Ngon)
       H.Face = cat(1,H.Face{:});
     end;
     
     
-  elseif strcmp(H.TYPE,'TVF 1.1A'),
+  elseif strcmp(H.TYPE,'TVF 1.1A')
     H.FILE.FID = fopen(H.FileName,'rt');
     
     tmp = fgetl(H.FILE.FID);
@@ -1084,34 +1084,34 @@ if ~FlagLoaded,
     [tmp,status] = str2double(fgetl(H.FILE.FID));
     H.TVF.GlobalMtrlProps = tmp;
     
-    H.TVF.Triangles = repmat(NaN,[H.TVF.NTR,3]);
-    for k = 1:H.TVF.NTR,
+    H.TVF.Triangles = NaN([H.TVF.NTR,3]);
+    for k = 1:H.TVF.NTR
       [tmp, status] = str2double(fgetl(H.FILE.FID));
       H.TVF.Triangles(k,:) = tmp;
     end;
     H.TVF.TrColorSets = reshape(NaN,[H.TVF.NTRC,H.TVF.NTR]);
-    for k = 1:H.TVF.NTRC,
+    for k = 1:H.TVF.NTRC
       [tmp, status] = str2double(fgetl(H.FILE.FID));
       H.TVF.TrColorSets(k,:) = tmp;
     end;
-    H.TVF.TrMtrlSets = repmat(NaN, [H.TVF.NTRM,H.TVF.NTR]);
-    for k = 1:H.TVF.NTRM,
+    H.TVF.TrMtrlSets = NaN([H.TVF.NTRM,H.TVF.NTR]);
+    for k = 1:H.TVF.NTRM
       [tmp, status] = str2double(fgetl(H.FILE.FID));
       H.TVF.TrMtrlSets(k,:) = tmp;
     end;
     
-    H.TVF.Vertices   = repmat(NaN, [H.TVF.NV,3]);
-    for k = 1:H.TVF.NV,
+    H.TVF.Vertices   = NaN([H.TVF.NV,3]);
+    for k = 1:H.TVF.NV
       [tmp, status] = str2double(fgetl(H.FILE.FID));
       H.TVF.Vertices(k,:) = tmp;
     end;
-    H.TVF.VColorSets = repmat(NaN, [H.TVF.NVC,H.TVF.NV]);
-    for k = 1:H.TVF.NVC,
+    H.TVF.VColorSets = NaN([H.TVF.NVC,H.TVF.NV]);
+    for k = 1:H.TVF.NVC
       [tmp, status] = str2double(fgetl(H.FILE.FID));
       H.TVF.VColorSets(k,:) = tmp;
     end;
-    H.TVF.VNrmlSets  = repmat(NaN, [H.TVF.NVN,3]);
-    for k = 1:H.TVF.NVN,
+    H.TVF.VNrmlSets  = NaN([H.TVF.NVN,3]);
+    for k = 1:H.TVF.NVN
       [tmp, status] = str2double(fgetl(H.FILE.FID));
       H.TVF.VNrmlSets(k,:) = tmp;
     end;
