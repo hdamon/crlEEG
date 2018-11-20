@@ -69,7 +69,7 @@ classdef EEG < MatTSA.timeseries
                              'type',types{i}.Type(j),...
                              'latencyTime',types{i}.Offset(j));
           newEVENTS = [newEVENTS new];
-        end;
+        end
       end
       
       newEVENTS = [obj.EVENTS newEVENTS];
@@ -89,11 +89,11 @@ classdef EEG < MatTSA.timeseries
         for i = 1:numel(out)
           out(i).latencyTime = startTime + (latencies{i}-1)/sampleRate;
         end
-      end;
+      end
     end
     
     function set.EVENTS(obj,val)
-      if isempty(val), obj.EVENTS_ = []; return; end;
+      if isempty(val), obj.EVENTS_ = []; return; end
       assert(isa(val,'crlEEG.event'));
       
       keepEVENTS = false(1,numel(val));
@@ -102,12 +102,12 @@ classdef EEG < MatTSA.timeseries
           % Convert a latency time into a sample latency.
           val(i).latency = round(obj.sampleRate*(val(i).latencyTime-obj.tVals(1))+1);
           val(i).latencyTime = [];
-        end;
+        end
         
         % Discard events that are outside the sample collection range
-        if (val(i).latency>0)&(val(i).latency<size(obj,1))
+        if (val(i).latency>0)&&(val(i).latency<size(obj,1))
           keepEVENTS(i) = true;
-        end;
+        end
                         
 %         if ~isempty(val(i).latency)&&~isempty(val(i).latencyTime)
 %           assert(val(i).latencyTime==(obj.tVals(1) + (val(i).latency-1)*(1/obj.sampleRate)),...
