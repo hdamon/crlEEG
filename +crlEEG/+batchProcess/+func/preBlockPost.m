@@ -48,7 +48,7 @@ if ~isempty(p.Results.preFunc)
   disp(['  Running preprocessing function']);
   EEG = p.Results.preFunc(EEG);
 end;
-outStruct.EEG = EEG;
+%outStruct.EEG = EEG;
 
 %% Run Block Processing
 if ~isempty(p.Results.blockFunc)
