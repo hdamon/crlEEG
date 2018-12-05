@@ -28,17 +28,20 @@ function varargout = plot2D(elec,varargin)
 %  fiducial positions, internally stores the reference orientations, and
 %  does the conversion to polar coordinates
 %
+
+
+%% Input Parsing
 p = inputParser;
 p.addOptional('origin',[],@(x) isequal(size(x),[1 3]));
 p.addOptional('basis',[],@(x) isequal(size(x),[3 3]));
-p.addParamValue('label',false,@(x) islogical(x));
+p.addParameter('label',false,@(x) islogical(x));
 p.addParameter('labelColors',[]);
 p.addParameter('labelColorMap','jet');
 p.addParameter('markerSize',[],@(x) isnumeric(x)&&isscalar(x));
-p.addParamValue('scale',0.95,@(x) isscalar(x));
-p.addParamValue('figure',[],@(x) isa(x,'matlab.ui.Figure'));
-p.addParamValue('axis',[],@(x) isa(x,'matlab.graphics.axis.Axes'));
-p.addParamValue('plotlabels',[],@(x) iscellstr(x));
+p.addParameter('scale',0.95,@(x) isscalar(x));
+p.addParameter('figure',[],@(x) isa(x,'matlab.ui.Figure'));
+p.addParameter('axis',[],@(x) isa(x,'matlab.graphics.axis.Axes'));
+p.addParameter('plotlabels',[],@(x) iscellstr(x));
 p.parse(varargin{:});
 
 labelOn = p.Results.label;
@@ -47,10 +50,10 @@ labelOn = p.Results.label;
 if isempty(p.Results.figure)
   if isempty(p.Results.axis)
     figure;
-  end;
+  end
 else
   figure(p.Results.figure);
-end;
+end
 
 % Select Correct Axis
 if isempty(p.Results.axis)
@@ -67,31 +70,33 @@ if ~isempty(p.Results.plotlabels)
  idx = elec.getNumericIndex(p.Results.plotlabels);
  x = x(idx);
  y = y(idx);
-end;
+end
 
 currHold = ishold(gca);
 hold on;
-colors = zeros(numel(x),3);
-if ~isempty(p.Results.labelColors)
-  assert(size(p.Results.labelColors,1)==numel(x),'Must provide a color for each electrode');
-  if size(p.Results.labelColors,2)==3
-   colors = p.Results.labelColors;
-  else
-    assert(size(p.Results.labelColors,1)==1,'Provide either);
-    
-  end
-end
+% colors = zeros(numel(x),3);
+% if ~isempty(p.Results.labelColors)
+%   assert(size(p.Results.labelColors,1)==numel(x),'Must provide a color for each electrode');
+%   if size(p.Results.labelColors,2)==3
+%    colors = p.Results.labelColors;
+%   else
+%     assert(size(p.Results.labelColors,1)==1,'Provide either... what?');
+%     
+%   end
+% end
+colors = p.Results.labelColors;
+if isempty(colors), colors = [0 0 0]; end;
 outObj.scatter = scatter(x,y,p.Results.markerSize,colors,'filled');
 
 if labelOn
   for i = 1:numel(elec)
     outObj.text(i) = text(x(i)+0.05,y(i)+0.05,elec(i).label);
   end
-end;
+end
 
 if nargout>0
   varargout{1} = outObj;
-end;
+end
 
 axis(p.Results.scale*[-2.1 2.1 -2.1 2.1]);
 

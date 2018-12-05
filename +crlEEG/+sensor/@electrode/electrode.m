@@ -41,13 +41,13 @@ classdef electrode
     function obj = electrode(varargin)
       
       % Return an empty object
-      if nargin==0, return; end;
+      if nargin==0, return; end
       
       % If passed an electrode, return an electrode.
       if (nargin>0)&&(isa(varargin{1},'crlEEG.sensor.electrode'))
         obj = varargin{1};
         return;
-      end;
+      end
       
       % Legacy support for previous crlEEG version
       if (nargin>0)&&(isa(varargin{1},'cnlElectrodes'))
@@ -82,23 +82,23 @@ classdef electrode
       p.parse(varargin{:});
       
       % Parse Labels
-      label = p.Results.label; if ~iscell(label), label = {label}; end;
+      label = p.Results.label; if ~iscell(label), label = {label}; end
       
       position  = p.Results.position;
       if (size(position,1)==3)&&~(size(position,2)==3)
         % Reorient matrix if needed. Assume 3x3 matrices arrive correctly
         % oriented
         position = position';
-      end;
+      end
       nodes     = p.Results.nodes;
-      if ~iscell(nodes), nodes = {nodes}; end;
+      if ~iscell(nodes), nodes = {nodes}; end
       voxels    = p.Results.voxels;
-      if ~iscell(voxels), voxels = {voxels}; end;
+      if ~iscell(voxels), voxels = {voxels}; end
       conductivities = p.Results.conductivities;
-      if ~iscell(conductivities), conductivities = {conductivities}; end;
+      if ~iscell(conductivities), conductivities = {conductivities}; end
       impedance = p.Results.impedance;
       model     = p.Results.model;
-      if ~iscell(model), model = {model}; end;
+      if ~iscell(model), model = {model}; end
       
       % Determine how many electrodes we're trying to define
       nElec = [numel(label) size(position,1) numel(conductivities) ...
@@ -110,7 +110,7 @@ classdef electrode
         nElec = nElec(1);
       else
         nElec = 1;
-      end;
+      end
       
       % Make sure input data is sized correctly
       if nElec>1
@@ -120,11 +120,11 @@ classdef electrode
             warning('Assigning default electrode names');
             for i = 1:nElec
               label{i} = ['E' num2str(i)];
-            end;
+            end
           else
             error('Cannot provide only a partial list of electrode names');
-          end;
-        end;
+          end
+        end
         
         if (size(position,1)==1)
           if all(position==[0 0 0])
@@ -132,7 +132,7 @@ classdef electrode
           else
             error('Mismatch in size of input positions');
           end
-        end;
+        end
         
         
         if ( numel(conductivities)==1 )
@@ -140,8 +140,8 @@ classdef electrode
             error('Conductivities not present for all electrodes');
           else
             conductivities = repmat(conductivities,1,nElec);
-          end;
-        end;
+          end
+        end
         
         if numel(voxels)==1
           if ~isempty(voxels{1})
@@ -149,8 +149,8 @@ classdef electrode
           else
             % Just duplicates an empty matrix
             voxels = repmat(voxels,1,nElec);
-          end;
-        end;
+          end
+        end
         
         if numel(nodes)==1
           if ~isempty(nodes{1})
@@ -159,16 +159,16 @@ classdef electrode
               nodes = num2cell(nodes{1});
             else
              error('Must provide node list for each electrode individually');
-            end;
+            end
           else
             nodes = repmat(nodes,1,nElec);
-          end;
+          end
         end
         
-        if numel(impedance)==1, impedance = repmat(impedance,nElec,1); end;
+        if numel(impedance)==1, impedance = repmat(impedance,nElec,1); end
         
-        if numel(model)==1, model = repmat(model,1,nElec); end;
-      end;
+        if numel(model)==1, model = repmat(model,1,nElec); end
+      end
       
       % Finally, construct the actual objects.
       obj(nElec) = crlEEG.sensor.electrode;
@@ -191,7 +191,7 @@ classdef electrode
       % voxels
       if numel(obj.conductivities)==1 && ( numel(obj.voxels)>1 )
         obj.conductivities = repmat(obj.conductivities,1,numel(obj.voxels));
-      end;
+      end
       
       isValid = ( isempty(obj.conductivities)|| numel(obj.conductivities)==numel(obj.voxels) ) || ...
         ( numel(obj.voxels)==0 );
@@ -241,8 +241,12 @@ classdef electrode
     %% Overloaded Methods
     function isEq = eq(a,b)
       % Overloaded eq(a,b) method for crlEEG.sensor.electrode objects
-      if ~isa(a,'crlEEG.sensor.electrode'), isEq = false; return; end;
-      if ~isa(b,'crlEEG.sensor.electrode'), isEq = false; return; end;
+      %
+      % Equality of electrode object is evaluated as:
+      %
+      %    lllkkjlkjsdf 
+      if ~isa(a,'crlEEG.sensor.electrode'), isEq = false; return; end
+      if ~isa(b,'crlEEG.sensor.electrode'), isEq = false; return; end
       
       assert((numel(a)==1)||(numel(b)==1)||isequal(size(a),size(b)),...
         'Matrix dimensions must agree');
@@ -261,19 +265,19 @@ classdef electrode
         isEq = false(size(b));
         for i = 1:numel(b)
           isEq(i) = a==b(i);
-        end;
+        end
       elseif ( numel(b) == 1 )
         isEq = false(size(a));
         for i = 1:numel(a)
           isEq(i) = a(i)==b;
-        end;
+        end
       else
         isEq = false(size(a));
         
         for i = 1:numel(a)
           isEq(i) = a(i)==b(i);
-        end;        
-      end;                              
+        end      
+      end                             
     end
     
     
@@ -287,6 +291,16 @@ classdef electrode
       % Get a set of basis functions for identification of polar
       % coordinates
       %      
+      % val = basis(obj)
+      %
+      % Inputs
+      % ------
+      %   obj : crlEEG.sensor.electrode object
+      %
+      % Output
+      % ------
+      %   val : 
+      %
       % Generally, it's best to avoid using this, and just get polar
       % locations from a headNet object, as this will more consistently
       % have the appropriate fiducials available.
@@ -309,8 +323,8 @@ classdef electrode
           frontPos = frontPos.position;
         catch
           error('Could not locate an appropriate set of reference points');
-        end;
-      end;
+        end
+      end
       
       vecZ = upPos - origin; vecZ = vecZ./norm(vecZ);
       vecX = frontPos - origin; vecX = vecX./norm(vecX);
@@ -328,7 +342,7 @@ classdef electrode
       p = inputParser;
       p.addOptional('origin',[],@(x) isempty(x)||isequal(size(x),[1 3]));
       p.addOptional('basis',[],@(x) isempty(x)||isequal(size(x),[3 3]));
-      p.addParamValue('scale',0.95,@(x) isscalar(x));
+      p.addParameter('scale',0.95,@(x) isscalar(x));
       p.parse(varargin{:});
       
       origin = p.Results.origin;
@@ -337,7 +351,7 @@ classdef electrode
       % Try and compute these if they weren't provided
       if ~exist('origin','var')||isempty(origin)
         origin = elec.center;
-      end;
+      end
       
       if ~exist('basis','var')||isempty(basis)        
         basis = elec.basis;
@@ -365,31 +379,34 @@ classdef electrode
   
   %%
   methods
- 
-    
+
+    % Methods with their own m-files
     varargout = plot2D(obj,origin,basis,varargin);
     varargout = plot3D(obj,varargin);
     mapToNodes(obj,nrrdIn,mapType,pushToSurf);
     
     %%
-    function outIdx = getNumericIndex(obj,refIn)
+    function varargout = getNumericIndex(obj,varargin)
       % Get the numeric indices associated with specific electrode names.
       %
       % Returns NaN's if an electrode requested by name is not present in
       % the array.
       %
-      outIdx = crlBase.util.getDimensionIndex({obj.label},refIn);      
+      varargout = cell(1,numel(varargin));
+      for i = 1:numel(varargin)
+        varargout{i} = crlBase.util.getDimensionIndex({obj.label},varargin{i},true);      
+      end
     end
     
     %%
     function s = struct(obj)
       % Typecast an electrode object to a struct
-      s.label = obj.label;
-      s.position = obj.position;
-      s.voxels = obj.voxels;
+      s.label          = obj.label;
+      s.position       = obj.position;
+      s.voxels         = obj.voxels;
       s.conductivities = obj.conductivities;
-      s.impedance = obj.impedance;
-      s.model = obj.model;
+      s.impedance      = obj.impedance;
+      s.model          = obj.model;
     end                
   end
   

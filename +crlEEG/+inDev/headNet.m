@@ -7,9 +7,9 @@ classdef headNet
   % ----------
   %    type
   %    electrodes : Electrode Object
-  %                   ( Class: crlEEG.head.model.EEG.electrode )
+  %                   ( Class: crlEEG.sensor.electrode )
   %    fiducials : Fiducial Object
-  %                   ( Class: crlEEG.head.model.EEG.electrode )
+  %                   ( Class: crlEEG.sensor.electrode )
   %
   % Dependent Properties
   % --------------------
@@ -34,11 +34,16 @@ classdef headNet
     function obj = headNet(varargin)
       
       %% Return an empty object
-      if nargin==0, return; end;
+      if nargin==0, return; end
       
-      %% Return the input
+      %% Return the input      
       if (isa(varargin{1},'headNet'))
-        obj = varargin{1};
+        obj(numel(varargin{1})) = obj;
+        for i = 1:numel(varargin{1})
+          obj(i).type_ = varargin{1}(i).type;
+          obj(i).electrodes_ = varargin{1}(i).electrodes;
+          obj(i).fiducials_ = varargin{1}(i).fiducials;
+        end
         return;
       end
       
@@ -46,33 +51,33 @@ classdef headNet
       if isa(varargin{1},'cnlElectrodes')
         crlEEG.disp('Converting from old cnlElectrodes object');
         
-        opts.electrodes = crlEEG.head.model.EEG.electrode(varargin{1});
+        opts.electrodes = crlEEG.sensor.electrode(varargin{1});
         if ~isempty(varargin{1}.FIDLabels)||...
              ~isempty(varargin{1}.FIDPositions)
-        opts.fiducials = crlEEG.head.model.EEG.electrode(...
+        opts.fiducials = crlEEG.sensor.electrode(...
                                 'label',varargin{1}.FIDLabels,...
                                 'position',varargin{1}.FIDPositions);
-        end;
+        end
         obj = headNet(opts);
         return;        
       end
       
       %% Input Parsing
       p = inputParser;
-      p.addParamValue('type',[]);
-      p.addParamValue('electrodes',[],...
-                            @(x) isa(x,'crlEEG.head.model.EEG.electrode'));
-      p.addParamValue('fiducials',[],...
-                            @(x) isa(x,'crlEEG.head.model.EEG.electrode'));
-      p.addParamValue('elecLabel',[]);
-      p.addParamValue('elecPosition',[0 0 0]);
-      p.addParamValue('elecVoxels',[]);
-      p.addParamValue('elecConductivities',[]);
-      p.addParamValue('elecNodes',[]);
-      p.addParamValue('elecImpedance',1000);
-      p.addParamValue('elecModel','pointModel');
-      p.addParamValue('fidLabel',[]);
-      p.addParamValue('fidPosition',[0 0 0]);
+      p.addParameter('type',[]);
+      p.addParameter('electrodes',[],...
+                            @(x) isa(x,'crlEEG.sensor.electrode'));
+      p.addParameter('fiducials',[],...
+                            @(x) isa(x,'crlEEG.sensor.electrode'));
+      p.addParameter('elecLabel',[]);
+      p.addParameter('elecPosition',[0 0 0]);
+      p.addParameter('elecVoxels',[]);
+      p.addParameter('elecConductivities',[]);
+      p.addParameter('elecNodes',[]);
+      p.addParameter('elecImpedance',1000);
+      p.addParameter('elecModel','pointModel');
+      p.addParameter('fidLabel',[]);
+      p.addParameter('fidPosition',[0 0 0]);
       p.parse(varargin{:});
       
       
@@ -80,7 +85,7 @@ classdef headNet
       if ~isempty(p.Results.electrodes)
         obj.electrodes = p.Results.electrodes;
       else
-        obj.electrodes = crlEEG.head.model.EEG.electrode(...
+        obj.electrodes = crlEEG.sensor.electrode(...
                             'label',p.Results.elecLabel,...
                             'position',p.Results.elecPosition,...
                             'voxels',p.Results.elecVoxels,...
@@ -98,21 +103,28 @@ classdef headNet
       else
         if ~isempty(obj.electrodes)
           obj.type = obj.discoverType;
-        end;
-      end;
+        end
+      end
              
       if ~isempty(p.Results.fiducials)
         obj.fiducials = p.Results.fiducials;
       else
         if ~isempty(p.Results.fidLabel)
-          obj.fiducials = crlEEG.head.model.EEG.electrode(...
+          obj.fiducials = crlEEG.sensor.electrode(...
                             'label',p.Results.fidLabel,...
                             'position',p.Results.fidPosition);
         else
-          obj.fiducials = crlEEG.head.model.EEG.electrode;
+          obj.fiducials = crlEEG.sensor.electrode.empty;
         end
-      end;
+      end
             
+    end
+    
+    function val = isempty(obj)
+      val = true;
+      val = val && isempty(obj.type);
+      val = val && isempty(obj.electrodes);
+      val = val && isempty(obj.fiducials);
     end
     
     function type = discoverType(obj)
@@ -139,14 +151,14 @@ classdef headNet
     end
     
     function obj = set.electrodes(obj,val)
-      crlEEG.util.assert.instanceOf('crlEEG.head.model.EEG.electrode',val);
+      crlBase.util.assert.instanceOf('crlEEG.sensor.electrode',val);
       obj.electrodes = val;
     end
     
     function obj = set.fiducials(obj,val)
-      crlEEG.util.assert.instanceOf('crlEEG.head.model.EEG.electrode',val);
+      crlBase.util.assert.instanceOf('crlEEG.sensor.electrode',val);
       obj.fiducials = val;
-    end;
+    end
     
     function val = center(obj)
       % Return the center of the headNet
@@ -203,7 +215,12 @@ classdef headNet
     end
     
     function out = plot2D(obj,varargin)
+      % Plot 
       out = obj.electrodes.plot2D('origin',obj.center,'basis',obj.basis,varargin{:});
+      if ~isempty(obj.fiducials)
+        hold on;
+        out = [out obj.fiducials.plot2D('origin',obj.center,'basis',obj.basis,'axis',gca,'labelColors','red')];
+      end
     end
     
     function out = plot3D(obj,varargin)

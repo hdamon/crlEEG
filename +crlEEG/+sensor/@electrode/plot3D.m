@@ -24,7 +24,7 @@ ax        = p.Results.ax;
 
 if isempty(figRef)
   figRef = figure;
-end;
+end
 
 %% Open the figure and lock it
 currFig = figure(figRef);
@@ -33,7 +33,7 @@ currFig = figure(figRef);
 if ~isempty(ax)
  axes(ax);
  hold on;
-end;
+end
 
 %% Display Surface MRI, if Provided
 if ~isempty(surfMRI)
@@ -53,7 +53,7 @@ if iscell(positions)
 end
 
 %%
-names = subsref(elecObj,substruct('.','label'));
+names = {elecObj.label};
 nPlot = numel(elecObj);
 hold on;
 cmap = [];

@@ -25,7 +25,7 @@ classdef dualPlot < MatTSA.gui.timeseries.dualPlot
     
     function updateWindow(obj)
       updateWindow@MatTSA.gui.timeseries.dualPlot(obj);
-    end;
+    end
     
     function plotEventsOnToggle(obj)
       tmpEVENTS = obj.toggleplot.timeseries.EVENTS;
@@ -38,7 +38,7 @@ classdef dualPlot < MatTSA.gui.timeseries.dualPlot
       tmpEVENTS = obj.miniplot.timeseries.EVENTS;
       if ~isempty(tmpEVENTS)
         tmpEVENTS.plot(obj.miniplot.axes,'LineWidth',2);
-      end;
+      end
     end
     
     function captureMouseClick(obj,h,varargin)
