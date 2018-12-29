@@ -209,6 +209,10 @@ classdef headNet
                   
     end
     
+    function G = graph(net)
+      G = net.electrodes.graph(net.center,net.basis);
+    end
+    
     function [x,y] = projPos(net)
       % Get the X-Y positions of each electrode projected onto a 2D circle.
       [x,y] = net.electrodes.projPos(net.center,net.basis);
