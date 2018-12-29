@@ -3,7 +3,10 @@ classdef electrode
   %
   % classdef electrode
   %
-  % Properties:
+  %  obj = crlEEG.sensor.electrode(varargin)
+  %
+  %
+  % Param-Value Inputs
   % -----------
   %  label          : Electrode Name
   %  position       : Centroid Location (X-Y-Z)
@@ -45,7 +48,15 @@ classdef electrode
       
       % If passed an electrode, return an electrode.
       if (nargin>0)&&(isa(varargin{1},'crlEEG.sensor.electrode'))
-        obj = varargin{1};
+        obj(numel(varargin{1})) = crlEEG.sensor.electrode;       
+        [obj.label] = varargin{1}.label;
+        [obj.position] = varargin{1}.position;
+        [obj.voxels] = varargin{1}.voxels;
+        [obj.conductivities] = varargin{1}.conductivities;
+        [obj.impedance] = varargin{1}.impedance;
+        [obj.nodes] = varargin{1}.nodes;
+        [obj.model] = varargin{1}.model;
+        
         return;
       end
       
@@ -53,11 +64,11 @@ classdef electrode
       if (nargin>0)&&(isa(varargin{1},'cnlElectrodes'))
         crlBase.disp('Converting from old cnlElectrodes object');
         
-        opts.label = varargin{1}.Labels;
-        opts.position = varargin{1}.Positions;        
-        opts.voxels = varargin{1}.Voxels;        
+        opts.label     = varargin{1}.Labels;
+        opts.position  = varargin{1}.Positions;        
+        opts.voxels    = varargin{1}.Voxels;        
         opts.impedance = varargin{1}.Impedance;       
-        opts.nodes = varargin{1}.Nodes;        
+        opts.nodes     = varargin{1}.Nodes;        
                   
         obj = crlEEG.sensor.electrode(opts);
         return;
@@ -72,13 +83,13 @@ classdef electrode
       
       % Input Parsing
       p = inputParser;
-      p.addParamValue('label'         ,[]      , validateLabels);
-      p.addParamValue('position'      ,[0 0 0] , validatePositions);
-      p.addParamValue('voxels'        ,[]      , validateAllNumVec);
-      p.addParamValue('conductivities',0       , validateAllNumVec);
-      p.addParamValue('nodes'         ,[]      , validateAllNumVec);
-      p.addParamValue('impedance'     ,1000    , isNumVec);
-      p.addParamValue('model'         ,'pointModel',validateModel);
+      p.addParameter('label'         ,[]      , validateLabels);
+      p.addParameter('position'      ,[0 0 0] , validatePositions);
+      p.addParameter('voxels'        ,[]      , validateAllNumVec);
+      p.addParameter('conductivities',0       , validateAllNumVec);
+      p.addParameter('nodes'         ,[]      , validateAllNumVec);
+      p.addParameter('impedance'     ,1000    , isNumVec);
+      p.addParameter('model'         ,'pointModel',validateModel);
       p.parse(varargin{:});
       
       % Parse Labels
@@ -172,16 +183,15 @@ classdef electrode
       
       % Finally, construct the actual objects.
       obj(nElec) = crlEEG.sensor.electrode;
-      
-      for i = 1:nElec
-        obj(i).label = label{i};
-        obj(i).position = position(i,:);
-        obj(i).voxels = voxels{i};
-        obj(i).conductivities = conductivities{i};
-        obj(i).nodes = nodes{i};
-        obj(i).impedance = impedance(i);
-        obj(i).model = model{i};        
-      end
+      [obj.label] = label{:};
+      tmp = num2cell(position,2);
+      [obj.position] = tmp{:};
+      [obj.voxels] = voxels{:};
+      [obj.conductivities] = conductivities{:};
+      [obj.nodes] = nodes{:};
+      tmp = num2cell(impedance);
+      [obj.impedance] = tmp{:};
+      [obj.model] = model{:};
       
     end % END electrode() constructor
     
@@ -249,41 +259,47 @@ classdef electrode
       if ~isa(b,'crlEEG.sensor.electrode'), isEq = false; return; end
       
       assert((numel(a)==1)||(numel(b)==1)||isequal(size(a),size(b)),...
-        'Matrix dimensions must agree');
+        'Electrode array dimensions must agree');
       
-      % Return a value if we're comparing singular electrodes
-      if ( numel(a)==1 ) && ( numel(b) == 1 )
-        isEq = isequal(a.label,b.label) && ...
+      % Handling Multiple Objects
+      if ( numel(a)>1 ) || ( numel(b) > 1 )
+        %  isEq = bsxfun(@isequal,a,b);
+        if ( numel(a) == 1 )
+          isEq = false(size(b));
+          for i = 1:numel(b)
+            isEq(i) = a==b(i);
+          end
+        elseif ( numel(b) == 1 )
+          isEq = false(size(a));
+          for i = 1:numel(a)
+            isEq(i) = a(i)==b;
+          end
+        else
+          isEq = false(size(a));
+          
+          for i = 1:numel(a)
+            isEq(i) = a(i)==b(i);
+          end
+        end
+        return;
+      end
+      
+      %% Compare Two Single Objects
+      isEq = isequal(a.label,b.label) && ...
                isequal(a.position,b.position) && ...
                isequal(a.voxels,b.voxels) && ...
                isequal(a.conductivities,b.conductivities) && ...
                isequal(a.nodes,b.nodes) && ...
                isequal(a.impedance,b.impedance) && ...
                isequal(a.model,b.model);
-        return;
-      elseif ( numel(a) == 1 )
-        isEq = false(size(b));
-        for i = 1:numel(b)
-          isEq(i) = a==b(i);
-        end
-      elseif ( numel(b) == 1 )
-        isEq = false(size(a));
-        for i = 1:numel(a)
-          isEq(i) = a(i)==b;
-        end
-      else
-        isEq = false(size(a));
-        
-        for i = 1:numel(a)
-          isEq(i) = a(i)==b(i);
-        end      
-      end                             
     end
     
     
     function val = center(obj)
-      % Returns the center of the electrode cloud      
-      val = mean(subsref(obj,substruct('.','position')),1);
+      % Returns the center of the electrode cloud     
+      val = mean(cat(1,obj.position),1);
+      
+      %val = mean(subsref(obj,substruct('.','position')),1);
     end
     
     
@@ -335,10 +351,83 @@ classdef electrode
       val = [vecX(:) vecY(:) vecZ(:)];
     end
     
-    function [x,y] = projPos(elec,varargin)
-      % Get electrode positions projected into a 2D plane using spherical
-      % coordinates.
+    function G = graph(obj,varargin)
       
+      p = inputParser;
+      p.addOptional('origin',[],@(x) isempty(x)||isequal(size(x),[1 3]));
+      p.addOptional('basis',[],@(x) isempty(x)||isequal(size(x),[3 3]));
+      p.addParameter('scale',0.95,@(x) isscalar(x));
+      p.addParameter('isWeighted',true,@islogical);
+      p.parse(varargin{:});
+      
+      origin = p.Results.origin;
+      if isempty(origin), origin = obj.origin; end
+      basis = p.Results.basis;
+      if isempty(basis), basis = obj.basis; end
+      isWeighted = p.Results.isWeighted;
+      
+      [x,y] = obj.projPos(origin,basis);
+      TRI = delaunay(x,y);
+      
+      if isWeighted
+        elecLoc = cat(1,obj.position);
+        
+        dist = zeros(numel(obj),numel(obj));
+        for i = 1:numel(obj)
+          tmpDist = elecLoc -elecLoc(i,:);
+          tmpDist = sqrt(sum(tmpDist.^2,2));
+          dist(:,i) = tmpDist;
+        end
+      end
+      
+      edges = nan([2,numel(TRI)]);
+      weights = nan(numel(TRI),1);
+      
+      idxOut = 0;
+      for idxTri = 1:size(TRI,1)
+        
+        currTRI = TRI(idxTri,:);
+        
+        for i = 1:3
+          for j = (i+1):3
+            a = currTRI(i);
+            b = currTRI(j);
+            
+            idxOut = idxOut + 1;
+            edges(1,idxOut) = a;
+            edges(2,idxOut) = b;
+            if isWeighted
+              weights(idxOut) = 1./dist(a,b);
+            else
+              weights(idxOut) = 1;
+            end
+          end
+        end
+      end
+      
+      G = graph(edges(1,:),edges(2,:),weights);
+      G = G.simplify;
+      
+    end
+    
+    function [x,y] = projPos(elec,varargin)
+      % 2D Project of Electrode Locations Using Spherical Coordinates
+      %
+      % [x,y] = projPos(elec,varargin)
+      %
+      % Inputs
+      % ------
+      %    elec : crlEEG.sensor.electrode object
+      %
+      % Param-Value Inputs
+      % ------------------
+      %   'origin' : [X Y Z] location of origin
+      %   'basis'  : (3 x 3) array of basis vectors
+      %
+      % Computes projection from head coordinates to 
+      % 
+      
+      %% Input Parsing
       p = inputParser;
       p.addOptional('origin',[],@(x) isempty(x)||isequal(size(x),[1 3]));
       p.addOptional('basis',[],@(x) isempty(x)||isequal(size(x),[3 3]));
@@ -349,6 +438,8 @@ classdef electrode
       basis = p.Results.basis;
       
       % Try and compute these if they weren't provided
+      %
+      % Not set as inputParser defaults to avoid unnecessary computation.
       if ~exist('origin','var')||isempty(origin)
         origin = elec.center;
       end
@@ -357,8 +448,12 @@ classdef electrode
         basis = elec.basis;
       end
       
+      %% Computation
+      
       % Get positions relative to center
-      relPos = subsref(elec,substruct('.','position')) - repmat(origin,numel(elec),1);
+      relPos = cat(1,elec.position) - repmat(origin,numel(elec),1);
+      
+      %relPos = subsref(elec,substruct('.','position')) - repmat(origin,numel(elec),1);
       newPos = (basis'*relPos')';
       X = newPos(:,1); Y = newPos(:,2); Z = newPos(:,3);
       
@@ -389,9 +484,12 @@ classdef electrode
     function varargout = getNumericIndex(obj,varargin)
       % Get the numeric indices associated with specific electrode names.
       %
+      % varargout = getNumericIndex(obj,varargin)
+      %
       % Returns NaN's if an electrode requested by name is not present in
       % the array.
       %
+      
       varargout = cell(1,numel(varargin));
       for i = 1:numel(varargin)
         varargout{i} = crlBase.util.getDimensionIndex({obj.label},varargin{i},true);      
@@ -401,6 +499,9 @@ classdef electrode
     %%
     function s = struct(obj)
       % Typecast an electrode object to a struct
+      %
+      % s = struct(obj);
+      %
       s.label          = obj.label;
       s.position       = obj.position;
       s.voxels         = obj.voxels;

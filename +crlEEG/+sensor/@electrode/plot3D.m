@@ -43,7 +43,8 @@ if ~isempty(surfMRI)
 end
 
 %% Display Electrode Locations
-positions = subsref(elecObj,substruct('.','position'));
+%positions = subsref(elecObj,substruct('.','position'));
+positions = cat(1,elecObj.position);
 if iscell(positions)
   % If we're using a patch/CEM model, use the mean location for plotting.
   for i = 1:numel(positions)

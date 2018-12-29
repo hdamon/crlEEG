@@ -3,7 +3,9 @@ function varargout = subsref(obj,s)
 % Shift name based indexing to numeric.
 for i = 1:numel(s)
   if isequal(s(i).type,'()')
-    s(i).subs = {obj.getNumericIndex(s(i).subs{:})};
+    if (i==1)||~ismember(s(i-1).subs,methods(crlEEG.sensor.electrode))
+      s(i).subs = {obj.getNumericIndex(s(i).subs{:})};
+    end
   end
 end
 
