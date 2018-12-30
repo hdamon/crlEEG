@@ -97,7 +97,7 @@ Cleaner = onCleanup(@(x) cd(retDir));
 p = inputParser;
 p.KeepUnmatched = true;
 p.addRequired('rootDir',@(x) exist(x,'dir'));
-p.addRequired('executeFcn',@(x) isa(x,'function_handle'));
+p.addRequired('executeFcn',@(x) isempty(x)||isa(x,'function_handle'));
 p.addParameter('recurseSubdirs',false);
 p.parse(rootDir,executeFcn,varargin{:});
 
