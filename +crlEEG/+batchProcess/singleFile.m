@@ -106,7 +106,7 @@ p = inputParser;
 p.KeepUnmatched = true;
 p.addRequired('fNameIn',@(x) ischar(x));
 p.addOptional('fPathIn',[],@(x) ischar(x)&&~ismember(x,allFields));
-p.addParameter('batchFuncHandle',[],@(x) isa(x,'function_handle'));
+p.addParameter('batchFuncHandle',[],@(x) isempty(x)||isa(x,'function_handle'));
 p.addParameter('skipIfProcessed', false , @(x) isscalar(x)&&islogical(x) );
 p.addParameter('loadIfSkipped'  , false , @(x) isscalar(x)&&islogical(x) );
 p.addParameter('returnEmpty'    , false , @(x) isscalar(x)&&islogical(x) );
@@ -131,7 +131,6 @@ if isempty(fPathOut)
 end
 fullOutputPath = fullfile(fPathOut,fNameOut);
 
-
 %% If the output file already exists, and skipIfProcessed is true
 if p.Results.skipIfProcessed&&exist(fullOutputPath,'file')
   disp(['Processing already completed for file: ' newline ...
@@ -145,7 +144,7 @@ if p.Results.skipIfProcessed&&exist(fullOutputPath,'file')
   else
     % Return an empty output
     outStruct = [];
-  end;
+  end
   return;
 end
 
@@ -158,13 +157,13 @@ if ~isempty(p.Results.batchFuncHandle)
   outStruct = p.Results.batchFuncHandle(fullInputPath);
 else
   outStruct = [];
-end;
+end
 
 %% Save output, if desired
 if p.Results.saveOutput
   cd(fPathOut);
   save(fNameOut,'-v7.3','outStruct');
-end;
+end
 
 disp(['Completed Batch Processing']);
 end

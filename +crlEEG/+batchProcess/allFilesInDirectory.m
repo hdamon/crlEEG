@@ -1,4 +1,4 @@
-function outStruct = allFilesInDirectory(rootDir,varargin)
+function outStruct = allFilesInDirectory(rootDir,executeFcn,varargin)
 % Recursively process all files of a particular type within a directory.
 %
 % outStruct = crlEEG.batchProcess.allFilesInDirectory(rootDir,varargin)
@@ -30,6 +30,8 @@ function outStruct = allFilesInDirectory(rootDir,varargin)
 %               blockProcessSingleEEGFile for more information.
 %
 % Param-Value Inputs From blockProcessSingleEEGFile (As of 10/11/2018)
+% ------------------
+%   Reproduced here for simplicity.
 % ------------------
 %        'blockSize' : Block size (in seconds) to average over.
 %                          DEFAULT: 30 seconds
@@ -95,8 +97,9 @@ Cleaner = onCleanup(@(x) cd(retDir));
 p = inputParser;
 p.KeepUnmatched = true;
 p.addRequired('rootDir',@(x) exist(x,'dir'));
+p.addRequired('executeFcn',@(x) isa(x,'function_handle'));
 p.addParameter('recurseSubdirs',false);
-p.parse(rootDir,varargin{:});
+p.parse(rootDir,executeFcn,varargin{:});
 
 %% Get List of Files/Directories
 outStruct.dir = rootDir;
@@ -109,7 +112,7 @@ d = dir;
 d = d(keep);
 
 %% Process EDFs is there are any.
-outStruct.processedFiles = processAllIndividualFiles(pwd,p.Unmatched);
+outStruct.processedFiles = processAllIndividualFiles(pwd,executeFcn,p.Unmatched);
 
 %% Find subdirectories and recurse through them.
 if p.Results.recurseSubdirs
@@ -120,15 +123,15 @@ if p.Results.recurseSubdirs
     % Recurse across subdirectories
     subDir = fullfile(d(i).folder,d(i).name);    
     outStruct.subDirs(i) = crlEEG.batchProcess.allFilesInDirectory(subDir,varargin{:});
-  end;
+  end
   
   % Ensure the field exists, for consistency in array construction.
   if ~isfield(outStruct,'subDirs')
     outStruct.subDirs = [];
-  end;
+  end
 else
   outStruct.subDirs = [];
-end;
+end
 
 end
 
@@ -174,7 +177,7 @@ p.addParameter('fileExtensions',{'*.edf','*.EDF'});
 p.parse(dataDir,varargin{:});
 
 fExt = p.Results.fileExtensions;
-if ischar(fExt), fExt = {fExt}; end;
+if ischar(fExt), fExt = {fExt}; end
 
 %% Loop across files in the data directory
 files = cellfun(@(x) dir(fullfile(dataDir,x)),fExt,'UniformOutput',false);
@@ -193,11 +196,11 @@ for idxF = 1:numel(files)
     % ultimately just leave an empty structure in the appropriate position,
     % unless it's the last file processed.
     outStruct(1,idxF) = tmpOut;
-  end;    
+  end   
 end
   
 % Return an empty array if nothing was found/done.
-if ~exist('outStruct','var'), outStruct = []; end;
+if ~exist('outStruct','var'), outStruct = []; end
 
 end
 
