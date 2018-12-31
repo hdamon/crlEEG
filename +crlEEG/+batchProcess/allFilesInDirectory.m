@@ -1,4 +1,4 @@
-function outStruct = allFilesInDirectory(rootDir,executeFcn,varargin)
+function outStruct = allFilesInDirectory(rootDir,varargin)
 % Recursively process all files of a particular type within a directory.
 %
 % outStruct = crlEEG.batchProcess.allFilesInDirectory(rootDir,varargin)
@@ -99,7 +99,7 @@ p.KeepUnmatched = true;
 p.addRequired('rootDir',@(x) exist(x,'dir'));
 %p.addRequired('executeFcn',@(x) isempty(x)||isa(x,'function_handle'));
 p.addParameter('recurseSubdirs',false);
-p.parse(rootDir,executeFcn,varargin{:});
+p.parse(rootDir,varargin{:});
 
 %% Get List of Files/Directories
 outStruct.dir = rootDir;
@@ -112,7 +112,7 @@ d = dir;
 d = d(keep);
 
 %% Process EDFs is there are any.
-outStruct.processedFiles = processAllIndividualFiles(pwd,executeFcn,p.Unmatched);
+outStruct.processedFiles = processAllIndividualFiles(pwd,p.Unmatched);
 
 %% Find subdirectories and recurse through them.
 if p.Results.recurseSubdirs
