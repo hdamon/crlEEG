@@ -112,6 +112,7 @@ p.addParameter('loadIfSkipped'  , false , @(x) isscalar(x)&&islogical(x) );
 p.addParameter('returnEmpty'    , false , @(x) isscalar(x)&&islogical(x) );
 p.addParameter('saveOutput'     , false , @(x) isscalar(x)&&islogical(x) );
 p.addParameter('outputPostfix','_Processed',@(x) ischar(x));
+p.addParameter('postLoadFcn',[],@(x) isa(x,'function_handle'));
 p.addParameter('fPathOut',[],@(x) exist(x,'dir'));
 p.parse(fNameIn,varargin{:});
 
@@ -145,6 +146,9 @@ if p.Results.skipIfProcessed&&exist(fullOutputPath,'file')
     % Return an empty output
     outStruct = [];
   end
+  if ~isempty(p.Results.postLoadFcn)
+    outStruct = p.Results.postLoadFcn(outStruct);
+  end;
   return;
 end
 
@@ -163,6 +167,10 @@ end
 if p.Results.saveOutput
   cd(fPathOut);
   save(fNameOut,'-v7.3','outStruct');
+end
+
+if ~isempty(p.Results.postLoadFcn)
+  outStruct = p.Results.postLoadFcn(outStruct);
 end
 
 disp(['Completed Batch Processing']);
