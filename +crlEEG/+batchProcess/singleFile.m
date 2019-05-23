@@ -125,23 +125,30 @@ fullInputPath = fullfile(p.Results.fPathIn,p.Results.fNameIn);
 %% Get Full Output Location
 [~,tmpName,~] = fileparts(fNameIn);
 fNameOut = [tmpName p.Results.outputPostfix '.mat'];
+fNameHold = [tmpName p.Results.outputPostfix '_Running.mat'];
 fPathOut = p.Results.fPathOut;
 if isempty(fPathOut)
   % By default, save in the same location as the data file
   fPathOut = fPathIn;
 end
 fullOutputPath = fullfile(fPathOut,fNameOut);
+fullHoldPath = fullfile(fPathOut,fNameHold);
+
+outputExists = exist(fullOutputPath,'file');
+onHold = exist(fullHoldPath,'file');
 
 %% If the output file already exists, and skipIfProcessed is true
-if p.Results.skipIfProcessed&&exist(fullOutputPath,'file')
+if p.Results.skipIfProcessed&&(outputExists||onHold)
   disp(['Processing already completed for file: ' newline ...
     '     ' fullInputPath]);
-  if p.Results.loadIfSkipped
+  if p.Results.loadIfSkipped&&(~onHold)
     % Load the precomputed output, if desired.
     load(fullOutputPath);
     % Check that the correct output is available
     assert(logical(exist('outStruct','var')),...
       ['The file: ' fNameOut ' does not provide the required variable ''outStruct''.']);
+    disp(['Successfully loaded data from file: ' fNameOut]);
+        
   else
     % Return an empty output
     outStruct = [];
@@ -158,7 +165,10 @@ disp(['Beginning Batch Processing for File: ' newline ...
 
 %% Run the batch processing function.
 if ~isempty(p.Results.batchFuncHandle)
+  holdVar = true;
+  save(fullHoldPath,'-v7.3','holdVar');
   outStruct = p.Results.batchFuncHandle(fullInputPath);
+  delete(fullHoldPath);
 else
   outStruct = [];
 end
